@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link, router, useLocalSearchParams } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
-import { Screen, Text, useFontScale } from '../components/ui';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Backdrop } from '../components/Backdrop';
+import { Text, Touch, useResponsive, useFontScale } from '../components/ui';
 import { Theme } from '../constants/theme';
-import { useSensoryPlayer } from '../hooks/useSensoryPlayer';
+import { useSensoryPlayer, type SensoryPlayer } from '../hooks/useSensoryPlayer';
 import { energyValueAt } from '../lib/sensory-score';
-import { Pulse } from '../components/player/Pulse';
-import { EnergyBar } from '../components/player/EnergyBar';
+import { PulseLine } from '../components/player/PulseLine';
 import { ChorusCountdown } from '../components/player/ChorusCountdown';
 import { LyricDisplay } from '../components/player/LyricDisplay';
-import { usePreferences } from '../store/preferences';
 
 export default function PlayerScreen() {
-  const f = useFontScale();
+  const { isWide } = useResponsive();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{
     trackId: string;
     title?: string;
@@ -21,136 +23,196 @@ export default function PlayerScreen() {
     guided?: string;
   }>();
   const trackId = Number(params.trackId ?? 0);
-  const visualOnly = usePreferences((s) => s.visualOnly);
 
   const player = useSensoryPlayer(trackId, {
     durationMs: params.durationMs ? Number(params.durationMs) : undefined,
   });
 
+  // Web: teclado (espacio = play/pausa, flechas = seek)
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    function onKey(e: KeyboardEvent) {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        player.toggle();
+      } else if (e.code === 'ArrowLeft') {
+        player.seekBy(-10000);
+      } else if (e.code === 'ArrowRight') {
+        player.seekBy(10000);
+      }
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [player.toggle, player.seekBy]);
+
   const [chorusFlash, setChorusFlash] = useState(false);
   useEffect(() => {
     if (player.cue?.type === 'chorus') {
       setChorusFlash(true);
-      const t = setTimeout(() => setChorusFlash(false), 900);
+      const t = setTimeout(() => setChorusFlash(false), 700);
       return () => clearTimeout(t);
     }
   }, [player.cue]);
+  void chorusFlash;
 
-  const energyNow = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.3;
-  const energyBefore = player.score ? energyValueAt(player.score.energy, Math.max(0, player.currentMs - 3000)) : 0.3;
-  const rising = energyNow > energyBefore + 0.04;
-  const inChorus = player.currentSection?.kind === 'chorus';
-  const guided = params.guided === '1';
-  const accentColor = inChorus ? Theme.chorus : Theme.pulse;
+  const progress = player.durationMs > 0 ? player.currentMs / player.durationMs : 0;
+  const title = params.title ?? 'Track';
+  const artist = params.artist ?? 'Unknown artist';
 
   if (player.status === 'loading') {
     return (
-      <Screen scroll={false}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', gap: 14 }}>
-          <ActivityIndicator size="large" color={Theme.accent} />
-          <Text dim>Building the sensory score…</Text>
+      <View style={[styles.fill, { paddingTop: insets.top }]}>
+        <Backdrop lift={0.07} />
+        <View style={styles.centerAll}>
+          <ActivityIndicator size="small" color={Theme.text} />
+          <Text dim variant="caption" style={{ marginTop: 14 }}>Building the sensory score…</Text>
         </View>
-      </Screen>
+      </View>
     );
   }
 
   if (player.status === 'error' || !trackId) {
     return (
-      <Screen>
-        <Text variant="largeTitle">Couldn’t load</Text>
-        <Text dim>{player.errorMessage ?? 'Missing track id'}</Text>
-        <Pressable onPress={() => router.replace('/search')} style={{ marginTop: 8 }}>
-          <Text color={Theme.accent}>Back to search</Text>
-        </Pressable>
-      </Screen>
+      <View style={[styles.fill, { paddingTop: insets.top }]}>
+        <Backdrop lift={0.05} />
+        <View style={styles.centerAll}>
+          <Text variant="largeTitle">Couldn’t load</Text>
+          <Text dim style={{ marginTop: 8 }}>{player.errorMessage ?? 'Missing track id'}</Text>
+          <Touch onPress={() => router.replace('/search')} style={{ marginTop: 20 }}>
+            <Text color={Theme.text}>‹ Back to search</Text>
+          </Touch>
+        </View>
+      </View>
     );
   }
 
-  const progress = player.durationMs > 0 ? player.currentMs / player.durationMs : 0;
-
-  return (
-    <Screen scroll={false} pad={22}>
-      <View style={styles.topBar}>
-        <Pressable onPress={() => router.back()} hitSlop={12}>
-          <Text variant="heading" color={Theme.textDim}>‹</Text>
-        </Pressable>
-        <Link href="/calibrate" asChild>
-          <Pressable hitSlop={12}>
-            <Text variant="caption" color={Theme.textDim}>Calibrate</Text>
-          </Pressable>
-        </Link>
-      </View>
-
-      <View style={{ gap: 2 }}>
-        <Text variant="title" numberOfLines={1} align="center">{params.title ?? 'Track'}</Text>
-        <Text dim variant="caption" numberOfLines={1} align="center">{params.artist ?? 'Unknown artist'}</Text>
-      </View>
-
-      <View style={styles.pulseArea}>
-        <Pulse beatPulse={player.beatPulse} intensity={energyNow} bloom={chorusFlash} color={accentColor} />
-      </View>
-
-      <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
-
-      <View style={styles.lyricArea}>
-        <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} />
-      </View>
-
-      {guided ? <GuidedCaption cue={player.cue} playing={player.isPlaying} accentColor={accentColor} /> : null}
-
-      <View style={{ gap: 8 }}>
-        <EnergyBar value={energyNow} rising={rising} sectionKind={player.currentSection?.kind} />
-        <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: accentColor }]} />
-        </View>
-        <View style={styles.timeRow}>
-          <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(12 * f) }}>{fmt(player.currentMs)}</Text>
-          <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(12 * f) }}>
-            {visualOnly ? 'VISUAL ONLY' : player.energySource === 'lalal' ? 'LALAL' : 'SEMANTIC'}
-          </Text>
-          <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(12 * f) }}>−{fmt(player.durationMs - player.currentMs)}</Text>
-        </View>
-      </View>
-
-      <View style={styles.controls}>
-        <Pressable onPress={() => player.seekBy(-10000)} hitSlop={12} style={styles.sideBtn}>
-          <Text variant="caption" color={Theme.textDim}>−10s</Text>
-        </Pressable>
-        <Pressable onPress={player.toggle} style={[styles.playBtn, { backgroundColor: Theme.text }]}>
-          <Text variant="heading" color="#000000" style={{ fontSize: Math.round(18 * f) }}>
-            {player.isPlaying ? 'Pause' : 'Play'}
-          </Text>
-        </Pressable>
-        <Pressable onPress={() => player.seekBy(10000)} hitSlop={12} style={styles.sideBtn}>
-          <Text variant="caption" color={Theme.textDim}>+10s</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.footer}>
-        <Pressable onPress={player.restart}><Text variant="caption" color={Theme.textFaint}>Restart</Text></Pressable>
-        <Link href="/legend" asChild><Pressable><Text variant="caption" color={Theme.textFaint}>Legend</Text></Pressable></Link>
-      </View>
-    </Screen>
+  return isWide ? (
+    <WebPlayer player={player} title={title} artist={artist} progress={progress} insets={insets} />
+  ) : (
+    <MobilePlayer player={player} title={title} artist={artist} progress={progress} insets={insets} />
   );
 }
 
-const CUE_COPY: Record<string, { text: string }> = {
-  line_start: { text: 'New lyric line' },
-  sustain: { text: 'Emotional sustain' },
-  chorus_warning: { text: 'Chorus coming' },
-  chorus: { text: 'Chorus hit' },
-  pause: { text: 'Vocal pause' },
-  section_end: { text: 'Section end' },
+type LayoutProps = {
+  player: SensoryPlayer;
+  title: string;
+  artist: string;
+  progress: number;
+  insets: { top: number; bottom: number; left: number; right: number };
 };
 
-function GuidedCaption({ cue, playing, accentColor }: { cue: { type: string } | null; playing: boolean; accentColor: string }) {
-  const copy = cue ? CUE_COPY[cue.type] : null;
+/* ----------------------------- MÓVIL (app) ----------------------------- */
+
+function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) {
+  const f = useFontScale();
   return (
-    <View style={styles.caption}>
-      <View style={[styles.captionDot, { backgroundColor: copy ? accentColor : Theme.textFaint }]} />
-      <Text style={{ color: Theme.textDim, fontSize: 13, fontWeight: '500' }}>
-        {playing ? (copy?.text ?? 'Following…') : 'Paused'}
-      </Text>
+    <View style={[styles.fill, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 14 }]}>
+      <Backdrop lift={0.07} />
+      <View style={styles.mobilePad}>
+        <View style={styles.topBar}>
+          <Touch onPress={() => router.back()} hitSlop={12} style={styles.iconBtn}>
+            <Ionicons name="chevron-back" size={24} color={Theme.textDim} />
+          </Touch>
+          <View style={{ flex: 1 }}>
+            <Text variant="caption" weight="600" numberOfLines={1} align="center">{title}</Text>
+            <Text variant="label" color={Theme.textFaint} numberOfLines={1} align="center" style={{ letterSpacing: 0.4, marginTop: 2 }}>
+              {artist.toUpperCase()}
+            </Text>
+          </View>
+          <Link href="/calibrate" asChild>
+            <Touch hitSlop={12} style={styles.iconBtn}>
+              <Ionicons name="options-outline" size={22} color={Theme.textDim} />
+            </Touch>
+          </Link>
+        </View>
+
+        <Pressable style={styles.lyricArea} onPress={player.toggle}>
+          <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={30} contextSize={16} />
+          <View style={{ height: 20 }} />
+          <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
+        </Pressable>
+
+        <View style={{ gap: 14 }}>
+          <PulseLine progress={progress} beatPulse={player.beatPulse} active={player.isPlaying} />
+          <View style={styles.timeRow}>
+            <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(11.5 * f) }}>{fmt(player.currentMs)}</Text>
+            <Text variant="mono" color={Theme.textGhost} style={{ fontSize: Math.round(10.5 * f), letterSpacing: 1.5 }}>
+              {player.energySource === 'lalal' ? 'LALAL' : 'SEMANTIC'}
+            </Text>
+            <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(11.5 * f) }}>−{fmt(player.durationMs - player.currentMs)}</Text>
+          </View>
+          <Transport player={player} />
+          <View style={styles.footer}>
+            <Touch onPress={player.restart} hitSlop={8}><Text variant="caption" color={Theme.textFaint}>Restart</Text></Touch>
+            <Link href="/legend" asChild><Touch hitSlop={8}><Text variant="caption" color={Theme.textFaint}>Legend</Text></Touch></Link>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/* ------------------------------ WEB (desktop) ------------------------------ */
+
+function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
+  return (
+    <View style={[styles.fill, { paddingTop: insets.top }]}>
+      <Backdrop lift={0.06} />
+
+      <View style={styles.webTopBar}>
+        <Touch onPress={() => router.back()} hitSlop={10} style={styles.webBack}>
+          <Ionicons name="chevron-back" size={20} color={Theme.textDim} />
+          <Text variant="caption" color={Theme.textDim} weight="600">Back</Text>
+        </Touch>
+        <Text variant="caption" color={Theme.textDim} numberOfLines={1} style={{ flex: 1, textAlign: 'center' }}>
+          {title}  ·  {artist}
+        </Text>
+        <Link href="/calibrate" asChild>
+          <Touch hitSlop={10} style={styles.webPill}>
+            <Text variant="caption" color={Theme.textDim} weight="600">Calibrate</Text>
+          </Touch>
+        </Link>
+      </View>
+
+      <Pressable style={styles.webStage} onPress={player.toggle}>
+        <View style={{ width: '100%', maxWidth: 1040 }}>
+          <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={62} contextSize={24} />
+          <View style={{ height: 28 }} />
+          <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
+        </View>
+      </Pressable>
+
+      <View style={[styles.webDock, { paddingBottom: insets.bottom + 28 }]}>
+        <View style={{ width: '100%', maxWidth: 920, gap: 16 }}>
+          <PulseLine progress={progress} beatPulse={player.beatPulse} active={player.isPlaying} />
+          <View style={styles.webDockRow}>
+            <Text variant="mono" color={Theme.textFaint} style={{ width: 64 }}>{fmt(player.currentMs)}</Text>
+            <Transport player={player} />
+            <Text variant="mono" color={Theme.textFaint} style={{ width: 64, textAlign: 'right' }}>−{fmt(player.durationMs - player.currentMs)}</Text>
+          </View>
+          <Text variant="label" color={Theme.textGhost} align="center" style={{ letterSpacing: 2 }}>
+            SPACE TO PLAY · ← → SEEK · {player.energySource === 'lalal' ? 'LALAL' : 'SEMANTIC'}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/* ------------------------------ Compartido ------------------------------ */
+
+function Transport({ player }: { player: SensoryPlayer }) {
+  return (
+    <View style={styles.controls}>
+      <Touch onPress={() => player.seekBy(-10000)} hitSlop={10} style={styles.sideBtn}>
+        <Text variant="caption" color={Theme.textDim} weight="600">−10</Text>
+      </Touch>
+      <Touch onPress={player.toggle} style={styles.playBtn} scaleTo={0.94}>
+        <Ionicons name={player.isPlaying ? 'pause' : 'play'} size={28} color={Theme.bg} style={player.isPlaying ? undefined : { marginLeft: 3 }} />
+      </Touch>
+      <Touch onPress={() => player.seekBy(10000)} hitSlop={10} style={styles.sideBtn}>
+        <Text variant="caption" color={Theme.textDim} weight="600">+10</Text>
+      </Touch>
     </View>
   );
 }
@@ -163,16 +225,52 @@ function fmt(ms: number): string {
 }
 
 const styles = StyleSheet.create({
-  topBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  pulseArea: { alignItems: 'center', paddingVertical: 6 },
-  lyricArea: { flex: 1, justifyContent: 'center', paddingVertical: 4 },
-  caption: { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'center', paddingVertical: 4 },
-  captionDot: { width: 6, height: 6, borderRadius: 3 },
-  progressTrack: { height: 3, borderRadius: 2, backgroundColor: Theme.fill, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 2 },
+  fill: { flex: 1, backgroundColor: Theme.bg },
+  centerAll: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+
+  // móvil
+  mobilePad: { flex: 1, paddingHorizontal: 22, gap: 18 },
+  topBar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  lyricArea: { flex: 1, justifyContent: 'center' },
   timeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 30, paddingVertical: 6 },
-  sideBtn: { paddingHorizontal: 14, paddingVertical: 12 },
-  playBtn: { paddingVertical: 18, paddingHorizontal: 46, borderRadius: 999 },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 2 },
+
+  // web
+  webTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    paddingHorizontal: 40,
+    paddingVertical: 22,
+  },
+  webBack: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 120 },
+  webPill: {
+    width: 120,
+    alignItems: 'flex-end',
+  },
+  webStage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 48 },
+  webDock: { alignItems: 'center', paddingHorizontal: 40, paddingTop: 16 },
+  webDockRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+
+  // transporte
+  controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 26 },
+  sideBtn: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Theme.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.border,
+  },
+  playBtn: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Theme.text,
+  },
 });

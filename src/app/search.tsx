@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, router } from 'expo-router';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput, View } from 'react-native';
-import { Screen, Text, Button, Stack, Card, useFontScale } from '../components/ui';
+import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
+import { Screen, Text, Button, Stack, Card, Touch, useFontScale } from '../components/ui';
 import { Theme } from '../constants/theme';
 import { searchTracksClient } from '../lib/api-client';
 import { usePreferences } from '../store/preferences';
@@ -56,43 +56,43 @@ export default function SearchScreen() {
           onChangeText={setQ}
           placeholder="Artist or title"
           placeholderTextColor={Theme.textFaint}
-          style={{ color: Theme.text, fontSize: Math.round(17 * f), flex: 1, paddingVertical: 16, paddingHorizontal: 16 }}
+          style={{ color: Theme.text, fontSize: Math.round(16.5 * f), flex: 1, paddingVertical: 15, paddingHorizontal: 18 }}
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="search"
         />
-        {loading ? <ActivityIndicator color={Theme.accent} style={{ marginRight: 16 }} /> : null}
+        {loading ? <ActivityIndicator color={Theme.textDim} style={{ marginRight: 16 }} /> : null}
       </View>
 
       {source ? (
-        <Text variant="caption" dim style={{ marginTop: -6 }}>
-          {source === 'musixmatch' ? 'Live · Musixmatch' : 'Demo catalogue'}
-        </Text>
+        <View style={styles.sourceRow}>
+          <View style={[styles.sourceDot, { backgroundColor: source === 'musixmatch' ? Theme.text : Theme.textGhost }]} />
+          <Text variant="caption" dim>
+            {source === 'musixmatch' ? 'Live · Musixmatch' : 'Demo catalogue'}
+          </Text>
+        </View>
       ) : null}
 
       {results && results.length === 0 && !loading ? (
         <Text dim style={{ textAlign: 'center', marginTop: 24 }}>No tracks found.</Text>
       ) : null}
 
-      <Stack gap={6}>
+      <View>
         {results?.map((t) => (
-          <Pressable
-            key={t.trackId}
-            onPress={() => openTrack(t)}
-            style={({ pressed }) => [styles.result, { opacity: pressed ? 0.6 : 1 }]}
-          >
+          <Touch key={t.trackId} onPress={() => openTrack(t)} style={styles.result} scaleTo={0.99}>
             <View style={{ flex: 1, gap: 3 }}>
               <Text variant="heading" numberOfLines={1}>{t.title}</Text>
               <Text dim variant="caption" numberOfLines={1}>
                 {t.artist}{t.album ? `  ·  ${t.album}` : ''}
               </Text>
             </View>
-          </Pressable>
+            <Text variant="caption" color={Theme.textFaint}>›</Text>
+          </Touch>
         ))}
-      </Stack>
+      </View>
 
       {q.trim() === '' ? (
-        <Stack gap={10} style={{ marginTop: 16 }}>
+        <Stack gap={12} style={{ marginTop: 14 }}>
           <Card>
             <Text variant="heading">No Musixmatch key yet?</Text>
             <Text dim>
@@ -113,6 +113,23 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.surface, borderRadius: 18 },
-  result: { paddingVertical: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Theme.separator },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Theme.surface,
+    borderRadius: 16,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.border,
+  },
+  sourceRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: -4 },
+  sourceDot: { width: 6, height: 6, borderRadius: 3 },
+  result: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 15,
+    paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Theme.separator,
+  },
 });

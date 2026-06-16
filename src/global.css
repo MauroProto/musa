@@ -13,6 +13,9 @@ expo-app {
 body {
   margin: 0;
   background-color: #000000;
+  /* halo de luz superior apenas perceptible, monocromo */
+  background-image: radial-gradient(70% 45% at 50% -8%, rgba(255, 255, 255, 0.05), transparent 60%);
+  background-attachment: fixed;
   color: #ffffff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
     "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
@@ -29,4 +32,9 @@ body {
 input,
 button {
   font-family: inherit;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
 }

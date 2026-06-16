@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
-import { Screen, Text, Button, Stack } from '../components/ui';
+import { StyleSheet, View } from 'react-native';
+import { Screen, Text, Button, Stack, Touch } from '../components/ui';
 import { Theme } from '../constants/theme';
 import { usePreferences } from '../store/preferences';
 import type { ListeningProfile } from '../lib/types';
@@ -28,11 +28,9 @@ export default function ProfileSetupScreen() {
 
   return (
     <Screen scroll>
-      <Text variant="label" color={Theme.textDim} style={{ letterSpacing: 3 }}>
-        STEP 1 OF 2
-      </Text>
+      <Text variant="label" color={Theme.textFaint}>STEP 1 OF 2</Text>
       <Text variant="largeTitle">How do you want to follow music?</Text>
-      <Text dim style={{ marginBottom: 4 }}>
+      <Text dim style={{ marginBottom: 2 }}>
         There’s no single “deaf mode”. Choose what fits you — you can change this later.
       </Text>
 
@@ -40,26 +38,26 @@ export default function ProfileSetupScreen() {
         {PROFILES.map((p) => {
           const active = selected === p.id;
           return (
-            <Pressable
+            <Touch
               key={p.id}
               onPress={() => setSelected(p.id)}
-              style={({ pressed }) => [
+              scaleTo={0.99}
+              style={[
                 styles.option,
                 {
-                  backgroundColor: active ? `${Theme.accent}26` : Theme.surface,
-                  borderColor: active ? `${Theme.accent}99` : 'transparent',
-                  opacity: pressed ? 0.7 : 1,
+                  backgroundColor: active ? 'rgba(255,255,255,0.10)' : Theme.surface,
+                  borderColor: active ? Theme.borderStrong : Theme.border,
                 },
               ]}
             >
               <View style={{ flex: 1, gap: 3 }}>
                 <Text variant="heading">{p.title}</Text>
-                <Text variant="caption" dim>
-                  {p.hint}
-                </Text>
+                <Text variant="caption" dim>{p.hint}</Text>
               </View>
-              <View style={[styles.radio, { borderColor: active ? Theme.accent : Theme.textFaint, backgroundColor: active ? Theme.accent : 'transparent' }]} />
-            </Pressable>
+              <View style={[styles.radio, { borderColor: active ? Theme.text : Theme.textFaint }]}>
+                {active ? <View style={styles.radioFill} /> : null}
+              </View>
+            </Touch>
           );
         })}
       </Stack>
@@ -74,9 +72,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 18,
+    padding: 17,
     borderRadius: 18,
-    borderWidth: 1.5,
+    borderWidth: 1,
   },
-  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2 },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  radioFill: { width: 11, height: 11, borderRadius: 6, backgroundColor: Theme.text },
 });

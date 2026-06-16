@@ -1,7 +1,7 @@
 import { Link, router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { Screen, Text, Button, Stack, Card } from '../components/ui';
+import { Screen, Text, Button, Stack, Card, Touch } from '../components/ui';
 import { Theme } from '../constants/theme';
 import { HAPTIC_LEGEND } from '../constants/haptic-patterns';
 import { previewHaptic } from '../lib/haptics';
@@ -13,30 +13,31 @@ export default function LegendScreen() {
   return (
     <Screen scroll>
       <Text variant="largeTitle">Haptic language</Text>
-      <Text dim style={{ marginBottom: 4 }}>
+      <Text dim style={{ marginBottom: 2 }}>
         Every pattern has meaning. Tap any card to feel it.
       </Text>
 
       <Stack gap={8}>
         {HAPTIC_LEGEND.map((item) => (
-          <Pressable
+          <Touch
             key={item.type}
             onPress={() => previewHaptic(item.type, strength, item.intensity)}
-            style={({ pressed }) => [styles.card, { opacity: pressed ? 0.6 : 1 }]}
+            style={styles.card}
+            scaleTo={0.99}
           >
             <View style={styles.cardHead}>
-              <View style={[styles.iconWrap, { backgroundColor: `${item.color}26` }]}>
-                <Feather name={item.icon as any} size={18} color={item.color} />
+              <View style={styles.iconWrap}>
+                <Feather name={item.icon as any} size={17} color={item.color} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="heading">{item.label}</Text>
-                <Text variant="caption" color={item.color}>
+                <Text variant="caption" dim>
                   {item.haptic} · {item.visual}
                 </Text>
               </View>
             </View>
             <Text dim>{item.why}</Text>
-          </Pressable>
+          </Touch>
         ))}
       </Stack>
 
@@ -59,7 +60,23 @@ export default function LegendScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: { gap: 10, padding: 16, borderRadius: 20, backgroundColor: Theme.surface },
-  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  iconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  card: {
+    gap: 10,
+    padding: 17,
+    borderRadius: 20,
+    backgroundColor: Theme.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.border,
+  },
+  cardHead: { flexDirection: 'row', alignItems: 'center', gap: 13 },
+  iconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Theme.surfaceStrong,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.border,
+  },
 });

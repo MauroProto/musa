@@ -1,17 +1,45 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { Theme } from '../../constants/theme';
-import { useFontScale } from '../ui';
+import { Text, useFontScale } from '../ui';
+
+const SINE = Easing.inOut(Easing.sin);
 
 export function ChorusCountdown({ msAway }: { msAway: number | null }) {
   const f = useFontScale();
+  const pulse = useSharedValue(0.45);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 650, easing: SINE }),
+        withTiming(0.4, { duration: 650, easing: SINE }),
+      ),
+      -1,
+      false,
+    );
+    return () => cancelAnimation(pulse);
+  }, [pulse]);
+
+  const dotStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
+
   if (msAway === null) return null;
   const secs = Math.max(0, Math.round(msAway / 1000));
 
   return (
-    <View style={[styles.wrap, { backgroundColor: `${Theme.chorus}1F` }]}>
-      <View style={[styles.dot, { backgroundColor: Theme.chorus }]} />
-      <Text style={{ color: Theme.chorus, fontSize: Math.round(13 * f), fontWeight: '600' }}>
-        Chorus in {secs}s
+    <View style={styles.wrap}>
+      <Animated.View style={[styles.dot, dotStyle]} />
+      <Text variant="caption" weight="600" color={Theme.textDim} style={{ fontSize: Math.round(12.5 * f), letterSpacing: 0.3 }}>
+        Chorus · {secs}s
       </Text>
     </View>
   );
@@ -26,6 +54,9 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 14,
     borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.border,
+    backgroundColor: Theme.surface,
   },
-  dot: { width: 7, height: 7, borderRadius: 4 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Theme.text },
 });
