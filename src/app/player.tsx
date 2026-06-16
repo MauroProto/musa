@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -27,6 +27,8 @@ export default function PlayerScreen() {
   const player = useSensoryPlayer(trackId, {
     durationMs: params.durationMs ? Number(params.durationMs) : undefined,
   });
+  const togglePlayer = player.toggle;
+  const seekPlayerBy = player.seekBy;
 
   // Web: teclado (espacio = play/pausa, flechas = seek)
   useEffect(() => {
@@ -34,26 +36,16 @@ export default function PlayerScreen() {
     function onKey(e: KeyboardEvent) {
       if (e.code === 'Space') {
         e.preventDefault();
-        player.toggle();
+        togglePlayer();
       } else if (e.code === 'ArrowLeft') {
-        player.seekBy(-10000);
+        seekPlayerBy(-10000);
       } else if (e.code === 'ArrowRight') {
-        player.seekBy(10000);
+        seekPlayerBy(10000);
       }
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [player.toggle, player.seekBy]);
-
-  const [chorusFlash, setChorusFlash] = useState(false);
-  useEffect(() => {
-    if (player.cue?.type === 'chorus') {
-      setChorusFlash(true);
-      const t = setTimeout(() => setChorusFlash(false), 700);
-      return () => clearTimeout(t);
-    }
-  }, [player.cue]);
-  void chorusFlash;
+  }, [togglePlayer, seekPlayerBy]);
 
   const progress = player.durationMs > 0 ? player.currentMs / player.durationMs : 0;
   const title = params.title ?? 'Track';
@@ -105,6 +97,7 @@ type LayoutProps = {
 
 function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) {
   const f = useFontScale();
+  const energy = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.5;
   return (
     <View style={[styles.fill, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 14 }]}>
       <Backdrop lift={0.07} />
@@ -115,7 +108,7 @@ function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) 
           </Touch>
           <View style={{ flex: 1 }}>
             <Text variant="caption" weight="600" numberOfLines={1} align="center">{title}</Text>
-            <Text variant="label" color={Theme.textFaint} numberOfLines={1} align="center" style={{ letterSpacing: 0.4, marginTop: 2 }}>
+            <Text variant="label" color={Theme.textFaint} numberOfLines={1} align="center" style={{ letterSpacing: 0, marginTop: 2 }}>
               {artist.toUpperCase()}
             </Text>
           </View>
@@ -130,13 +123,14 @@ function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) 
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={30} contextSize={16} />
           <View style={{ height: 20 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
+          <TactileMeter energy={energy} source={player.energySource} section={player.currentSection?.kind} />
         </Pressable>
 
         <View style={{ gap: 14 }}>
           <PulseLine progress={progress} beatPulse={player.beatPulse} active={player.isPlaying} />
           <View style={styles.timeRow}>
             <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(11.5 * f) }}>{fmt(player.currentMs)}</Text>
-            <Text variant="mono" color={Theme.textGhost} style={{ fontSize: Math.round(10.5 * f), letterSpacing: 1.5 }}>
+            <Text variant="mono" color={Theme.textGhost} style={{ fontSize: Math.round(10.5 * f), letterSpacing: 0 }}>
               {player.energySource === 'lalal' ? 'LALAL' : 'SEMANTIC'}
             </Text>
             <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(11.5 * f) }}>−{fmt(player.durationMs - player.currentMs)}</Text>
@@ -155,6 +149,7 @@ function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) 
 /* ------------------------------ WEB (desktop) ------------------------------ */
 
 function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
+  const energy = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.5;
   return (
     <View style={[styles.fill, { paddingTop: insets.top }]}>
       <Backdrop lift={0.06} />
@@ -169,7 +164,7 @@ function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
         </Text>
         <Link href="/calibrate" asChild>
           <Touch hitSlop={10} style={styles.webPill}>
-            <Text variant="caption" color={Theme.textDim} weight="600">Calibrate</Text>
+            <Ionicons name="options-outline" size={21} color={Theme.textDim} />
           </Touch>
         </Link>
       </View>
@@ -179,6 +174,7 @@ function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={62} contextSize={24} />
           <View style={{ height: 28 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
+          <TactileMeter energy={energy} source={player.energySource} section={player.currentSection?.kind} />
         </View>
       </Pressable>
 
@@ -190,9 +186,6 @@ function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
             <Transport player={player} />
             <Text variant="mono" color={Theme.textFaint} style={{ width: 64, textAlign: 'right' }}>−{fmt(player.durationMs - player.currentMs)}</Text>
           </View>
-          <Text variant="label" color={Theme.textGhost} align="center" style={{ letterSpacing: 2 }}>
-            SPACE TO PLAY · ← → SEEK · {player.energySource === 'lalal' ? 'LALAL' : 'SEMANTIC'}
-          </Text>
         </View>
       </View>
     </View>
@@ -204,15 +197,46 @@ function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
 function Transport({ player }: { player: SensoryPlayer }) {
   return (
     <View style={styles.controls}>
-      <Touch onPress={() => player.seekBy(-10000)} hitSlop={10} style={styles.sideBtn}>
-        <Text variant="caption" color={Theme.textDim} weight="600">−10</Text>
+      <Touch onPress={() => player.seekBy(-10000)} hitSlop={10} style={styles.sideBtn} accessibilityLabel="Seek back 10 seconds">
+        <Ionicons name="play-back-outline" size={21} color={Theme.textDim} />
       </Touch>
-      <Touch onPress={player.toggle} style={styles.playBtn} scaleTo={0.94}>
+      <Touch onPress={player.toggle} style={styles.playBtn} scaleTo={0.94} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
         <Ionicons name={player.isPlaying ? 'pause' : 'play'} size={28} color={Theme.bg} style={player.isPlaying ? undefined : { marginLeft: 3 }} />
       </Touch>
-      <Touch onPress={() => player.seekBy(10000)} hitSlop={10} style={styles.sideBtn}>
-        <Text variant="caption" color={Theme.textDim} weight="600">+10</Text>
+      <Touch onPress={() => player.seekBy(10000)} hitSlop={10} style={styles.sideBtn} accessibilityLabel="Seek forward 10 seconds">
+        <Ionicons name="play-forward-outline" size={21} color={Theme.textDim} />
       </Touch>
+    </View>
+  );
+}
+
+function TactileMeter({ energy, source, section }: { energy: number; source: string; section?: string }) {
+  const level = Math.max(0, Math.min(1, energy));
+  const bars = [0.18, 0.34, 0.5, 0.66, 0.82, 1];
+  const label = `${section ?? 'score'} / ${source === 'lalal' ? 'lalal' : 'semantic'}`;
+
+  return (
+    <View style={styles.meterWrap}>
+      <View style={styles.meterBars}>
+        {bars.map((threshold, index) => {
+          const active = level >= threshold;
+          return (
+            <View
+              key={threshold}
+              style={[
+                styles.meterBar,
+                {
+                  height: 12 + index * 5,
+                  opacity: active ? 0.86 : 0.16,
+                },
+              ]}
+            />
+          );
+        })}
+      </View>
+      <Text variant="label" color={Theme.textGhost} align="center" style={{ letterSpacing: 0 }}>
+        {label.toUpperCase()}
+      </Text>
     </View>
   );
 }
@@ -247,7 +271,9 @@ const styles = StyleSheet.create({
   webBack: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 120 },
   webPill: {
     width: 120,
+    height: 40,
     alignItems: 'flex-end',
+    justifyContent: 'center',
   },
   webStage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 48 },
   webDock: { alignItems: 'center', paddingHorizontal: 40, paddingTop: 16 },
@@ -271,6 +297,22 @@ const styles = StyleSheet.create({
     borderRadius: 38,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: Theme.text,
+  },
+  meterWrap: {
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 24,
+  },
+  meterBars: {
+    height: 42,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 5,
+  },
+  meterBar: {
+    width: 5,
+    borderRadius: 3,
     backgroundColor: Theme.text,
   },
 });

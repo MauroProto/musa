@@ -123,7 +123,7 @@ function Toggle({ label, desc, value, onToggle }: { label: string; desc?: string
 }
 
 const styles = StyleSheet.create({
-  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 17, borderRadius: 18, borderWidth: 1 },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 17, borderRadius: 8, borderWidth: 1 },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   radioFill: { width: 11, height: 11, borderRadius: 6, backgroundColor: Theme.text },
   testRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 2 },

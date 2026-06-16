@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 17,
-    borderRadius: 18,
+    borderRadius: 8,
     borderWidth: 1,
   },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },

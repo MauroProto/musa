@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getLyricsClient, getStemsClient } from '../lib/api-client';
+import { getLyricsClient } from '../lib/api-client';
 import { buildSensoryScore, getCurrentLineIndex, nearestChorusIn } from '../lib/sensory-score';
 import { createHapticController, type HapticController } from '../lib/haptics';
 import { usePreferences } from '../store/preferences';
@@ -52,11 +52,15 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
   const playStartMsRef = useRef(0);
   const playStartWallRef = useRef(0);
   const rafRef = useRef<ReturnType<typeof requestAnimationFrame> | null>(null);
+  const frameRef = useRef<() => void>(() => {});
   const eventCursorRef = useRef(0);
   const beatCursorRef = useRef(0);
   const lastStatePushRef = useRef(0);
   const scoreRef = useRef<SensoryScore | null>(null);
-  scoreRef.current = score;
+
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
 
   const hapticRef = useRef<HapticController | null>(null);
   useEffect(() => {
@@ -66,23 +70,34 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
 
   useEffect(() => {
     let cancelled = false;
-    setStatus('loading');
-    setErrorMessage(undefined);
     async function load() {
+      if (cancelled) return;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      hapticRef.current?.stop();
+      currentMsRef.current = 0;
+      eventCursorRef.current = 0;
+      beatCursorRef.current = 0;
+      setCurrentMs(0);
+      setIsPlaying(false);
+      setCue(null);
+      setBeatPulse(0);
+      setEnergySource('estimated');
+      setStatus('loading');
+      setErrorMessage(undefined);
       try {
         const { lines: fetched } = await getLyricsClient(trackId);
         if (cancelled) return;
-        const stems = await getStemsClient(trackId).catch(() => null);
-        if (cancelled) return;
+        // Musixmatch does not provide audio, so avoid a second lyric fetch until real stems are available.
         const built = buildSensoryScore({
           lines: fetched,
           durationMs: hints.durationMs && hints.durationMs > 0 ? hints.durationMs : undefined,
-          energy: stems?.energy && stems.energy.length > 1 ? stems.energy : undefined,
         });
         if (cancelled) return;
         setLines(fetched);
         setScore(built);
-        if (stems?.source) setEnergySource(stems.source);
         setStatus('ready');
       } catch (e) {
         if (cancelled) return;
@@ -90,9 +105,14 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
         setStatus('error');
       }
     }
-    void load();
+    void Promise.resolve().then(load);
     return () => {
       cancelled = true;
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+      hapticRef.current?.stop();
     };
   }, [trackId, hints.durationMs]);
 
@@ -150,11 +170,16 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
       setIsPlaying(false);
       return;
     }
-    rafRef.current = requestAnimationFrame(frame);
+    rafRef.current = requestAnimationFrame(() => frameRef.current());
   }, [durationMs, pulseOn, visualOnly, stopLoop]);
+
+  useEffect(() => {
+    frameRef.current = frame;
+  }, [frame]);
 
   const play = useCallback(() => {
     if (status !== 'ready' || !scoreRef.current) return;
+    if (rafRef.current !== null) return;
     if (currentMsRef.current >= durationMs) {
       currentMsRef.current = 0;
       resetCursors(0);
@@ -164,8 +189,8 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
     resetCursors(currentMsRef.current);
     lastStatePushRef.current = 0;
     setIsPlaying(true);
-    rafRef.current = requestAnimationFrame(frame);
-  }, [status, durationMs, resetCursors, frame]);
+    rafRef.current = requestAnimationFrame(() => frameRef.current());
+  }, [status, durationMs, resetCursors]);
 
   const pause = useCallback(() => {
     stopLoop();

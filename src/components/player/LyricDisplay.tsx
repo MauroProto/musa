@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     color: Theme.text,
     fontWeight: '700',
     textAlign: 'center',
-    letterSpacing: -0.8,
+    letterSpacing: 0,
   },
   context: {
     color: Theme.textFaint,

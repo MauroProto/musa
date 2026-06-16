@@ -10,8 +10,8 @@ import { Theme } from '../constants/theme';
  */
 export const Backdrop = memo(function Backdrop({ lift = 0.05 }: { lift?: number }) {
   return (
-    <View style={[StyleSheet.absoluteFill, { backgroundColor: Theme.bg }]} pointerEvents="none">
-      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%" pointerEvents="none">
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: Theme.bg, pointerEvents: 'none' }]}>
+      <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
         <Defs>
           <RadialGradient id="backdrop-top" cx="50%" cy="2%" r="80%">
             <Stop offset="0%" stopColor="#FFFFFF" stopOpacity={lift.toFixed(3)} />

@@ -1,7 +1,7 @@
 /**
  * MUSA — sistema visual monocromo.
  * Negro absoluto, blanco, y una escala de grises por opacidad.
- * Sin color: la jerarquía se construye con contraste, peso y espacio.
+ * La jerarquía se construye con contraste, peso y espacio.
  * El color se usa solo para errores.
  */
 
@@ -55,10 +55,10 @@ export function warmthFor(kind?: SectionKind): number {
 }
 
 export const RADIUS = {
-  sm: 12,
-  md: 18,
-  lg: 24,
-  xl: 30,
+  sm: 6,
+  md: 8,
+  lg: 8,
+  xl: 8,
   pill: 999,
 } as const;
 

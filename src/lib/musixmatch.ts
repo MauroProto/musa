@@ -1,12 +1,9 @@
 import type { SyncedLine, Track } from './types';
 
-const MX_BASE =
-  process.env.EXPO_PUBLIC_MUSIXMATCH_BASE_URL ??
-  process.env.MUSIXMATCH_BASE_URL ??
-  'https://api.musixmatch.com/ws/1.1';
+const MX_BASE = process.env.MUSIXMATCH_BASE_URL ?? 'https://api.musixmatch.com/ws/1.1';
 
 function apiKey(): string | undefined {
-  return process.env.MUSIXMATCH_API_KEY ?? process.env.EXPO_PUBLIC_MUSIXMATCH_API_KEY;
+  return process.env.MUSIXMATCH_API_KEY;
 }
 
 export function hasMusixmatchKey(): boolean {

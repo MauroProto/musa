@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   card: {
     gap: 10,
     padding: 17,
-    borderRadius: 20,
+    borderRadius: 8,
     backgroundColor: Theme.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Theme.border,
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   iconWrap: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Theme.surfaceStrong,

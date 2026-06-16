@@ -45,7 +45,7 @@ export function PulseLine({
       <View style={styles.track}>
         <View style={[styles.fill, { width: `${pct * 100}%` }]} />
       </View>
-      <Animated.View style={[styles.dotWrap, { left: `${pct * 100}%` }]} pointerEvents="none">
+      <Animated.View style={[styles.dotWrap, { left: `${pct * 100}%` }]}>
         <Animated.View style={[styles.dot, dotStyle]} />
       </Animated.View>
     </View>
@@ -73,9 +73,5 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: Theme.text,
-    shadowColor: Theme.text,
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
   },
 });

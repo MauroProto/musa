@@ -59,11 +59,17 @@ export function Touch({
     <AnimatedPressable
       {...rest}
       disabled={disabled}
+      onPress={(e) => {
+        blurFocusedWebElement();
+        rest.onPress?.(e);
+      }}
       onPressIn={(e) => {
+        // eslint-disable-next-line react-hooks/immutability -- Reanimated shared values are mutated through `.value`.
         s.value = withTiming(scaleTo, { duration: MOTION.dur.press, easing: EASE_OUT });
         rest.onPressIn?.(e);
       }}
       onPressOut={(e) => {
+        // eslint-disable-next-line react-hooks/immutability -- Reanimated shared values are mutated through `.value`.
         s.value = withTiming(1, { duration: MOTION.dur.fast, easing: EASE_OUT });
         rest.onPressOut?.(e);
       }}
@@ -72,6 +78,12 @@ export function Touch({
       {children}
     </AnimatedPressable>
   );
+}
+
+function blurFocusedWebElement() {
+  if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+  const active = document.activeElement;
+  if (active instanceof HTMLElement) active.blur();
 }
 
 type TextVariant = 'hero' | 'largeTitle' | 'title' | 'heading' | 'body' | 'caption' | 'mono' | 'label';
@@ -88,12 +100,12 @@ const BASE_SIZE: Record<TextVariant, number> = {
 };
 
 const TRACKING: Partial<Record<TextVariant, number>> = {
-  hero: -2,
-  largeTitle: -1,
-  title: -0.6,
-  heading: -0.3,
-  body: -0.2,
-  label: 1.6,
+  hero: 0,
+  largeTitle: 0,
+  title: 0,
+  heading: 0,
+  body: 0,
+  label: 0,
 };
 
 export function Text({
@@ -257,7 +269,7 @@ export function Button({
           color: palette.fg,
           fontSize: Math.round(16.5 * f),
           fontWeight: '600',
-          letterSpacing: -0.2,
+          letterSpacing: 0,
           textAlign: 'center',
           fontFamily: fontFamily(),
         }}

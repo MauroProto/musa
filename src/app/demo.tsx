@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 18,
-    borderRadius: 20,
+    borderRadius: 8,
     backgroundColor: Theme.surface,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Theme.border,

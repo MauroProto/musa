@@ -38,7 +38,7 @@ export function ChorusCountdown({ msAway }: { msAway: number | null }) {
   return (
     <View style={styles.wrap}>
       <Animated.View style={[styles.dot, dotStyle]} />
-      <Text variant="caption" weight="600" color={Theme.textDim} style={{ fontSize: Math.round(12.5 * f), letterSpacing: 0.3 }}>
+      <Text variant="caption" weight="600" color={Theme.textDim} style={{ fontSize: Math.round(12.5 * f), letterSpacing: 0 }}>
         Chorus · {secs}s
       </Text>
     </View>
