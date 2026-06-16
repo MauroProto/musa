@@ -1,0 +1,32 @@
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root,
+expo-app {
+  background-color: #000000;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: #000000;
+  color: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+input,
+button {
+  font-family: inherit;
+}
