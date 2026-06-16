@@ -64,12 +64,10 @@ export function Touch({
         rest.onPress?.(e);
       }}
       onPressIn={(e) => {
-        // eslint-disable-next-line react-hooks/immutability -- Reanimated shared values are mutated through `.value`.
         s.value = withTiming(scaleTo, { duration: MOTION.dur.press, easing: EASE_OUT });
         rest.onPressIn?.(e);
       }}
       onPressOut={(e) => {
-        // eslint-disable-next-line react-hooks/immutability -- Reanimated shared values are mutated through `.value`.
         s.value = withTiming(1, { duration: MOTION.dur.fast, easing: EASE_OUT });
         rest.onPressOut?.(e);
       }}
