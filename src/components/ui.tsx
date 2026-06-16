@@ -1,24 +1,39 @@
 import type { ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, View, Text as StyledText, type ViewStyle, type TextStyle } from 'react-native';
+import { Platform, Pressable, ScrollView, StyleSheet, View, Text as StyledText, type ViewStyle, type TextStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme, FONT_SCALE_MULTIPLIER } from '../constants/theme';
 import { usePreferences, type FontScale } from '../store/preferences';
+
+const WEB_FONT =
+  '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, "Helvetica Neue", sans-serif';
 
 export function useFontScale(): number {
   const scale = usePreferences((s) => s.fontScale) as FontScale;
   return FONT_SCALE_MULTIPLIER[scale] ?? 1;
 }
 
-type TextVariant = 'hero' | 'title' | 'heading' | 'body' | 'caption' | 'mono' | 'label';
+function fontFamily(): string | undefined {
+  return Platform.OS === 'web' ? WEB_FONT : undefined;
+}
+
+type TextVariant = 'hero' | 'largeTitle' | 'title' | 'heading' | 'body' | 'caption' | 'mono' | 'label';
 
 const BASE_SIZE: Record<TextVariant, number> = {
-  hero: 34,
+  hero: 40,
+  largeTitle: 34,
   title: 27,
-  heading: 21,
+  heading: 20,
   body: 17,
   caption: 14,
-  mono: 15,
-  label: 13,
+  mono: 14,
+  label: 12,
+};
+
+const TRACKING: Partial<Record<TextVariant, number>> = {
+  hero: -1.2,
+  largeTitle: -0.8,
+  title: -0.5,
+  heading: -0.2,
 };
 
 export function Text({
@@ -42,17 +57,17 @@ export function Text({
 }) {
   const f = useFontScale();
   const size = Math.round(BASE_SIZE[variant] * f);
-  const fontWeight =
-    weight ?? (variant === 'hero' || variant === 'title' ? 'bold' : variant === 'heading' ? '600' : '400');
+  const resolvedColor = dim ? Theme.textDim : color;
   return (
     <StyledText
       style={{
-        color: dim ? Theme.textDim : color,
+        color: resolvedColor,
         fontSize: size,
-        lineHeight: Math.round(size * 1.35),
+        lineHeight: Math.round(size * (variant === 'hero' || variant === 'largeTitle' ? 1.12 : variant === 'title' ? 1.18 : 1.32)),
         textAlign: align,
-        fontWeight,
-        fontFamily: variant === 'mono' ? 'Courier' : undefined,
+        fontWeight: weight ?? defaultWeight(variant),
+        letterSpacing: TRACKING[variant] ?? 0,
+        fontFamily: variant === 'mono' ? monoFamily() : fontFamily(),
         ...style,
       }}
       numberOfLines={numberOfLines}
@@ -62,10 +77,23 @@ export function Text({
   );
 }
 
+function defaultWeight(variant: TextVariant): TextStyle['fontWeight'] {
+  if (variant === 'hero' || variant === 'largeTitle' || variant === 'title') return '700';
+  if (variant === 'heading') return '600';
+  if (variant === 'label') return '600';
+  return '400';
+}
+
+function monoFamily(): string {
+  return Platform.OS === 'web'
+    ? 'ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace'
+    : 'Menlo';
+}
+
 export function Screen({
   children,
   scroll = true,
-  pad = 22,
+  pad = 24,
   style,
   bg = Theme.bg,
 }: {
@@ -79,16 +107,16 @@ export function Screen({
   const containerStyle: ViewStyle = {
     flex: 1,
     backgroundColor: bg,
-    paddingTop: insets.top + 8,
+    paddingTop: insets.top + 6,
     paddingBottom: insets.bottom + 8,
   };
   const inner = (
-    <View style={{ paddingHorizontal: pad, gap: 18, paddingBottom: 40 }}>{children}</View>
+    <View style={{ paddingHorizontal: pad, gap: 22, paddingBottom: 48 }}>{children}</View>
   );
   if (scroll) {
     return (
       <View style={containerStyle}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1, ...style }} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={{ flexGrow: 1, ...style }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {inner}
         </ScrollView>
       </View>
@@ -96,7 +124,7 @@ export function Screen({
   }
   return (
     <View style={[containerStyle, style]}>
-      <View style={{ paddingHorizontal: pad, flex: 1, gap: 18 }}>{children}</View>
+      <View style={{ paddingHorizontal: pad, flex: 1, gap: 22 }}>{children}</View>
     </View>
   );
 }
@@ -108,20 +136,21 @@ export function Button({
   icon,
   disabled,
   style,
+  full = true,
 }: {
   label: string;
   onPress?: () => void;
-  variant?: 'primary' | 'ghost' | 'danger' | 'soft';
+  variant?: 'primary' | 'secondary' | 'ghost';
   icon?: ReactNode;
   disabled?: boolean;
   style?: ViewStyle;
+  full?: boolean;
 }) {
   const f = useFontScale();
   const palette = {
-    primary: { bg: Theme.accent, fg: '#03121A', border: Theme.accent },
-    ghost: { bg: 'transparent', fg: Theme.text, border: Theme.border },
-    soft: { bg: Theme.surfaceAlt, fg: Theme.text, border: Theme.border },
-    danger: { bg: 'transparent', fg: Theme.danger, border: Theme.danger },
+    primary: { bg: Theme.accent, fg: Theme.accentText },
+    secondary: { bg: Theme.surfaceAlt, fg: Theme.text },
+    ghost: { bg: 'transparent', fg: Theme.accent },
   }[variant];
   return (
     <Pressable
@@ -131,8 +160,8 @@ export function Button({
         styles.button,
         {
           backgroundColor: palette.bg,
-          borderColor: palette.border,
-          opacity: disabled ? 0.4 : pressed ? 0.82 : 1,
+          opacity: disabled ? 0.35 : pressed ? 0.7 : 1,
+          width: full ? '100%' : undefined,
         },
         style,
       ]}
@@ -144,6 +173,7 @@ export function Button({
           fontSize: Math.round(17 * f),
           fontWeight: '600',
           textAlign: 'center',
+          fontFamily: fontFamily(),
         }}
       >
         {label}
@@ -164,7 +194,7 @@ export function Card({
   const inner = <View style={[styles.card, style]}>{children}</View>;
   if (onPress) {
     return (
-      <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.86 : 1 }]}>
+      <Pressable onPress={onPress} style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}>
         {inner}
       </Pressable>
     );
@@ -172,33 +202,7 @@ export function Card({
   return inner;
 }
 
-export function Chip({
-  label,
-  color = Theme.accent,
-  selected = false,
-}: {
-  label: string;
-  color?: string;
-  selected?: boolean;
-}) {
-  return (
-    <View
-      style={[
-        styles.chip,
-        {
-          borderColor: selected ? color : Theme.border,
-          backgroundColor: selected ? `${color}22` : Theme.surface,
-        },
-      ]}
-    >
-      <StyledText style={{ color: selected ? color : Theme.textDim, fontSize: 13, fontWeight: '600' }}>
-        {label}
-      </StyledText>
-    </View>
-  );
-}
-
-export function Stack({ children, gap = 12, style }: { children: ReactNode; gap?: number; style?: ViewStyle }) {
+export function Stack({ children, gap = 16, style }: { children: ReactNode; gap?: number; style?: ViewStyle }) {
   return <View style={[{ gap }, style]}>{children}</View>;
 }
 
@@ -209,24 +213,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    minHeight: 56,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    minHeight: 54,
   },
   card: {
     backgroundColor: Theme.surface,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Theme.border,
-    padding: 18,
-    gap: 8,
-  },
-  chip: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    borderWidth: 1.5,
-    alignSelf: 'flex-start',
+    borderRadius: 22,
+    padding: 20,
+    gap: 10,
   },
 });

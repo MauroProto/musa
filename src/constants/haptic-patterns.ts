@@ -19,7 +19,7 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Double tap',
     visual: 'Line highlights',
     why: 'Marks when a vocal phrase begins',
-    color: '#6EE7FF',
+    color: '#0A84FF',
     intensity: 0.6,
   },
   {
@@ -29,7 +29,7 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Short tap',
     visual: 'Pulsing dot',
     why: 'Helps you keep timing',
-    color: '#8BE9FF',
+    color: '#64D2FF',
     intensity: 0.2,
   },
   {
@@ -39,7 +39,7 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Soft long vibration',
     visual: 'Glowing line',
     why: 'Transmits a long, held phrase',
-    color: '#B69CFF',
+    color: '#5E5CE6',
     intensity: 0.6,
   },
   {
@@ -49,7 +49,7 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Three rising taps',
     visual: 'Countdown appears',
     why: 'Anticipation + structure',
-    color: '#FF9F6B',
+    color: '#FF9F0A',
     intensity: 0.6,
   },
   {
@@ -59,7 +59,7 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Strong hit',
     visual: 'Screen blooms',
     why: 'The shared energy moment',
-    color: '#FFD36E',
+    color: '#FFB340',
     intensity: 1,
   },
   {
@@ -69,7 +69,7 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Haptic silence',
     visual: 'Open space / breath',
     why: 'Feel absence and tension',
-    color: '#5C6477',
+    color: 'rgba(235,235,245,0.45)',
     intensity: 0.2,
   },
 ];

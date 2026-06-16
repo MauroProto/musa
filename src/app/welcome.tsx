@@ -10,42 +10,44 @@ export default function WelcomeScreen() {
         <Text variant="hero" align="center">
           MUSA
         </Text>
-        <Text variant="caption" align="center" color={Theme.accent} style={{ letterSpacing: 3 }}>
+        <Text variant="label" align="center" color={Theme.textDim} style={{ letterSpacing: 4, marginTop: 6 }}>
           HAPTIC CAPTIONS FOR MUSIC
         </Text>
       </View>
 
       <View style={styles.headline}>
-        <Text variant="title" align="center">
+        <Text variant="largeTitle" align="center">
           Lyrics you can read.
         </Text>
-        <Text variant="title" align="center" color={Theme.accentAlt}>
+        <Text variant="largeTitle" align="center" color={Theme.accent}>
           Rhythm you can feel.
         </Text>
-        <Text variant="title" align="center">
+        <Text variant="largeTitle" align="center">
           Music you can follow.
         </Text>
       </View>
 
-      <Text dim align="center">
+      <Text dim align="center" style={{ paddingHorizontal: 8 }}>
         MUSA turns synced lyrics into a tactile and visual score — so Deaf, hard-of-hearing and
         implant & hearing-aid users can follow a song through text, touch and rhythm.
       </Text>
 
-      <Stack gap={12}>
-        <Button label="Get started" onPress={() => router.push('/profile-setup')} />
-        <Link href="/demo" asChild>
-          <Button label="Try the demo" variant="ghost" />
-        </Link>
-        <Link href="/legend" asChild>
-          <Button label="Learn the haptic language" variant="ghost" />
-        </Link>
-      </Stack>
+      <View style={{ marginTop: 8 }}>
+        <Stack gap={12}>
+          <Button label="Get started" onPress={() => router.push('/profile-setup')} />
+          <Link href="/demo" asChild>
+            <Button label="Try the demo" variant="secondary" />
+          </Link>
+          <Link href="/legend" asChild>
+            <Button label="Learn the haptic language" variant="ghost" />
+          </Link>
+        </Stack>
+      </View>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  brand: { alignItems: 'center', gap: 6, marginTop: 12 },
-  headline: { gap: 4, marginTop: 8, marginBottom: 4 },
+  brand: { alignItems: 'center', marginTop: 24, marginBottom: 8 },
+  headline: { gap: 2, marginTop: 12 },
 });

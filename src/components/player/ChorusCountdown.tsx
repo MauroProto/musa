@@ -6,33 +6,12 @@ export function ChorusCountdown({ msAway }: { msAway: number | null }) {
   const f = useFontScale();
   if (msAway === null) return null;
   const secs = Math.max(0, Math.round(msAway / 1000));
-  const urgent = secs <= 3;
 
   return (
-    <View
-      style={[
-        styles.wrap,
-        {
-          borderColor: urgent ? Theme.chorus : Theme.warning,
-          backgroundColor: urgent ? `${Theme.chorus}1A` : `${Theme.warning}14`,
-        },
-      ]}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <View style={[styles.dot, { backgroundColor: urgent ? Theme.chorus : Theme.warning }]} />
-        <Text style={{ color: Theme.textDim, fontSize: Math.round(12 * f), fontWeight: '700', letterSpacing: 1.5 }}>
-          CHORUS IN
-        </Text>
-      </View>
-      <Text
-        style={{
-          color: urgent ? Theme.chorus : Theme.warning,
-          fontSize: Math.round(30 * f),
-          fontWeight: '800',
-          fontVariant: ['tabular-nums'],
-        }}
-      >
-        {secs}s
+    <View style={[styles.wrap, { backgroundColor: `${Theme.chorus}1F` }]}>
+      <View style={[styles.dot, { backgroundColor: Theme.chorus }]} />
+      <Text style={{ color: Theme.chorus, fontSize: Math.round(13 * f), fontWeight: '600' }}>
+        Chorus in {secs}s
       </Text>
     </View>
   );
@@ -42,11 +21,11 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    borderRadius: 16,
-    borderWidth: 1.5,
+    gap: 8,
+    alignSelf: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 999,
   },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  dot: { width: 7, height: 7, borderRadius: 4 },
 });

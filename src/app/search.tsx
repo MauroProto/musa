@@ -48,64 +48,51 @@ export default function SearchScreen() {
 
   return (
     <Screen scroll>
-      <Text variant="caption" color={Theme.accent} style={{ letterSpacing: 2 }}>
-        SENSORY SCORE
-      </Text>
-      <Text variant="title">Search a song</Text>
-      <Text dim>Artist or title. We pull synced lyrics and translate them into touch.</Text>
+      <Text variant="largeTitle">Search</Text>
 
-      <View style={[styles.inputWrap, { borderColor: Theme.border }]}>
+      <View style={styles.inputWrap}>
         <TextInput
           value={q}
           onChangeText={setQ}
-          placeholder="e.g. Coldplay, Fix You…"
+          placeholder="Artist or title"
           placeholderTextColor={Theme.textFaint}
-          style={{ color: Theme.text, fontSize: Math.round(17 * f), padding: 14, flex: 1 }}
+          style={{ color: Theme.text, fontSize: Math.round(17 * f), flex: 1, paddingVertical: 16, paddingHorizontal: 16 }}
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="search"
         />
-        {loading ? <ActivityIndicator color={Theme.accent} /> : null}
+        {loading ? <ActivityIndicator color={Theme.accent} style={{ marginRight: 16 }} /> : null}
       </View>
 
       {source ? (
-        <Text variant="caption" dim>
-          {source === 'musixmatch' ? 'Live results · Musixmatch' : 'Demo catalogue (no API key detected)'}
+        <Text variant="caption" dim style={{ marginTop: -6 }}>
+          {source === 'musixmatch' ? 'Live · Musixmatch' : 'Demo catalogue'}
         </Text>
       ) : null}
 
       {results && results.length === 0 && !loading ? (
-        <Card>
-          <Text variant="body">No tracks found.</Text>
-          <Text dim variant="caption">Try another title, or use the demo.</Text>
-        </Card>
+        <Text dim style={{ textAlign: 'center', marginTop: 24 }}>No tracks found.</Text>
       ) : null}
 
-      <Stack gap={10}>
+      <Stack gap={6}>
         {results?.map((t) => (
           <Pressable
             key={t.trackId}
             onPress={() => openTrack(t)}
-            style={({ pressed }) => [styles.result, { opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [styles.result, { opacity: pressed ? 0.6 : 1 }]}
           >
-            <View style={{ flex: 1, gap: 4 }}>
-              <Text variant="heading" numberOfLines={1}>
-                {t.title}
-              </Text>
+            <View style={{ flex: 1, gap: 3 }}>
+              <Text variant="heading" numberOfLines={1}>{t.title}</Text>
               <Text dim variant="caption" numberOfLines={1}>
-                {t.artist}
-                {t.album ? `  ·  ${t.album}` : ''}
+                {t.artist}{t.album ? `  ·  ${t.album}` : ''}
               </Text>
             </View>
-            <Text variant="caption" color={Theme.accent} weight="600">
-              Open →
-            </Text>
           </Pressable>
         ))}
       </Stack>
 
       {q.trim() === '' ? (
-        <Stack gap={12} style={{ marginTop: 12 }}>
+        <Stack gap={10} style={{ marginTop: 16 }}>
           <Card>
             <Text variant="heading">No Musixmatch key yet?</Text>
             <Text dim>
@@ -114,7 +101,7 @@ export default function SearchScreen() {
             </Text>
           </Card>
           <Link href="/demo" asChild>
-            <Button label="Play the demo" variant="ghost" />
+            <Button label="Play the demo" variant="secondary" />
           </Link>
           <Link href="/calibrate" asChild>
             <Button label="Calibrate haptics" variant="ghost" />
@@ -126,21 +113,6 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Theme.surface,
-    borderRadius: 16,
-    borderWidth: 1.5,
-  },
-  result: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 16,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: Theme.border,
-    backgroundColor: Theme.surface,
-  },
+  inputWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: Theme.surface, borderRadius: 18 },
+  result: { paddingVertical: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: Theme.separator },
 });

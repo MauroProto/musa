@@ -12,25 +12,21 @@ export default function LegendScreen() {
 
   return (
     <Screen scroll>
-      <Text variant="caption" color={Theme.accent} style={{ letterSpacing: 2 }}>
-        HAPTIC LANGUAGE
-      </Text>
-      <Text variant="title">Every pattern has meaning</Text>
-      <Text dim>
-        MUSA is not vibration by volume. Each haptic communicates a specific musical event. Tap any
-        card to feel it.
+      <Text variant="largeTitle">Haptic language</Text>
+      <Text dim style={{ marginBottom: 4 }}>
+        Every pattern has meaning. Tap any card to feel it.
       </Text>
 
-      <Stack gap={12}>
+      <Stack gap={8}>
         {HAPTIC_LEGEND.map((item) => (
           <Pressable
             key={item.type}
             onPress={() => previewHaptic(item.type, strength, item.intensity)}
-            style={({ pressed }) => [styles.card, { borderColor: item.color, opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [styles.card, { opacity: pressed ? 0.6 : 1 }]}
           >
             <View style={styles.cardHead}>
-              <View style={[styles.iconWrap, { backgroundColor: `${item.color}22` }]}>
-                <Feather name={item.icon as any} size={22} color={item.color} />
+              <View style={[styles.iconWrap, { backgroundColor: `${item.color}26` }]}>
+                <Feather name={item.icon as any} size={18} color={item.color} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text variant="heading">{item.label}</Text>
@@ -38,9 +34,6 @@ export default function LegendScreen() {
                   {item.haptic} · {item.visual}
                 </Text>
               </View>
-              <Text variant="caption" color={Theme.textDim}>
-                Try ▸
-              </Text>
             </View>
             <Text dim>{item.why}</Text>
           </Pressable>
@@ -50,13 +43,13 @@ export default function LegendScreen() {
       <Card>
         <Text variant="heading">Semantic, not raw</Text>
         <Text dim>
-          Other haptic products vibrate because there is sound. MUSA vibrates because a line begins,
-          a chorus hits, or the energy shifts — turning synced lyrics into a tactile score.
+          Other products vibrate because there is sound. MUSA vibrates because a line begins, a
+          chorus hits, or the energy shifts — turning synced lyrics into a tactile score.
         </Text>
       </Card>
 
       <Stack gap={10}>
-        <Button label="Calibrate strength" variant="ghost" onPress={() => router.push('/calibrate')} />
+        <Button label="Calibrate strength" variant="secondary" onPress={() => router.push('/calibrate')} />
         <Link href="/demo" asChild>
           <Button label="Try the demo" variant="ghost" />
         </Link>
@@ -66,13 +59,7 @@ export default function LegendScreen() {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    gap: 12,
-    padding: 16,
-    borderRadius: 18,
-    borderWidth: 1.5,
-    backgroundColor: Theme.surface,
-  },
+  card: { gap: 10, padding: 16, borderRadius: 20, backgroundColor: Theme.surface },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  iconWrap: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  iconWrap: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
 });

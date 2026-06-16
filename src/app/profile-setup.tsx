@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Screen, Text, Button, Stack, useFontScale } from '../components/ui';
+import { Screen, Text, Button, Stack } from '../components/ui';
 import { Theme } from '../constants/theme';
 import { usePreferences } from '../store/preferences';
 import type { ListeningProfile } from '../lib/types';
@@ -15,7 +15,6 @@ const PROFILES: { id: ListeningProfile; title: string; hint: string }[] = [
 ];
 
 export default function ProfileSetupScreen() {
-  const f = useFontScale();
   const setProfile = usePreferences((s) => s.setProfile);
   const complete = usePreferences((s) => s.completeOnboarding);
   const [selected, setSelected] = useState<ListeningProfile | null>(null);
@@ -29,15 +28,15 @@ export default function ProfileSetupScreen() {
 
   return (
     <Screen scroll>
-      <Text variant="caption" color={Theme.accent} style={{ letterSpacing: 2 }}>
-        ONBOARDING · 1 / 2
+      <Text variant="label" color={Theme.textDim} style={{ letterSpacing: 3 }}>
+        STEP 1 OF 2
       </Text>
-      <Text variant="title">How do you want to follow music?</Text>
-      <Text dim>
-        There is no single “deaf mode”. Choose what fits you — you can change this later.
+      <Text variant="largeTitle">How do you want to follow music?</Text>
+      <Text dim style={{ marginBottom: 4 }}>
+        There’s no single “deaf mode”. Choose what fits you — you can change this later.
       </Text>
 
-      <Stack gap={10}>
+      <Stack gap={8}>
         {PROFILES.map((p) => {
           const active = selected === p.id;
           return (
@@ -47,26 +46,19 @@ export default function ProfileSetupScreen() {
               style={({ pressed }) => [
                 styles.option,
                 {
-                  borderColor: active ? Theme.accent : Theme.border,
-                  backgroundColor: active ? `${Theme.accent}18` : Theme.surface,
-                  opacity: pressed ? 0.85 : 1,
+                  backgroundColor: active ? `${Theme.accent}26` : Theme.surface,
+                  borderColor: active ? `${Theme.accent}99` : 'transparent',
+                  opacity: pressed ? 0.7 : 1,
                 },
               ]}
             >
               <View style={{ flex: 1, gap: 3 }}>
-                <Text variant="heading" style={{ fontSize: Math.round(19 * f) }}>
-                  {p.title}
-                </Text>
+                <Text variant="heading">{p.title}</Text>
                 <Text variant="caption" dim>
                   {p.hint}
                 </Text>
               </View>
-              <View
-                style={[
-                  styles.radio,
-                  { borderColor: active ? Theme.accent : Theme.textFaint, backgroundColor: active ? Theme.accent : 'transparent' },
-                ]}
-              />
+              <View style={[styles.radio, { borderColor: active ? Theme.accent : Theme.textFaint, backgroundColor: active ? Theme.accent : 'transparent' }]} />
             </Pressable>
           );
         })}
@@ -86,10 +78,5 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 1.5,
   },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-  },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2 },
 });

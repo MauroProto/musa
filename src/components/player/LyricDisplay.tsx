@@ -4,8 +4,8 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withTiming,
+  withSequence,
   Easing,
-  runOnJS,
 } from 'react-native-reanimated';
 import { Theme } from '../../constants/theme';
 import { useFontScale } from '../ui';
@@ -26,13 +26,10 @@ function LyricDisplayBase({
   useEffect(() => {
     if (!cue) return;
     if (cue.type === 'line_start' || cue.type === 'chorus' || cue.type === 'sustain') {
-      glow.value = 0;
-      glow.value = withTiming(1, { duration: 200, easing: Easing.out(Easing.quad) }, () => {
-        runOnJS(resetGlow)();
-      });
-    }
-    function resetGlow() {
-      glow.value = withTiming(0, { duration: 600 });
+      glow.value = withSequence(
+        withTiming(1, { duration: 180, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: 620 }),
+      );
     }
   }, [cue, glow]);
 
@@ -41,21 +38,18 @@ function LyricDisplayBase({
   const next = currentLineIndex >= 0 && currentLineIndex < lines.length - 1 ? lines[currentLineIndex + 1] : null;
 
   const currentStyle = useAnimatedStyle(() => ({
-    opacity: 0.7 + 0.3 * glow.value,
-    transform: [{ scale: 1 + 0.02 * glow.value }],
+    opacity: 0.85 + 0.15 * glow.value,
+    transform: [{ scale: 1 + 0.012 * glow.value }],
   }));
 
   return (
     <View style={styles.wrap}>
       {prev ? (
-        <Text
-          numberOfLines={2}
-          style={[styles.context, { color: Theme.textFaint, fontSize: Math.round(16 * f) }]}
-        >
+        <Text numberOfLines={2} style={[styles.context, { color: Theme.textFaint, fontSize: Math.round(15 * f) }]}>
           {prev.text}
         </Text>
       ) : (
-        <View style={{ height: 8 }} />
+        <View style={{ height: 6 }} />
       )}
 
       {cur ? (
@@ -64,9 +58,9 @@ function LyricDisplayBase({
             styles.current,
             {
               color: Theme.text,
-              fontSize: Math.round(28 * f),
+              fontSize: Math.round(26 * f),
               textShadowColor: Theme.accent,
-              textShadowRadius: 18 * glow.value,
+              textShadowRadius: 22 * glow.value,
             },
             currentStyle,
           ]}
@@ -74,20 +68,17 @@ function LyricDisplayBase({
           {cur.text}
         </Animated.Text>
       ) : (
-        <Text style={[styles.current, { color: Theme.textDim, fontSize: Math.round(22 * f) }]}>
-          {lines.length === 0 ? 'Waiting for synced lyrics…' : 'Get ready…'}
+        <Text style={[styles.current, { color: Theme.textDim, fontSize: Math.round(20 * f) }]}>
+          {lines.length === 0 ? 'Waiting for synced lyrics…' : 'Press play'}
         </Text>
       )}
 
       {next ? (
-        <Text
-          numberOfLines={2}
-          style={[styles.context, { color: Theme.textDim, fontSize: Math.round(16 * f) }]}
-        >
+        <Text numberOfLines={2} style={[styles.context, { color: Theme.textFaint, fontSize: Math.round(15 * f) }]}>
           {next.text}
         </Text>
       ) : (
-        <View style={{ height: 8 }} />
+        <View style={{ height: 6 }} />
       )}
     </View>
   );
@@ -96,14 +87,7 @@ function LyricDisplayBase({
 export const LyricDisplay = memo(LyricDisplayBase);
 
 const styles = StyleSheet.create({
-  wrap: { gap: 12, minHeight: 180, justifyContent: 'center' },
-  current: {
-    fontWeight: '800',
-    lineHeight: 38,
-    textAlign: 'center',
-  },
-  context: {
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  wrap: { gap: 10, minHeight: 170, justifyContent: 'center' },
+  current: { fontWeight: '700', lineHeight: 36, textAlign: 'center' },
+  context: { textAlign: 'center', lineHeight: 22 },
 });
