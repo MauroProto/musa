@@ -1,24 +1,36 @@
 import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { HapticEventType, HapticStrength, Intensity } from './types';
+import {
+  buildHapticSequence,
+  type AndroidHapticName,
+  type HapticStep,
+  type IosHapticName,
+} from './haptic-sequence';
 
-const STRENGTH_FACTOR: Record<HapticStrength, number> = {
-  soft: 0.55,
-  medium: 0.8,
-  strong: 1,
+type HapticPlatform = 'android' | 'ios' | 'web';
+
+const ANDROID_HAPTICS: Record<AndroidHapticName, Haptics.AndroidHaptics> = {
+  'clock-tick': Haptics.AndroidHaptics.Clock_Tick,
+  confirm: Haptics.AndroidHaptics.Confirm,
+  'context-click': Haptics.AndroidHaptics.Context_Click,
+  'gesture-end': Haptics.AndroidHaptics.Gesture_End,
+  'gesture-start': Haptics.AndroidHaptics.Gesture_Start,
+  'keyboard-press': Haptics.AndroidHaptics.Keyboard_Press,
+  'long-press': Haptics.AndroidHaptics.Long_Press,
+  'segment-frequent-tick': Haptics.AndroidHaptics.Segment_Frequent_Tick,
+  'segment-tick': Haptics.AndroidHaptics.Segment_Tick,
+  'virtual-key': Haptics.AndroidHaptics.Virtual_Key,
+  'virtual-key-release': Haptics.AndroidHaptics.Virtual_Key_Release,
 };
 
-type Band = { style: Haptics.ImpactFeedbackStyle; ms: number };
-
-function bandFor(combined: number): Band {
-  if (combined < 0.4) {
-    return { style: Haptics.ImpactFeedbackStyle.Light, ms: 14 };
-  }
-  if (combined < 0.7) {
-    return { style: Haptics.ImpactFeedbackStyle.Medium, ms: 28 };
-  }
-  return { style: Haptics.ImpactFeedbackStyle.Heavy, ms: 50 };
-}
+const IOS_IMPACTS: Partial<Record<IosHapticName, Haptics.ImpactFeedbackStyle>> = {
+  'impact-heavy': Haptics.ImpactFeedbackStyle.Heavy,
+  'impact-light': Haptics.ImpactFeedbackStyle.Light,
+  'impact-medium': Haptics.ImpactFeedbackStyle.Medium,
+  'impact-rigid': Haptics.ImpactFeedbackStyle.Rigid,
+  'impact-soft': Haptics.ImpactFeedbackStyle.Soft,
+};
 
 function vibrateWeb(pattern: number | number[]) {
   try {
@@ -30,8 +42,37 @@ function vibrateWeb(pattern: number | number[]) {
   }
 }
 
-function impactNative(band: Band) {
-  void Haptics.impactAsync(band.style).catch(() => {});
+function currentPlatform(): HapticPlatform {
+  if (Platform.OS === 'android') return 'android';
+  if (Platform.OS === 'ios') return 'ios';
+  return 'web';
+}
+
+function playIos(name: IosHapticName) {
+  if (name === 'selection') {
+    void Haptics.selectionAsync().catch(() => {});
+    return;
+  }
+  if (name === 'notification-success') {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    return;
+  }
+  if (name === 'notification-warning') {
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    return;
+  }
+  const style = IOS_IMPACTS[name] ?? Haptics.ImpactFeedbackStyle.Medium;
+  void Haptics.impactAsync(style).catch(() => {});
+}
+
+function playNativeStep(step: HapticStep) {
+  if (Platform.OS === 'android') {
+    void Haptics.performAndroidHapticsAsync(ANDROID_HAPTICS[step.android]).catch(() => {
+      playIos(step.ios);
+    });
+    return;
+  }
+  playIos(step.ios);
 }
 
 export type HapticController = {
@@ -43,7 +84,6 @@ export function createHapticController(opts: {
   strength: HapticStrength;
   visualOnly: boolean;
 }): HapticController {
-  const factor = STRENGTH_FACTOR[opts.strength] ?? 1;
   const timers = new Set<ReturnType<typeof setTimeout>>();
 
   function schedule(fn: () => void, delayMs: number) {
@@ -56,58 +96,20 @@ export function createHapticController(opts: {
 
   function fire(type: HapticEventType, intensity: Intensity) {
     if (opts.visualOnly) return;
-    const combined = Math.max(0, Math.min(1, intensity * factor));
-    const band = bandFor(combined);
-    const isWeb = Platform.OS === 'web';
+    const platform = currentPlatform();
+    const sequence = buildHapticSequence(type, {
+      strength: opts.strength,
+      intensity,
+    });
 
-    switch (type) {
-      case 'line_start': {
-        if (isWeb) vibrateWeb([band.ms, 45, band.ms]);
-        else {
-          impactNative(band);
-          schedule(() => impactNative(band), 80);
-        }
-        break;
-      }
-      case 'beat': {
-        if (isWeb) vibrateWeb(band.ms);
-        else impactNative(band);
-        break;
-      }
-      case 'sustain': {
-        const long = Math.round(180 + combined * 700);
-        if (isWeb) vibrateWeb(long);
-        else {
-          impactNative(band);
-          schedule(() => impactNative(band), 120);
-          schedule(() => impactNative(band), 240);
-        }
-        break;
-      }
-      case 'chorus_warning': {
-        if (isWeb) vibrateWeb([band.ms, 70, band.ms + 8, 70, band.ms + 16]);
-        else {
-          impactNative(band);
-          schedule(() => impactNative(band), 110);
-          schedule(() => impactNative({ ...band, style: Haptics.ImpactFeedbackStyle.Medium }), 220);
-        }
-        break;
-      }
-      case 'chorus': {
-        if (isWeb) vibrateWeb([Math.round(band.ms * 2.4), 30, band.ms]);
-        else {
-          impactNative({ style: Haptics.ImpactFeedbackStyle.Heavy, ms: band.ms });
-          schedule(() => impactNative({ style: Haptics.ImpactFeedbackStyle.Heavy, ms: band.ms }), 70);
-        }
-        break;
-      }
-      case 'section_end': {
-        if (isWeb) vibrateWeb(Math.round(band.ms * 1.8));
-        else impactNative({ style: Haptics.ImpactFeedbackStyle.Medium, ms: 40 });
-        break;
-      }
-      case 'pause':
-        break;
+    if (platform === 'web') {
+      if (sequence.webPattern !== null) vibrateWeb(sequence.webPattern);
+      return;
+    }
+
+    for (const step of sequence.steps) {
+      if (step.delayMs <= 0) playNativeStep(step);
+      else schedule(() => playNativeStep(step), step.delayMs);
     }
   }
 

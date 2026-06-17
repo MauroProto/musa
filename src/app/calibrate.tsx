@@ -2,15 +2,18 @@ import { router } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { Screen, Text, Button, Stack, Card, Touch } from '../components/ui';
 import { Theme } from '../constants/theme';
+import { HAPTIC_LEGEND } from '../constants/haptic-patterns';
 import { usePreferences } from '../store/preferences';
 import { previewHaptic } from '../lib/haptics';
 import type { HapticStrength } from '../lib/types';
 
 const STRENGTHS: { id: HapticStrength; label: string; desc: string }[] = [
-  { id: 'soft', label: 'Soft', desc: 'Gentle, discreet taps' },
-  { id: 'medium', label: 'Medium', desc: 'Balanced — recommended' },
-  { id: 'strong', label: 'Strong', desc: 'Clear, hard to miss' },
+  { id: 'soft', label: 'Soft', desc: 'Gentle cues for long sessions' },
+  { id: 'medium', label: 'Medium', desc: 'Balanced and readable' },
+  { id: 'strong', label: 'Strong', desc: 'Maximum clarity for hard-to-miss cues' },
 ];
+
+const TEST_PATTERNS = HAPTIC_LEGEND.filter((item) => item.type !== 'pause');
 
 export default function CalibrateScreen() {
   const strength = usePreferences((s) => s.strength);
@@ -27,7 +30,7 @@ export default function CalibrateScreen() {
       <Text variant="label" color={Theme.textFaint}>STEP 2 OF 2</Text>
       <Text variant="largeTitle">Haptic strength</Text>
       <Text dim style={{ marginBottom: 2 }}>
-        Test each pattern. Pick the level that feels clear without being overwhelming.
+        Test the tactile language. Pick the level that feels clear without becoming tiring.
       </Text>
 
       <Stack gap={8}>
@@ -59,17 +62,23 @@ export default function CalibrateScreen() {
       </Stack>
 
       <Card>
-        <Text variant="heading">Test the patterns</Text>
+        <Text variant="heading">Pattern lab</Text>
+        <Text variant="caption" dim>
+          Strong keeps the beat subtle, but makes section changes and chorus hits unmistakable.
+        </Text>
         <View style={styles.testRow}>
-          <TestButton label="Line change" onPress={() => previewHaptic('line_start', strength, 0.6)} />
-          <TestButton label="Sustain" onPress={() => previewHaptic('sustain', strength, 0.6)} />
-          <TestButton label="Chorus coming" onPress={() => previewHaptic('chorus_warning', strength, 0.6)} />
-          <TestButton label="Chorus hit" onPress={() => previewHaptic('chorus', strength, 1)} />
+          {TEST_PATTERNS.map((item) => (
+            <TestButton
+              key={item.type}
+              label={item.label}
+              onPress={() => previewHaptic(item.type, strength, item.intensity)}
+            />
+          ))}
         </View>
       </Card>
 
       <Card>
-        <Toggle label="Beat pulse haptics" desc="Constant taps to keep timing" value={pulseOn} onToggle={() => setPulseOn(!pulseOn)} />
+        <Toggle label="Beat pulse haptics" desc="Very light timing ticks between semantic cues" value={pulseOn} onToggle={() => setPulseOn(!pulseOn)} />
         <View style={styles.sep} />
         <Toggle label="Visual only" desc="Follow with no vibration" value={visualOnly} onToggle={() => setVisualOnly(!visualOnly)} />
         <View style={styles.sep} />

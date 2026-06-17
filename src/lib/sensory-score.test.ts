@@ -135,3 +135,45 @@ test('buildSensoryScore uses provided energy when supplied', () => {
   });
   assert.equal(score.energy.length, 2);
 });
+
+test('buildSensoryScore adds bass pulses in high-energy chorus sections', () => {
+  const score = buildSensoryScore({ lines: fixYouExcerpt() });
+  const bassPulses = score.events.filter((e) => e.type === 'bass_pulse');
+
+  assert.ok(bassPulses.length >= 2, 'expected body-level bass pulses');
+  assert.ok(
+    bassPulses.some((e) => e.t >= 40000 && e.t <= 50000),
+    'expected bass pulses around the first chorus',
+  );
+});
+
+test('buildSensoryScore adds a drum fill before chorus impact', () => {
+  const score = buildSensoryScore({ lines: fixYouExcerpt() });
+  const fills = score.events.filter((e) => e.type === 'drum_fill');
+  const choruses = score.events.filter((e) => e.type === 'chorus');
+
+  assert.ok(fills.length >= 1, 'expected at least one drum fill');
+  assert.ok(
+    fills.some((fill) => choruses.some((chorus) => chorus.t - fill.t > 0 && chorus.t - fill.t <= 2400)),
+    'expected fill shortly before a chorus',
+  );
+});
+
+test('buildSensoryScore exposes readable sensory moments', () => {
+  const score = buildSensoryScore({
+    lines: [
+      line(0, 'I feel the tears come down'),
+      line(4000, 'Waiting in the dark'),
+      line(8000, 'Lights will guide you home'),
+      line(11000, 'And ignite your bones'),
+      line(14000, 'And I will try to fix you'),
+      line(22000, 'Lights will guide you home'),
+      line(25000, 'And ignite your bones'),
+      line(28000, 'And I will try to fix you'),
+    ],
+  });
+
+  assert.ok(score.moments.length > 0, 'expected sensory moment labels');
+  assert.ok(score.moments.some((m) => m.layer === 'emotion' && m.mood === 'melancholic'));
+  assert.ok(score.moments.some((m) => m.layer === 'structure' && m.label === 'Chorus opens'));
+});

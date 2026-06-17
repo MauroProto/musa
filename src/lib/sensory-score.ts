@@ -6,6 +6,8 @@ import type {
   SectionMark,
   SensoryScore,
   SensoryScoreInput,
+  SensoryMoment,
+  SensoryMood,
   SyncedLine,
 } from './types';
 
@@ -196,6 +198,115 @@ function energyAt(energy: EnergyPoint[], t: number): number {
 
 export { energyAt as energyValueAt };
 
+export function inferLyricMood(text: string): SensoryMood {
+  const normalized = ` ${normalizeLyric(text)} `;
+  const groups: { mood: SensoryMood; words: string[] }[] = [
+    { mood: 'melancholic', words: [' tear ', ' tears ', ' cry ', ' crying ', ' lonely ', ' lost ', ' pain ', ' goodbye ', ' hurt '] },
+    { mood: 'tense', words: [' fear ', ' afraid ', ' fire ', ' fight ', ' break ', ' danger ', ' dark ', ' world ', ' wrong '] },
+    { mood: 'euphoric', words: [' light ', ' lights ', ' dance ', ' alive ', ' free ', ' high ', ' love ', ' tonight ', ' party '] },
+    { mood: 'calm', words: [' sleep ', ' dream ', ' quiet ', ' slow ', ' soft ', ' home ', ' breathe '] },
+  ];
+
+  for (const group of groups) {
+    if (group.words.some((word) => normalized.includes(word))) return group.mood;
+  }
+  return 'neutral';
+}
+
+function moodLabel(mood: SensoryMood): string {
+  switch (mood) {
+    case 'melancholic':
+      return 'Melancholic phrase';
+    case 'tense':
+      return 'Tension in the lyric';
+    case 'euphoric':
+      return 'Lift in the lyric';
+    case 'calm':
+      return 'Soft emotional space';
+    case 'driving':
+      return 'Driving movement';
+    case 'neutral':
+      return 'Vocal phrase';
+  }
+}
+
+function sectionLabel(kind: SectionMark['kind']): string {
+  if (kind === 'chorus') return 'Chorus opens';
+  if (kind === 'bridge') return 'Bridge turn';
+  if (kind === 'intro') return 'Intro';
+  if (kind === 'outro') return 'Outro';
+  return 'Verse opens';
+}
+
+function buildSensoryMoments(args: {
+  lines: SyncedLine[];
+  sections: SectionMark[];
+  energy: EnergyPoint[];
+  durationMs: number;
+}): SensoryMoment[] {
+  const moments: SensoryMoment[] = [];
+
+  for (const section of args.sections) {
+    const endMs = section.endMs ?? Math.min(args.durationMs, section.t + 8000);
+    const energy = energyAt(args.energy, section.t);
+    moments.push({
+      t: section.t,
+      endMs,
+      layer: 'structure',
+      label: sectionLabel(section.kind),
+      detail: section.kind === 'chorus' ? 'Main hook and shared energy moment' : 'Song structure changes',
+      intensity: clampIntensity(0.45 + energy * 0.35),
+      mood: section.kind === 'chorus' ? 'euphoric' : 'neutral',
+    });
+  }
+
+  for (let i = 0; i < args.lines.length; i++) {
+    const line = args.lines[i];
+    const next = args.lines[i + 1];
+    const mood = inferLyricMood(line.text);
+    if (mood === 'neutral') continue;
+    const endMs = next ? Math.min(next.startMs, line.startMs + 4200) : line.startMs + 3600;
+    moments.push({
+      t: line.startMs,
+      endMs,
+      layer: 'emotion',
+      label: moodLabel(mood),
+      detail: 'Lyric meaning changes the tactile/visual tone',
+      intensity: mood === 'tense' || mood === 'euphoric' ? 0.8 : 0.6,
+      mood,
+    });
+  }
+
+  for (let i = 1; i < args.energy.length; i++) {
+    const prev = args.energy[i - 1];
+    const cur = args.energy[i];
+    const delta = cur.value - prev.value;
+    if (Math.abs(delta) < 0.22) continue;
+    moments.push({
+      t: cur.t,
+      endMs: Math.min(args.durationMs, cur.t + 4500),
+      layer: delta > 0 ? 'bass' : 'structure',
+      label: delta > 0 ? 'Energy lift' : 'Energy release',
+      detail: delta > 0 ? 'The track is building pressure' : 'The arrangement opens up',
+      intensity: clampIntensity(0.45 + Math.abs(delta) * 1.4),
+      mood: delta > 0 ? 'driving' : 'calm',
+    });
+  }
+
+  return moments.sort((a, b) => a.t - b.t || b.intensity - a.intensity);
+}
+
+export function activeSensoryMoments(
+  moments: SensoryMoment[],
+  currentMs: number,
+  limit = 3,
+): SensoryMoment[] {
+  return moments
+    .filter((moment) => currentMs >= moment.t && currentMs <= moment.endMs)
+    .sort((a, b) => b.intensity - a.intensity || a.t - b.t)
+    .slice(0, limit);
+}
+
 export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
   const lines = [...input.lines].sort((a, b) => a.startMs - b.startMs);
   const durationMs = computeDurationMs(lines, input.durationMs);
@@ -233,6 +344,16 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
       });
     }
 
+    const mood = inferLyricMood(line.text);
+    if (mood !== 'neutral') {
+      events.push({
+        t: line.startMs + 140,
+        type: 'mood_shift',
+        intensity: mood === 'tense' || mood === 'euphoric' ? 0.8 : 0.6,
+        durationMs: 220,
+      });
+    }
+
     if (next) {
       const gap = next.startMs - endMs;
       if (gap >= PAUSE_GAP_MS) {
@@ -247,6 +368,26 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
   }
 
   for (const region of chorusRegions) {
+    const riseT = region.startMs - 4200;
+    if (riseT >= 0) {
+      events.push({
+        t: riseT,
+        type: 'energy_rise',
+        intensity: 0.6,
+        durationMs: 520,
+      });
+    }
+
+    const fillT = region.startMs - 1800;
+    if (fillT >= 0) {
+      events.push({
+        t: fillT,
+        type: 'drum_fill',
+        intensity: 0.8,
+        durationMs: 360,
+      });
+    }
+
     const warningT = region.startMs - CHORUS_WARNING_LEAD_MS;
     if (warningT >= 0 && !chorusWarningTimes.has(warningT)) {
       chorusWarningTimes.add(warningT);
@@ -266,6 +407,21 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
     });
   }
 
+  let lastBassT = -Infinity;
+  for (const beat of beats) {
+    const eAt = energyAt(energy, beat);
+    const inChorus = isInsideRegion(beat, chorusRegions);
+    if (!inChorus && eAt < 0.72) continue;
+    if (beat - lastBassT < 900) continue;
+    events.push({
+      t: beat,
+      type: 'bass_pulse',
+      intensity: clampIntensity(0.45 + eAt * 0.45),
+      durationMs: 220,
+    });
+    lastBassT = beat;
+  }
+
   if (lines.length > 0) {
     const lastEnd = lineEndMs(lines[lines.length - 1], undefined, 3000);
     events.push({
@@ -277,9 +433,10 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
   }
 
   const sections: SectionMark[] = buildSections(lines, chorusRegions, durationMs);
+  const moments = buildSensoryMoments({ lines, sections, energy, durationMs });
 
   events.sort((a, b) => a.t - b.t);
-  return { events, beats, sections, energy, durationMs, chorusTimesMs };
+  return { events, beats, sections, energy, moments, durationMs, chorusTimesMs };
 }
 
 function buildSections(

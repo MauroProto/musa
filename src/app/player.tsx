@@ -11,6 +11,7 @@ import { energyValueAt } from '../lib/sensory-score';
 import { PulseLine } from '../components/player/PulseLine';
 import { ChorusCountdown } from '../components/player/ChorusCountdown';
 import { LyricDisplay } from '../components/player/LyricDisplay';
+import type { HapticEvent, SensoryMoment } from '../lib/types';
 
 export default function PlayerScreen() {
   const { isWide } = useResponsive();
@@ -123,6 +124,7 @@ function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) 
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={30} contextSize={16} />
           <View style={{ height: 20 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
+          <SensoryReadout moments={player.activeMoments} cue={player.cue?.type} />
           <TactileMeter energy={energy} source={player.energySource} section={player.currentSection?.kind} />
         </Pressable>
 
@@ -174,6 +176,7 @@ function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={62} contextSize={24} />
           <View style={{ height: 28 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
+          <SensoryReadout moments={player.activeMoments} cue={player.cue?.type} />
           <TactileMeter energy={energy} source={player.energySource} section={player.currentSection?.kind} />
         </View>
       </Pressable>
@@ -208,6 +211,98 @@ function Transport({ player }: { player: SensoryPlayer }) {
       </Touch>
     </View>
   );
+}
+
+function SensoryReadout({
+  moments,
+  cue,
+}: {
+  moments: SensoryMoment[];
+  cue?: HapticEvent['type'];
+}) {
+  const primary = moments[0];
+  const label = primary?.label ?? (cue ? cueLabel(cue) : 'Listening');
+  const detail = primary?.detail ?? (cue ? cueDetail(cue) : 'Following lyrics, rhythm, and structure');
+  const chips = moments.length > 0 ? moments : primary ? [primary] : [];
+
+  return (
+    <View style={styles.sensoryWrap}>
+      <Text variant="label" color={Theme.textGhost} align="center" style={{ letterSpacing: 0 }}>
+        NOW FEELING
+      </Text>
+      <Text variant="heading" align="center" numberOfLines={1}>
+        {label}
+      </Text>
+      <Text variant="caption" color={Theme.textDim} align="center" numberOfLines={2}>
+        {detail}
+      </Text>
+      {chips.length > 0 ? (
+        <View style={styles.layerRow}>
+          {chips.map((moment) => (
+            <View key={`${moment.layer}-${moment.t}`} style={styles.layerPill}>
+              <Text variant="label" color={Theme.textFaint} style={{ letterSpacing: 0 }}>
+                {moment.layer.toUpperCase()}
+              </Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function cueLabel(type: HapticEvent['type']): string {
+  switch (type) {
+    case 'bass_pulse':
+      return 'Bass body';
+    case 'drum_fill':
+      return 'Percussion turn';
+    case 'energy_rise':
+      return 'Energy build';
+    case 'mood_shift':
+      return 'Mood shift';
+    case 'chorus':
+      return 'Chorus impact';
+    case 'chorus_warning':
+      return 'Chorus coming';
+    case 'sustain':
+      return 'Held vocal';
+    case 'line_start':
+      return 'New lyric phrase';
+    case 'section_end':
+      return 'Section release';
+    case 'pause':
+      return 'Vocal space';
+    case 'beat':
+      return 'Main pulse';
+  }
+}
+
+function cueDetail(type: HapticEvent['type']): string {
+  switch (type) {
+    case 'bass_pulse':
+      return 'Low-end energy is carrying the track';
+    case 'drum_fill':
+      return 'Percussion is pushing into the next section';
+    case 'energy_rise':
+      return 'The song is building pressure';
+    case 'mood_shift':
+      return 'The lyric changed emotional color';
+    case 'chorus':
+      return 'The main hook opens';
+    case 'chorus_warning':
+      return 'A shared energy moment is approaching';
+    case 'sustain':
+      return 'The vocal phrase is being held';
+    case 'line_start':
+      return 'A new vocal phrase begins';
+    case 'section_end':
+      return 'The arrangement releases';
+    case 'pause':
+      return 'Silence creates tension';
+    case 'beat':
+      return 'Timing pulse';
+  }
 }
 
 function TactileMeter({ energy, source, section }: { energy: number; source: string; section?: string }) {
@@ -298,6 +393,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Theme.text,
+  },
+  sensoryWrap: {
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 18,
+    paddingHorizontal: 18,
+  },
+  layerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 3,
+  },
+  layerPill: {
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: 999,
+    backgroundColor: Theme.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: Theme.border,
   },
   meterWrap: {
     alignItems: 'center',

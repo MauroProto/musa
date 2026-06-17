@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getLyricsClient } from '../lib/api-client';
-import { buildSensoryScore, getCurrentLineIndex, nearestChorusIn } from '../lib/sensory-score';
+import {
+  activeSensoryMoments,
+  buildSensoryScore,
+  getCurrentLineIndex,
+  nearestChorusIn,
+} from '../lib/sensory-score';
 import { createHapticController, type HapticController } from '../lib/haptics';
 import { usePreferences } from '../store/preferences';
-import type { HapticEvent, SectionMark, SensoryScore, SyncedLine } from '../lib/types';
+import type { HapticEvent, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
 
 export type PlayerStatus = 'loading' | 'ready' | 'error';
 
@@ -22,6 +27,7 @@ export type SensoryPlayer = {
   beatPulse: number;
   currentLineIndex: number;
   currentSection: SectionMark | null;
+  activeMoments: SensoryMoment[];
   nextChorusInMs: number | null;
   energySource: string;
   play: () => void;
@@ -56,6 +62,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
   const eventCursorRef = useRef(0);
   const beatCursorRef = useRef(0);
   const lastStatePushRef = useRef(0);
+  const lastSemanticHapticMsRef = useRef(-Infinity);
   const scoreRef = useRef<SensoryScore | null>(null);
 
   useEffect(() => {
@@ -80,6 +87,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
       currentMsRef.current = 0;
       eventCursorRef.current = 0;
       beatCursorRef.current = 0;
+      lastSemanticHapticMsRef.current = -Infinity;
       setCurrentMs(0);
       setIsPlaying(false);
       setCue(null);
@@ -146,14 +154,17 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
         eventCursorRef.current += 1;
         if (e.type !== 'beat') {
           hapticRef.current?.fire(e.type, e.intensity);
+          lastSemanticHapticMsRef.current = e.t;
           cueIdRef.current += 1;
           setCue({ id: cueIdRef.current, type: e.type, t: e.t });
         }
       }
       while (beatCursorRef.current < s.beats.length && s.beats[beatCursorRef.current] <= tMs) {
+        const beatT = s.beats[beatCursorRef.current];
         beatCursorRef.current += 1;
         setBeatPulse((p) => (p + 1) % 1_000_000);
-        if (pulseOn && !visualOnly) {
+        const hasNearbySemanticCue = Math.abs(beatT - lastSemanticHapticMsRef.current) < 260;
+        if (pulseOn && !visualOnly && !hasNearbySemanticCue) {
           hapticRef.current?.fire('beat', 0.2);
         }
       }
@@ -241,6 +252,10 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
     if (!score) return null;
     return score.sections.find((s) => currentMs >= s.t && (s.endMs === undefined || currentMs < s.endMs)) ?? null;
   }, [score, currentMs]);
+  const activeMoments = useMemo(
+    () => (score ? activeSensoryMoments(score.moments, currentMs, 3) : []),
+    [score, currentMs],
+  );
   const nextChorusInMs = useMemo(
     () => (score ? nearestChorusIn(score.chorusTimesMs, currentMs) : null),
     [score, currentMs],
@@ -259,6 +274,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
     beatPulse,
     currentLineIndex,
     currentSection,
+    activeMoments,
     nextChorusInMs,
     energySource,
     play,

@@ -37,7 +37,11 @@ export type HapticStrength = 'soft' | 'medium' | 'strong';
 /** Tipos de evento del lenguaje háptico (haptic alphabet) */
 export type HapticEventType =
   | 'beat' // pulso principal repetido
+  | 'bass_pulse' // pulso corporal de bajo / low-end
+  | 'drum_fill' // textura percusiva breve antes de cambios
+  | 'energy_rise' // build-up / incremento de tensión
   | 'line_start' // nueva línea vocal (double tap)
+  | 'mood_shift' // cambio emocional perceptible
   | 'chorus_warning' // coro próximo (3 taps ascendentes)
   | 'chorus' // impacto de coro/drop
   | 'pause' // silencio / respiración
@@ -68,12 +72,33 @@ export type SectionMark = {
   label?: string;
 };
 
+export type SensoryLayer = 'voice' | 'rhythm' | 'bass' | 'drums' | 'emotion' | 'structure';
+
+export type SensoryMood =
+  | 'calm'
+  | 'driving'
+  | 'euphoric'
+  | 'melancholic'
+  | 'neutral'
+  | 'tense';
+
+export type SensoryMoment = {
+  t: number;
+  endMs: number;
+  layer: SensoryLayer;
+  label: string;
+  detail: string;
+  intensity: Intensity;
+  mood?: SensoryMood;
+};
+
 /** Resultado completo del motor */
 export type SensoryScore = {
   events: HapticEvent[];
   beats: number[];
   sections: SectionMark[];
   energy: EnergyPoint[];
+  moments: SensoryMoment[];
   durationMs: number;
   chorusTimesMs: number[];
 };
