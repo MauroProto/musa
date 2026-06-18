@@ -5,6 +5,7 @@ import { Theme } from '../constants/theme';
 import { HAPTIC_LEGEND } from '../constants/haptic-patterns';
 import { usePreferences } from '../store/preferences';
 import { previewHaptic } from '../lib/haptics';
+import { AUDIO_MODE_OPTIONS, ISOLATABLE_STEMS, type AudioMode, type StemKind } from '../lib/audio-client';
 import type { HapticStrength } from '../lib/types';
 
 const STRENGTHS: { id: HapticStrength; label: string; desc: string }[] = [
@@ -22,6 +23,10 @@ export default function CalibrateScreen() {
   const setPulseOn = usePreferences((s) => s.setPulseOn);
   const visualOnly = usePreferences((s) => s.visualOnly);
   const setVisualOnly = usePreferences((s) => s.setVisualOnly);
+  const audioMode = usePreferences((s) => s.audioMode);
+  const setAudioMode = usePreferences((s) => s.setAudioMode);
+  const isolateStem = usePreferences((s) => s.isolateStem);
+  const setIsolateStem = usePreferences((s) => s.setIsolateStem);
   const fontScale = usePreferences((s) => s.fontScale);
   const setFontScale = usePreferences((s) => s.setFontScale);
 
@@ -103,6 +108,66 @@ export default function CalibrateScreen() {
         </View>
       </Card>
 
+      <Card>
+        <Text variant="heading">Audio</Text>
+        <Text variant="caption" dim style={{ marginBottom: 4 }}>
+          MUSA is silent by default (Deaf-first). Optionally hear the song with haptics in sync,
+          or isolate a single stem to learn a layer — something Apple Music Haptics doesn’t offer.
+        </Text>
+        <Stack gap={8}>
+          {AUDIO_MODE_OPTIONS.map((opt) => {
+            const active = audioMode === opt.key;
+            return (
+              <Touch
+                key={opt.key}
+                onPress={() => setAudioMode(opt.key as AudioMode)}
+                scaleTo={0.99}
+                style={[
+                  styles.option,
+                  {
+                    backgroundColor: active ? 'rgba(255,255,255,0.10)' : Theme.surface,
+                    borderColor: active ? Theme.borderStrong : Theme.border,
+                  },
+                ]}
+              >
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Text variant="heading">{opt.label}</Text>
+                  <Text variant="caption" dim>{opt.hint}</Text>
+                </View>
+                <View style={[styles.radio, { borderColor: active ? Theme.text : Theme.textFaint }]}>
+                  {active ? <View style={styles.radioFill} /> : null}
+                </View>
+              </Touch>
+            );
+          })}
+        </Stack>
+
+        {audioMode === 'isolate' ? (
+          <View style={styles.stemRow}>
+            {ISOLATABLE_STEMS.map((stem) => {
+              const active = isolateStem === stem.key;
+              return (
+                <Touch
+                  key={stem.key}
+                  onPress={() => setIsolateStem(stem.key as StemKind)}
+                  style={[
+                    styles.stemBtn,
+                    {
+                      backgroundColor: active ? Theme.text : Theme.surfaceStrong,
+                      borderColor: active ? Theme.text : Theme.border,
+                    },
+                  ]}
+                >
+                  <Text variant="caption" color={active ? Theme.bg : Theme.textDim} weight="700">
+                    {stem.label}
+                  </Text>
+                </Touch>
+              );
+            })}
+          </View>
+        ) : null}
+      </Card>
+
       <Button label="Done" onPress={() => router.replace('/search')} />
     </Screen>
   );
@@ -144,4 +209,6 @@ const styles = StyleSheet.create({
   knob: { width: 26, height: 26, borderRadius: 13 },
   segRow: { flexDirection: 'row', gap: 6 },
   seg: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999 },
+  stemRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
+  stemBtn: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999, borderWidth: StyleSheet.hairlineWidth },
 });

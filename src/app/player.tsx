@@ -7,7 +7,11 @@ import { Backdrop } from '../components/Backdrop';
 import { Text, Touch, useResponsive, useFontScale } from '../components/ui';
 import { Theme } from '../constants/theme';
 import { useSensoryPlayer, type SensoryPlayer } from '../hooks/useSensoryPlayer';
+import { useStemAudio } from '../hooks/useStemAudio';
+import { AudioModeControl } from '../components/player/AudioModeControl';
 import { energyValueAt } from '../lib/sensory-score';
+import { isStemDemoTrack } from '../lib/demo-score-tracks';
+import { usePreferences } from '../store/preferences';
 import { SeekBar } from '../components/player/SeekBar';
 import { ChorusCountdown } from '../components/player/ChorusCountdown';
 import { LyricDisplay } from '../components/player/LyricDisplay';
@@ -24,12 +28,21 @@ export default function PlayerScreen() {
     guided?: string;
   }>();
   const trackId = Number(params.trackId ?? 0);
+  const audioMode = usePreferences((s) => s.audioMode);
+  const isolateStem = usePreferences((s) => s.isolateStem);
 
-  const player = useSensoryPlayer(trackId, {
-    durationMs: params.durationMs ? Number(params.durationMs) : undefined,
-  });
+  const audio = useStemAudio(trackId, audioMode, isolateStem);
+  const player = useSensoryPlayer(
+    trackId,
+    {
+      durationMs: params.durationMs ? Number(params.durationMs) : undefined,
+    },
+    audio,
+  );
   const togglePlayer = player.toggle;
   const seekPlayerBy = player.seekBy;
+
+  const showAudio = isStemDemoTrack(trackId);
 
   // Web: teclado (espacio = play/pausa, flechas = seek)
   useEffect(() => {
@@ -80,9 +93,9 @@ export default function PlayerScreen() {
   }
 
   return isWide ? (
-    <WebPlayer player={player} title={title} artist={artist} progress={progress} insets={insets} />
+    <WebPlayer player={player} title={title} artist={artist} progress={progress} insets={insets} showAudio={showAudio} />
   ) : (
-    <MobilePlayer player={player} title={title} artist={artist} progress={progress} insets={insets} />
+    <MobilePlayer player={player} title={title} artist={artist} progress={progress} insets={insets} showAudio={showAudio} />
   );
 }
 
@@ -92,11 +105,12 @@ type LayoutProps = {
   artist: string;
   progress: number;
   insets: { top: number; bottom: number; left: number; right: number };
+  showAudio: boolean;
 };
 
 /* ----------------------------- MÓVIL (app) ----------------------------- */
 
-function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) {
+function MobilePlayer({ player, title, artist, progress, insets, showAudio }: LayoutProps) {
   const f = useFontScale();
   const energy = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.5;
   return (
@@ -151,6 +165,7 @@ function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) 
             <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(11.5 * f) }}>−{fmt(player.durationMs - player.currentMs)}</Text>
           </View>
           <Transport player={player} />
+          {showAudio ? <AudioModeControl /> : null}
           <View style={styles.footer}>
             <Touch onPress={player.restart} hitSlop={8}><Text variant="caption" color={Theme.textFaint}>Restart</Text></Touch>
             <Link href="/legend" asChild><Touch hitSlop={8}><Text variant="caption" color={Theme.textFaint}>Legend</Text></Touch></Link>
@@ -163,7 +178,7 @@ function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) 
 
 /* ------------------------------ WEB (desktop) ------------------------------ */
 
-function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
+function WebPlayer({ player, title, artist, progress, insets, showAudio }: LayoutProps) {
   const energy = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.5;
   return (
     <View style={[styles.fill, { paddingTop: insets.top }]}>
@@ -215,6 +230,7 @@ function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
             <Transport player={player} />
             <Text variant="mono" color={Theme.textFaint} style={{ width: 64, textAlign: 'right' }}>−{fmt(player.durationMs - player.currentMs)}</Text>
           </View>
+          {showAudio ? <AudioModeControl /> : null}
         </View>
       </View>
     </View>

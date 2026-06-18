@@ -1,4 +1,5 @@
 import type {
+  AuthoredMoment,
   EnergyPoint,
   HapticEvent,
   HapticEventType,
@@ -284,11 +285,25 @@ function buildSensoryMoments(args: {
     });
   }
 
+  // Energy-shift moments: compare against a ~1.5s windowed baseline instead
+  // of the immediately previous frame, so high-resolution stems (100ms) don't
+  // produce a burst of near-identical lift/release moments. Plus a cooldown so
+  // only the most significant shift in any ~2.5s window becomes a moment.
+  const ENERGY_WINDOW_MS = 1500;
+  const ENERGY_COOLDOWN_MS = 2500;
+  let lastEnergyMomentT = -Infinity;
   for (let i = 1; i < args.energy.length; i++) {
-    const prev = args.energy[i - 1];
     const cur = args.energy[i];
-    const delta = cur.value - prev.value;
-    if (Math.abs(delta) < 0.22) continue;
+    if (cur.t - lastEnergyMomentT < ENERGY_COOLDOWN_MS) continue;
+    // Find the baseline point roughly ENERGY_WINDOW_MS before cur.
+    let baselineIdx = i - 1;
+    while (baselineIdx > 0 && cur.t - args.energy[baselineIdx].t < ENERGY_WINDOW_MS) {
+      baselineIdx -= 1;
+    }
+    const baseline = args.energy[baselineIdx];
+    const delta = cur.value - baseline.value;
+    if (Math.abs(delta) < 0.28) continue;
+    lastEnergyMomentT = cur.t;
     moments.push({
       t: cur.t,
       endMs: Math.min(args.durationMs, cur.t + 4500),
@@ -347,6 +362,55 @@ function shouldReplaceEvent(next: HapticEvent, previous: HapticEvent): boolean {
   const priorityDelta = eventPriority(next.type) - eventPriority(previous.type);
   if (priorityDelta !== 0) return priorityDelta > 0;
   return next.intensity > previous.intensity;
+}
+
+/** Default haptic duration per authored cue type, mirroring auto-detected events. */
+function authoredCueDuration(type: HapticEventType): number {
+  switch (type) {
+    case 'chorus':
+      return 280;
+    case 'drum_fill':
+      return 340;
+    case 'guitar_strum':
+      return 220;
+    case 'bass_pulse':
+      return 220;
+    case 'energy_rise':
+      return 520;
+    case 'mood_shift':
+      return 220;
+    case 'sustain':
+      return 1000;
+    case 'chorus_warning':
+      return 240;
+    case 'section_end':
+      return 420;
+    case 'line_start':
+      return 60;
+    case 'beat':
+      return 14;
+    case 'pause':
+      return 0;
+  }
+}
+
+/** Expand an authored moment into its cue event(s), repeating across the window. */
+function authoredCueEvents(moment: AuthoredMoment): HapticEvent[] {
+  const durationMs = authoredCueDuration(moment.cueType);
+  const events: HapticEvent[] = [
+    { t: moment.t, type: moment.cueType, intensity: moment.intensity, durationMs },
+  ];
+  if (moment.repeatEveryMs && moment.repeatEveryMs > 0) {
+    for (let t = moment.t + moment.repeatEveryMs; t <= moment.endMs; t += moment.repeatEveryMs) {
+      events.push({ t, type: moment.cueType, intensity: moment.intensity, durationMs });
+    }
+  }
+  return events;
+}
+
+/** True if two time intervals [aT,aEnd] and [bT,bEnd] overlap. */
+function intervalsOverlap(aT: number, aEnd: number, bT: number, bEnd: number): boolean {
+  return aT <= bEnd && bT <= aEnd;
 }
 
 function coalesceStemBackedEvents(events: HapticEvent[]): HapticEvent[] {
@@ -506,11 +570,41 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
     });
   }
 
+  // Authored screenplay: inject curated cues (riff strums, chorus hits, ...).
+  // These enter the same stream and win collisions by type-priority in coalesce.
+  const authored = input.authored ?? [];
+  for (const moment of authored) {
+    events.push(...authoredCueEvents(moment));
+  }
+  const authoredChorusTimes = authored
+    .filter((m) => m.cueType === 'chorus')
+    .map((m) => m.t);
+
   const sections: SectionMark[] = buildSections(lines, chorusRegions, durationMs);
-  const moments = [
+
+  // Build moments: authored ones override auto-detected moments of the same
+  // layer whose window they overlap, so narration stays clean and specific.
+  const autoMoments = [
     ...buildSensoryMoments({ lines, sections, energy, durationMs }),
     ...(input.stemAnalysis ? momentsFromStemAnalysis(input.stemAnalysis) : []),
-  ].sort((a, b) => a.t - b.t || b.intensity - a.intensity);
+  ].filter((m) => {
+    const claimed = authored.some(
+      (a) => a.layer === m.layer && intervalsOverlap(a.t, a.endMs, m.t, m.endMs),
+    );
+    return !claimed;
+  });
+  const authoredMoments: SensoryMoment[] = authored.map((a) => ({
+    t: a.t,
+    endMs: a.endMs,
+    layer: a.layer,
+    label: a.label,
+    detail: a.detail,
+    intensity: a.intensity,
+    mood: a.mood,
+  }));
+  const moments = [...authoredMoments, ...autoMoments].sort(
+    (a, b) => a.t - b.t || b.intensity - a.intensity,
+  );
 
   events.sort((a, b) => a.t - b.t || eventPriority(b.type) - eventPriority(a.type));
   const shapedEvents = input.stemAnalysis ? coalesceStemBackedEvents(events) : events;
@@ -521,7 +615,7 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
     energy,
     moments,
     durationMs,
-    chorusTimesMs,
+    chorusTimesMs: [...chorusTimesMs, ...authoredChorusTimes].sort((a, b) => a - b),
     source: input.stemAnalysis?.source ?? 'semantic',
     bpm,
   };

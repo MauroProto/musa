@@ -11,6 +11,17 @@ function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
 }
 
+/** The four separable musical layers we analyse. */
+type StemKey = 'bass' | 'drums' | 'guitar' | 'vocals';
+
+/** Maps a stem key to its onset (peak) field, when present. */
+const ONSET_KEY: Record<StemKey, 'onsetBass' | 'onsetDrums' | 'onsetGuitar' | 'onsetVocals'> = {
+  bass: 'onsetBass',
+  drums: 'onsetDrums',
+  guitar: 'onsetGuitar',
+  vocals: 'onsetVocals',
+};
+
 function clampIntensity(value: number): Intensity {
   const steps: Intensity[] = [0.2, 0.4, 0.6, 0.8, 1];
   let best = steps[0];
@@ -29,15 +40,26 @@ function orderedFrames(analysis: StemAnalysis): StemFrame[] {
   return [...analysis.frames].sort((a, b) => a.t - b.t);
 }
 
+/** RMS (sustained) level for a stem. Used for energy curves. */
 function value(frame: StemFrame, key: keyof Omit<StemFrame, 't'>): number {
   return clamp01(frame[key] ?? 0);
 }
 
-function isLocalPeak(frames: StemFrame[], index: number, key: keyof Omit<StemFrame, 't'>, threshold: number): boolean {
-  const current = value(frames[index], key);
+/**
+ * Transient/attack level for a stem. Prefers the onset (peak) field when
+ * available, falling back to RMS so legacy frames without onsets still work.
+ * Used for strum/fill/bass-attack detection where attacks matter more than level.
+ */
+function onsetValue(frame: StemFrame, key: StemKey): number {
+  const onset = frame[ONSET_KEY[key]];
+  return clamp01(onset ?? frame[key] ?? 0);
+}
+
+function isLocalPeak(frames: StemFrame[], index: number, key: StemKey, threshold: number): boolean {
+  const current = onsetValue(frames[index], key);
   if (current < threshold) return false;
-  const prev = index > 0 ? value(frames[index - 1], key) : 0;
-  const next = index < frames.length - 1 ? value(frames[index + 1], key) : 0;
+  const prev = index > 0 ? onsetValue(frames[index - 1], key) : 0;
+  const next = index < frames.length - 1 ? onsetValue(frames[index + 1], key) : 0;
   return current >= prev && current >= next;
 }
 
@@ -110,10 +132,10 @@ export function hapticEventsFromStemAnalysis(analysis: StemAnalysis): HapticEven
 
   let lastBassT = -Infinity;
   for (let i = 0; i < frames.length; i++) {
-    if (!isLocalPeak(frames, i, 'bass', 0.82)) continue;
+    if (!isLocalPeak(frames, i, 'bass', 0.74)) continue;
     const frame = frames[i];
     if (frame.t - lastBassT < 1300) continue;
-    const bass = value(frame, 'bass');
+    const bass = onsetValue(frame, 'bass');
     events.push({
       t: frame.t,
       type: 'bass_pulse',
@@ -130,11 +152,11 @@ export function hapticEventsFromStemAnalysis(analysis: StemAnalysis): HapticEven
     const third = frames[i + 2];
     const tightCluster = third.t - first.t <= 850;
     const strongDrums =
-      value(first, 'drums') >= 0.72 &&
-      value(second, 'drums') >= 0.72 &&
-      value(third, 'drums') >= 0.72;
+      onsetValue(first, 'drums') >= 0.66 &&
+      onsetValue(second, 'drums') >= 0.66 &&
+      onsetValue(third, 'drums') >= 0.66;
     if (!tightCluster || !strongDrums || first.t - lastFillT < 1600) continue;
-    const maxDrum = Math.max(value(first, 'drums'), value(second, 'drums'), value(third, 'drums'));
+    const maxDrum = Math.max(onsetValue(first, 'drums'), onsetValue(second, 'drums'), onsetValue(third, 'drums'));
     events.push({
       t: first.t,
       type: 'drum_fill',
@@ -144,10 +166,10 @@ export function hapticEventsFromStemAnalysis(analysis: StemAnalysis): HapticEven
     lastFillT = first.t;
   }
   for (let i = 0; i < frames.length; i++) {
-    if (!isLocalPeak(frames, i, 'drums', 0.84)) continue;
+    if (!isLocalPeak(frames, i, 'drums', 0.76)) continue;
     const frame = frames[i];
     if (frame.t - lastFillT < 2200) continue;
-    const drum = value(frame, 'drums');
+    const drum = onsetValue(frame, 'drums');
     events.push({
       t: frame.t,
       type: 'drum_fill',
@@ -159,10 +181,10 @@ export function hapticEventsFromStemAnalysis(analysis: StemAnalysis): HapticEven
 
   let lastGuitarT = -Infinity;
   for (let i = 0; i < frames.length; i++) {
-    if (!isLocalPeak(frames, i, 'guitar', 0.7)) continue;
+    if (!isLocalPeak(frames, i, 'guitar', 0.6)) continue;
     const frame = frames[i];
     if (frame.t - lastGuitarT < 700) continue;
-    const guitar = value(frame, 'guitar');
+    const guitar = onsetValue(frame, 'guitar');
     events.push({
       t: frame.t,
       type: 'guitar_strum',

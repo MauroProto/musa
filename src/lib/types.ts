@@ -71,6 +71,11 @@ export type StemFrame = {
   drums?: number;
   guitar?: number;
   vocals?: number;
+  /** Transient/attack intensity (peak amplitude) per stem, 0–1. Used for strum/fill/bass attacks. */
+  onsetBass?: number;
+  onsetDrums?: number;
+  onsetGuitar?: number;
+  onsetVocals?: number;
 };
 
 export type StemAnalysis = {
@@ -128,6 +133,27 @@ export type SensoryScoreInput = {
   energy?: EnergyPoint[];
   stemAnalysis?: StemAnalysis;
   durationMs?: number;
+  /** Curated, human-authored moments that override auto-detection in their windows. */
+  authored?: AuthoredMoment[];
+};
+
+/**
+ * A human-authored tactile/narrative moment for a specific track.
+ * Authored moments win over auto-detected moments of the same layer when they
+ * overlap in time, and their cue is injected into the haptic event stream.
+ */
+export type AuthoredMoment = {
+  t: number;
+  endMs: number;
+  layer: SensoryLayer;
+  label: string;
+  detail: string;
+  intensity: Intensity;
+  mood?: SensoryMood;
+  /** Haptic cue fired at moment.t (and repeated across the window if repeatEveryMs is set). */
+  cueType: HapticEventType;
+  /** If set, the cueType repeats every repeatEveryMs across [t, endMs] (e.g. a riff). */
+  repeatEveryMs?: number;
 };
 
 /** Preferencias de usuaria que afectan la generación */

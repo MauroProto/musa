@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import type { AudioMode, StemKind } from '../lib/audio-client';
 import type { HapticStrength, ListeningProfile } from '../lib/types';
 
 type FontScale = 'comfortable' | 'large' | 'xl';
@@ -10,6 +11,8 @@ type PreferencesState = {
   strength: HapticStrength;
   pulseOn: boolean;
   visualOnly: boolean;
+  audioMode: AudioMode;
+  isolateStem: StemKind;
   fontScale: FontScale;
   onboarded: boolean;
   lastTrackId: number | null;
@@ -17,6 +20,8 @@ type PreferencesState = {
   setStrength: (s: HapticStrength) => void;
   setPulseOn: (v: boolean) => void;
   setVisualOnly: (v: boolean) => void;
+  setAudioMode: (m: AudioMode) => void;
+  setIsolateStem: (s: StemKind) => void;
   setFontScale: (f: FontScale) => void;
   setLastTrackId: (id: number) => void;
   completeOnboarding: () => void;
@@ -25,7 +30,15 @@ type PreferencesState = {
 
 type PersistedPreferences = Pick<
   PreferencesState,
-  'fontScale' | 'lastTrackId' | 'onboarded' | 'profile' | 'pulseOn' | 'strength' | 'visualOnly'
+  | 'audioMode'
+  | 'fontScale'
+  | 'isolateStem'
+  | 'lastTrackId'
+  | 'onboarded'
+  | 'profile'
+  | 'pulseOn'
+  | 'strength'
+  | 'visualOnly'
 >;
 
 const STORAGE_KEY = 'musa-preferences';
@@ -35,6 +48,8 @@ const DEFAULT_PREFERENCES: PersistedPreferences = {
   strength: 'medium',
   pulseOn: true,
   visualOnly: false,
+  audioMode: 'silent',
+  isolateStem: 'vocals',
   fontScale: 'large',
   onboarded: false,
   lastTrackId: null,
@@ -50,6 +65,8 @@ function pickPreferences(state: PreferencesState): PersistedPreferences {
     strength: state.strength,
     pulseOn: state.pulseOn,
     visualOnly: state.visualOnly,
+    audioMode: state.audioMode,
+    isolateStem: state.isolateStem,
     fontScale: state.fontScale,
     onboarded: state.onboarded,
     lastTrackId: state.lastTrackId,
@@ -77,6 +94,8 @@ export const usePreferences = create<PreferencesState>()((set, get) => {
     setStrength: (strength) => setAndPersist({ strength }),
     setPulseOn: (pulseOn) => setAndPersist({ pulseOn }),
     setVisualOnly: (visualOnly) => setAndPersist({ visualOnly }),
+    setAudioMode: (audioMode) => setAndPersist({ audioMode }),
+    setIsolateStem: (isolateStem) => setAndPersist({ isolateStem }),
     setFontScale: (fontScale) => setAndPersist({ fontScale }),
     setLastTrackId: (lastTrackId) => setAndPersist({ lastTrackId }),
     completeOnboarding: () => setAndPersist({ onboarded: true }),

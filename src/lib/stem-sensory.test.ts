@@ -92,6 +92,35 @@ test('hapticEventsFromStemAnalysis emits sparse drum fills for isolated strong a
   assert.deepEqual(fills.map((e) => e.t), [500, 3200]);
 });
 
+test('hapticEventsFromStemAnalysis prefers onset (transient) over RMS to catch quiet-but-sharp attacks', () => {
+  // Same frame has moderate RMS guitar (0.45) but a sharp attack (onset 0.86).
+  // Old RMS-only path (threshold 0.70) would miss this; onset path must catch it.
+  const events = hapticEventsFromStemAnalysis(stem([
+    { t: 0, guitar: 0.1, onsetGuitar: 0.2 },
+    { t: 500, guitar: 0.45, onsetGuitar: 0.86 },
+    { t: 1000, guitar: 0.2, onsetGuitar: 0.25 },
+  ]));
+
+  assert.ok(
+    events.some((e) => e.type === 'guitar_strum' && e.t === 500),
+    'a sharp transient with low RMS should still emit a guitar_strum via onset',
+  );
+});
+
+test('hapticEventsFromStemAnalysis ignores transient noise below the onset threshold', () => {
+  const events = hapticEventsFromStemAnalysis(stem([
+    { t: 0, guitar: 0.1, onsetGuitar: 0.4 },
+    { t: 500, guitar: 0.45, onsetGuitar: 0.5 },
+    { t: 1000, guitar: 0.2, onsetGuitar: 0.42 },
+  ]));
+
+  assert.equal(
+    events.some((e) => e.type === 'guitar_strum'),
+    false,
+    'onset below threshold should not over-trigger',
+  );
+});
+
 test('momentsFromStemAnalysis explains bass, drums, and guitar layers', () => {
   const moments = momentsFromStemAnalysis(stem([
     { t: 0, bass: 0.1, drums: 0.1, guitar: 0.1, vocals: 0.2 },

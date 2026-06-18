@@ -6,8 +6,8 @@ import ffmpegPath from 'ffmpeg-static';
 const root = process.cwd();
 const inputDir = path.join(root, 'assets', 'lalalai');
 const outputFile = path.join(root, 'src', 'lib', 'generated', 'dani-california-stem-analysis.ts');
-const sampleRate = 1000;
-const windowMs = 500;
+const sampleRate = 2000;
+const windowMs = 100;
 const samplesPerWindow = Math.round((sampleRate * windowMs) / 1000);
 
 const stems = {
@@ -73,30 +73,47 @@ function rmsWindows(buffer) {
   }
 
   const rms = [];
+  const peak = [];
   for (let start = 0; start < samples.length; start += samplesPerWindow) {
     const end = Math.min(samples.length, start + samplesPerWindow);
     let sum = 0;
-    for (let i = start; i < end; i++) sum += samples[i] * samples[i];
+    let maxAbs = 0;
+    for (let i = start; i < end; i++) {
+      const v = samples[i];
+      sum += v * v;
+      const a = Math.abs(v);
+      if (a > maxAbs) maxAbs = a;
+    }
     rms.push(Math.sqrt(sum / Math.max(1, end - start)));
+    peak.push(maxAbs);
   }
 
-  const ref = Math.max(0.001, percentile(rms, 0.95));
-  return rms.map((v) => {
+  const rmsRef = Math.max(0.001, percentile(rms, 0.95));
+  const peakRef = Math.max(0.001, percentile(peak, 0.95));
+  const norm = (v, ref) => {
     const normalized = clamp01(v / ref);
     return normalized < 0.04 ? 0 : Number(normalized.toFixed(2));
-  });
+  };
+  return {
+    rms: rms.map((v) => norm(v, rmsRef)),
+    peak: peak.map((v) => norm(v, peakRef)),
+  };
 }
 
 function buildFrames(envelopes) {
-  const maxLength = Math.max(...Object.values(envelopes).map((v) => v.length));
+  const maxLength = Math.max(...Object.values(envelopes).map((e) => e.rms.length));
   const frames = [];
   for (let i = 0; i < maxLength; i++) {
     frames.push({
       t: i * windowMs,
-      bass: envelopes.bass[i] ?? 0,
-      drums: envelopes.drums[i] ?? 0,
-      guitar: envelopes.guitar[i] ?? 0,
-      vocals: envelopes.vocals[i] ?? 0,
+      bass: envelopes.bass.rms[i] ?? 0,
+      drums: envelopes.drums.rms[i] ?? 0,
+      guitar: envelopes.guitar.rms[i] ?? 0,
+      vocals: envelopes.vocals.rms[i] ?? 0,
+      onsetBass: envelopes.bass.peak[i] ?? 0,
+      onsetDrums: envelopes.drums.peak[i] ?? 0,
+      onsetGuitar: envelopes.guitar.peak[i] ?? 0,
+      onsetVocals: envelopes.vocals.peak[i] ?? 0,
     });
   }
   return frames;

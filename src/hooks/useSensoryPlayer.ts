@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getLyricsClient, getStemsClient } from '../lib/api-client';
+import { getAuthoredScreenplay } from '../lib/authored-screenplay';
 import {
   activeSensoryMoments,
   buildSensoryScore,
@@ -10,6 +11,7 @@ import {
 import { createHapticController, type HapticController } from '../lib/haptics';
 import { seekByDeltaMs, seekToMs } from '../lib/player-time';
 import { usePreferences } from '../store/preferences';
+import type { StemAudioController } from './useStemAudio';
 import type { HapticEvent, Intensity, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
 
 export type PlayerStatus = 'loading' | 'ready' | 'error';
@@ -40,7 +42,11 @@ export type SensoryPlayer = {
   seekTo: (targetMs: number) => void;
 };
 
-export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }): SensoryPlayer {
+export function useSensoryPlayer(
+  trackId: number,
+  hints: { durationMs?: number },
+  audio?: StemAudioController | null,
+): SensoryPlayer {
   const strength = usePreferences((s) => s.strength);
   const pulseOn = usePreferences((s) => s.pulseOn);
   const visualOnly = usePreferences((s) => s.visualOnly);
@@ -67,6 +73,9 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
   const lastStatePushRef = useRef(0);
   const lastSemanticHapticMsRef = useRef(-Infinity);
   const scoreRef = useRef<SensoryScore | null>(null);
+  const audioRef = useRef<StemAudioController | null | undefined>(audio);
+  audioRef.current = audio;
+  const prevHadAudioRef = useRef(false);
 
   useEffect(() => {
     scoreRef.current = score;
@@ -110,6 +119,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
           bpm: stems?.bpm,
           stemAnalysis: stems?.stemAnalysis,
           energy: stems?.stemAnalysis ? undefined : stems?.energy,
+          authored: getAuthoredScreenplay(trackId),
         });
         if (cancelled) return;
         setLines(fetched);
@@ -151,7 +161,20 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
 
   const frame = useCallback(() => {
     const now = performance.now();
-    const tMs = Math.min(durationMs, playStartMsRef.current + (now - playStartWallRef.current));
+    const audioMs = audioRef.current?.getCurrentMs() ?? null;
+    let tMs: number;
+    if (audioMs !== null) {
+      tMs = Math.min(durationMs, audioMs);
+      prevHadAudioRef.current = true;
+    } else {
+      if (prevHadAudioRef.current) {
+        // Just lost the audio clock — rebase the wall clock to keep going.
+        playStartMsRef.current = currentMsRef.current;
+        playStartWallRef.current = now;
+        prevHadAudioRef.current = false;
+      }
+      tMs = Math.min(durationMs, playStartMsRef.current + (now - playStartWallRef.current));
+    }
     const s = scoreRef.current;
 
     if (s) {
@@ -187,6 +210,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
 
     if (tMs >= durationMs) {
       stopLoop();
+      audioRef.current?.pause();
       setIsPlaying(false);
       return;
     }
@@ -203,6 +227,12 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
     if (currentMsRef.current >= durationMs) {
       currentMsRef.current = 0;
       resetCursors(0);
+      if (audioRef.current) audioRef.current.seekTo(0);
+    }
+    if (audioRef.current) {
+      audioRef.current.seekTo(currentMsRef.current);
+      audioRef.current.play();
+      prevHadAudioRef.current = true;
     }
     playStartMsRef.current = currentMsRef.current;
     playStartWallRef.current = performance.now();
@@ -214,6 +244,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
 
   const pause = useCallback(() => {
     stopLoop();
+    audioRef.current?.pause();
     setIsPlaying(false);
     hapticRef.current?.stop();
   }, [stopLoop]);
@@ -227,11 +258,11 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
       currentMsRef.current = target;
       setCurrentMs(target);
       resetCursors(target);
-      if (isPlaying) {
-        playStartMsRef.current = target;
-        playStartWallRef.current = performance.now();
-      }
-  }, [isPlaying, resetCursors]);
+      if (audioRef.current) audioRef.current.seekTo(target);
+      // Rebase the wall clock so playback stays continuous if the audio clock drops.
+      playStartMsRef.current = target;
+      playStartWallRef.current = performance.now();
+  }, [resetCursors]);
 
   const seekBy = useCallback(
     (deltaMs: number) => {
@@ -253,6 +284,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
     currentMsRef.current = 0;
     setCurrentMs(0);
     resetCursors(0);
+    if (audioRef.current) audioRef.current.seekTo(0);
     setIsPlaying(false);
     hapticRef.current?.stop();
   }, [resetCursors, stopLoop]);
@@ -260,6 +292,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
   useEffect(() => {
     return () => {
       stopLoop();
+      audioRef.current?.pause();
       hapticRef.current?.stop();
     };
   }, [stopLoop]);
