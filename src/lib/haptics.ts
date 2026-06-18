@@ -1,9 +1,11 @@
-import { Platform } from 'react-native';
+import { Platform, Vibration } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { HapticEventType, HapticStrength, Intensity } from './types';
 import {
+  buildAndroidVibrationPattern,
   buildHapticSequence,
   type AndroidHapticName,
+  type HapticSequence,
   type HapticStep,
   type IosHapticName,
 } from './haptic-sequence';
@@ -75,6 +77,17 @@ function playNativeStep(step: HapticStep) {
   playIos(step.ios);
 }
 
+function playAndroidVibrationFallback(sequence: HapticSequence, type: HapticEventType) {
+  if (type === 'beat') return;
+  const pattern = buildAndroidVibrationPattern(sequence.steps);
+  if (!pattern) return;
+  try {
+    Vibration.vibrate(pattern, false);
+  } catch {
+    /* no-op */
+  }
+}
+
 export type HapticController = {
   fire: (type: HapticEventType, intensity: Intensity) => void;
   stop: () => void;
@@ -107,6 +120,10 @@ export function createHapticController(opts: {
       return;
     }
 
+    if (platform === 'android') {
+      playAndroidVibrationFallback(sequence, type);
+    }
+
     for (const step of sequence.steps) {
       if (step.delayMs <= 0) playNativeStep(step);
       else schedule(() => playNativeStep(step), step.delayMs);
@@ -116,6 +133,7 @@ export function createHapticController(opts: {
   function stop() {
     for (const id of timers) clearTimeout(id);
     timers.clear();
+    if (Platform.OS === 'android') Vibration.cancel();
     if (Platform.OS === 'web') vibrateWeb(0);
   }
 

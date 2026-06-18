@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildHapticSequence } from './haptic-sequence.ts';
+import { buildAndroidVibrationPattern, buildHapticSequence } from './haptic-sequence.ts';
 
 test('beat stays subtle because it can fire many times per song', () => {
   const sequence = buildHapticSequence('beat', {
@@ -82,6 +82,17 @@ test('drum fill is a quick multi-tap texture', () => {
   assert.ok(sequence.stopAfterMs < 420);
 });
 
+test('guitar strum is a tight brushed texture, not a heavy bass hit', () => {
+  const sequence = buildHapticSequence('guitar_strum', {
+    strength: 'strong',
+    intensity: 0.8,
+  });
+
+  assert.ok(sequence.steps.length >= 3);
+  assert.ok(sequence.stopAfterMs < 360);
+  assert.notEqual(sequence.steps[0].android, 'long-press');
+});
+
 test('energy rise has an ascending build shape', () => {
   const sequence = buildHapticSequence('energy_rise', {
     strength: 'strong',
@@ -90,4 +101,19 @@ test('energy rise has an ascending build shape', () => {
 
   assert.ok(sequence.steps.length >= 3);
   assert.equal(sequence.steps.at(-1)?.android, 'confirm');
+});
+
+test('android vibration fallback uses wait/vibrate pairs for React Native', () => {
+  const sequence = buildHapticSequence('chorus', {
+    strength: 'strong',
+    intensity: 1,
+  });
+  const pattern = buildAndroidVibrationPattern(sequence.steps);
+
+  assert.ok(pattern);
+  assert.equal(pattern[0], 0);
+  assert.equal(pattern.length, sequence.steps.length * 2);
+  for (let i = 1; i < pattern.length; i += 2) {
+    assert.ok(pattern[i] > 0, `vibration duration at index ${i} should be positive`);
+  }
 });

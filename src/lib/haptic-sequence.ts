@@ -82,6 +82,20 @@ function buildWebPattern(steps: HapticStep[]): number | number[] | null {
   return pattern;
 }
 
+export function buildAndroidVibrationPattern(steps: HapticStep[]): number[] | null {
+  if (steps.length === 0) return null;
+
+  const pattern: number[] = [];
+  let cursorMs = 0;
+  for (const step of steps) {
+    const gapMs = Math.max(0, step.delayMs - cursorMs);
+    pattern.push(gapMs);
+    pattern.push(step.webMs);
+    cursorMs = step.delayMs + step.webMs;
+  }
+  return pattern;
+}
+
 function finish(steps: HapticStep[]): HapticSequence {
   const last = steps.at(-1);
   return {
@@ -123,6 +137,14 @@ export function buildHapticSequence(
         tap(62, 'segment-tick', 'impact-light', pulseMs(energy, 8, 18)),
         tap(124, 'keyboard-press', 'impact-rigid', pulseMs(energy, 9, 20)),
         tap(196, 'confirm', 'impact-medium', pulseMs(energy, 12, 26)),
+      ]);
+
+    case 'guitar_strum':
+      return finish([
+        tap(0, 'segment-tick', 'impact-light', pulseMs(energy, 7, 16)),
+        tap(42, 'virtual-key', 'impact-rigid', pulseMs(energy, 8, 18)),
+        tap(92, 'segment-tick', 'impact-light', pulseMs(energy, 7, 16)),
+        tap(154, 'context-click', 'impact-medium', pulseMs(energy, 10, 22)),
       ]);
 
     case 'energy_rise': {

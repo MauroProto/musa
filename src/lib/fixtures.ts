@@ -1,6 +1,16 @@
 import type { SyncedLine, Track } from './types';
+import { DANI_CALIFORNIA_TRACK_ID } from './demo-score-tracks.ts';
 
 export const DEMO_TRACKS: Track[] = [
+  {
+    trackId: DANI_CALIFORNIA_TRACK_ID,
+    title: 'Dani California',
+    artist: 'Red Hot Chili Peppers',
+    album: 'LALAL.AI stem score',
+    hasSubtitles: true,
+    instrumental: false,
+    durationMs: 281000,
+  },
   {
     trackId: 9001,
     title: 'Slow Light',
@@ -59,6 +69,14 @@ const UNDERWATER: SyncedLine[] = [
   { startMs: 78000, text: 'Underwater, underwater, still' },
 ];
 
+export const STEM_DEMO_FALLBACK_LINES: Record<number, SyncedLine[]> = {
+  [DANI_CALIFORNIA_TRACK_ID]: [
+    { startMs: 0, text: 'Stem score ready' },
+    { startMs: 8000, text: 'Bass and drums lead the tactile map' },
+    { startMs: 18000, text: 'Live lyrics load from Musixmatch' },
+  ],
+};
+
 export const DEMO_LYRICS: Record<number, SyncedLine[]> = {
   9001: SLOW_LIGHT,
   9002: UNDERWATER,
@@ -66,4 +84,12 @@ export const DEMO_LYRICS: Record<number, SyncedLine[]> = {
 
 export function isDemoTrack(trackId: number): boolean {
   return trackId >= 9000 && DEMO_LYRICS[trackId] !== undefined;
+}
+
+export function searchDemoTracks(query: string): Track[] {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  return DEMO_TRACKS.filter((track) =>
+    `${track.title} ${track.artist} ${track.album ?? ''}`.toLowerCase().includes(q),
+  );
 }

@@ -8,10 +8,10 @@ import { Text, Touch, useResponsive, useFontScale } from '../components/ui';
 import { Theme } from '../constants/theme';
 import { useSensoryPlayer, type SensoryPlayer } from '../hooks/useSensoryPlayer';
 import { energyValueAt } from '../lib/sensory-score';
-import { PulseLine } from '../components/player/PulseLine';
+import { SeekBar } from '../components/player/SeekBar';
 import { ChorusCountdown } from '../components/player/ChorusCountdown';
 import { LyricDisplay } from '../components/player/LyricDisplay';
-import type { HapticEvent, SensoryMoment } from '../lib/types';
+import { SensoryPanel } from '../components/player/SensoryPanel';
 
 export default function PlayerScreen() {
   const { isWide } = useResponsive();
@@ -124,16 +124,29 @@ function MobilePlayer({ player, title, artist, progress, insets }: LayoutProps) 
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={30} contextSize={16} />
           <View style={{ height: 20 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
-          <SensoryReadout moments={player.activeMoments} cue={player.cue?.type} />
-          <TactileMeter energy={energy} source={player.energySource} section={player.currentSection?.kind} />
+          <SensoryPanel
+            moments={player.activeMoments}
+            cue={player.cue?.type}
+            cueId={player.cue?.id}
+            energy={energy}
+            source={player.energySource}
+            section={player.currentSection?.kind}
+            isPlaying={player.isPlaying}
+          />
         </Pressable>
 
         <View style={{ gap: 14 }}>
-          <PulseLine progress={progress} beatPulse={player.beatPulse} active={player.isPlaying} />
+          <SeekBar
+            progress={progress}
+            beatPulse={player.beatPulse}
+            active={player.isPlaying}
+            durationMs={player.durationMs}
+            seekTo={player.seekTo}
+          />
           <View style={styles.timeRow}>
             <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(11.5 * f) }}>{fmt(player.currentMs)}</Text>
             <Text variant="mono" color={Theme.textGhost} style={{ fontSize: Math.round(10.5 * f), letterSpacing: 0 }}>
-              {player.energySource === 'lalal' ? 'LALAL' : 'SEMANTIC'}
+              {isLalalSource(player.energySource) ? 'LALAL' : 'SEMANTIC'}
             </Text>
             <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(11.5 * f) }}>−{fmt(player.durationMs - player.currentMs)}</Text>
           </View>
@@ -176,14 +189,27 @@ function WebPlayer({ player, title, artist, progress, insets }: LayoutProps) {
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={62} contextSize={24} />
           <View style={{ height: 28 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
-          <SensoryReadout moments={player.activeMoments} cue={player.cue?.type} />
-          <TactileMeter energy={energy} source={player.energySource} section={player.currentSection?.kind} />
+          <SensoryPanel
+            moments={player.activeMoments}
+            cue={player.cue?.type}
+            cueId={player.cue?.id}
+            energy={energy}
+            source={player.energySource}
+            section={player.currentSection?.kind}
+            isPlaying={player.isPlaying}
+          />
         </View>
       </Pressable>
 
       <View style={[styles.webDock, { paddingBottom: insets.bottom + 28 }]}>
         <View style={{ width: '100%', maxWidth: 920, gap: 16 }}>
-          <PulseLine progress={progress} beatPulse={player.beatPulse} active={player.isPlaying} />
+          <SeekBar
+            progress={progress}
+            beatPulse={player.beatPulse}
+            active={player.isPlaying}
+            durationMs={player.durationMs}
+            seekTo={player.seekTo}
+          />
           <View style={styles.webDockRow}>
             <Text variant="mono" color={Theme.textFaint} style={{ width: 64 }}>{fmt(player.currentMs)}</Text>
             <Transport player={player} />
@@ -213,127 +239,8 @@ function Transport({ player }: { player: SensoryPlayer }) {
   );
 }
 
-function SensoryReadout({
-  moments,
-  cue,
-}: {
-  moments: SensoryMoment[];
-  cue?: HapticEvent['type'];
-}) {
-  const primary = moments[0];
-  const label = primary?.label ?? (cue ? cueLabel(cue) : 'Listening');
-  const detail = primary?.detail ?? (cue ? cueDetail(cue) : 'Following lyrics, rhythm, and structure');
-  const chips = moments.length > 0 ? moments : primary ? [primary] : [];
-
-  return (
-    <View style={styles.sensoryWrap}>
-      <Text variant="label" color={Theme.textGhost} align="center" style={{ letterSpacing: 0 }}>
-        NOW FEELING
-      </Text>
-      <Text variant="heading" align="center" numberOfLines={1}>
-        {label}
-      </Text>
-      <Text variant="caption" color={Theme.textDim} align="center" numberOfLines={2}>
-        {detail}
-      </Text>
-      {chips.length > 0 ? (
-        <View style={styles.layerRow}>
-          {chips.map((moment) => (
-            <View key={`${moment.layer}-${moment.t}`} style={styles.layerPill}>
-              <Text variant="label" color={Theme.textFaint} style={{ letterSpacing: 0 }}>
-                {moment.layer.toUpperCase()}
-              </Text>
-            </View>
-          ))}
-        </View>
-      ) : null}
-    </View>
-  );
-}
-
-function cueLabel(type: HapticEvent['type']): string {
-  switch (type) {
-    case 'bass_pulse':
-      return 'Bass body';
-    case 'drum_fill':
-      return 'Percussion turn';
-    case 'energy_rise':
-      return 'Energy build';
-    case 'mood_shift':
-      return 'Mood shift';
-    case 'chorus':
-      return 'Chorus impact';
-    case 'chorus_warning':
-      return 'Chorus coming';
-    case 'sustain':
-      return 'Held vocal';
-    case 'line_start':
-      return 'New lyric phrase';
-    case 'section_end':
-      return 'Section release';
-    case 'pause':
-      return 'Vocal space';
-    case 'beat':
-      return 'Main pulse';
-  }
-}
-
-function cueDetail(type: HapticEvent['type']): string {
-  switch (type) {
-    case 'bass_pulse':
-      return 'Low-end energy is carrying the track';
-    case 'drum_fill':
-      return 'Percussion is pushing into the next section';
-    case 'energy_rise':
-      return 'The song is building pressure';
-    case 'mood_shift':
-      return 'The lyric changed emotional color';
-    case 'chorus':
-      return 'The main hook opens';
-    case 'chorus_warning':
-      return 'A shared energy moment is approaching';
-    case 'sustain':
-      return 'The vocal phrase is being held';
-    case 'line_start':
-      return 'A new vocal phrase begins';
-    case 'section_end':
-      return 'The arrangement releases';
-    case 'pause':
-      return 'Silence creates tension';
-    case 'beat':
-      return 'Timing pulse';
-  }
-}
-
-function TactileMeter({ energy, source, section }: { energy: number; source: string; section?: string }) {
-  const level = Math.max(0, Math.min(1, energy));
-  const bars = [0.18, 0.34, 0.5, 0.66, 0.82, 1];
-  const label = `${section ?? 'score'} / ${source === 'lalal' ? 'lalal' : 'semantic'}`;
-
-  return (
-    <View style={styles.meterWrap}>
-      <View style={styles.meterBars}>
-        {bars.map((threshold, index) => {
-          const active = level >= threshold;
-          return (
-            <View
-              key={threshold}
-              style={[
-                styles.meterBar,
-                {
-                  height: 12 + index * 5,
-                  opacity: active ? 0.86 : 0.16,
-                },
-              ]}
-            />
-          );
-        })}
-      </View>
-      <Text variant="label" color={Theme.textGhost} align="center" style={{ letterSpacing: 0 }}>
-        {label.toUpperCase()}
-      </Text>
-    </View>
-  );
+function isLalalSource(source: string): boolean {
+  return source.startsWith('lalal');
 }
 
 function fmt(ms: number): string {
@@ -392,43 +299,6 @@ const styles = StyleSheet.create({
     borderRadius: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Theme.text,
-  },
-  sensoryWrap: {
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 18,
-    paddingHorizontal: 18,
-  },
-  layerRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
-    marginTop: 3,
-  },
-  layerPill: {
-    paddingVertical: 5,
-    paddingHorizontal: 9,
-    borderRadius: 999,
-    backgroundColor: Theme.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
-  },
-  meterWrap: {
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 24,
-  },
-  meterBars: {
-    height: 42,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 5,
-  },
-  meterBar: {
-    width: 5,
-    borderRadius: 3,
     backgroundColor: Theme.text,
   },
 });

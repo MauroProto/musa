@@ -39,6 +39,7 @@ export type HapticEventType =
   | 'beat' // pulso principal repetido
   | 'bass_pulse' // pulso corporal de bajo / low-end
   | 'drum_fill' // textura percusiva breve antes de cambios
+  | 'guitar_strum' // rasgueo / ataque de guitarra
   | 'energy_rise' // build-up / incremento de tensión
   | 'line_start' // nueva línea vocal (double tap)
   | 'mood_shift' // cambio emocional perceptible
@@ -64,6 +65,21 @@ export type EnergyPoint = {
   value: number; // 0–1
 };
 
+export type StemFrame = {
+  t: number;
+  bass?: number;
+  drums?: number;
+  guitar?: number;
+  vocals?: number;
+};
+
+export type StemAnalysis = {
+  source: 'lalal' | 'lalal-local';
+  durationMs?: number;
+  bpm?: number;
+  frames: StemFrame[];
+};
+
 /** Sección estructural detectada */
 export type SectionMark = {
   t: number;
@@ -72,7 +88,7 @@ export type SectionMark = {
   label?: string;
 };
 
-export type SensoryLayer = 'voice' | 'rhythm' | 'bass' | 'drums' | 'emotion' | 'structure';
+export type SensoryLayer = 'voice' | 'rhythm' | 'bass' | 'drums' | 'guitar' | 'emotion' | 'structure';
 
 export type SensoryMood =
   | 'calm'
@@ -101,6 +117,8 @@ export type SensoryScore = {
   moments: SensoryMoment[];
   durationMs: number;
   chorusTimesMs: number[];
+  source: 'semantic' | 'lalal' | 'lalal-local';
+  bpm: number;
 };
 
 /** Input del motor */
@@ -108,6 +126,7 @@ export type SensoryScoreInput = {
   lines: SyncedLine[];
   bpm?: number;
   energy?: EnergyPoint[];
+  stemAnalysis?: StemAnalysis;
   durationMs?: number;
 };
 

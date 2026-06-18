@@ -116,7 +116,7 @@ export default function SearchScreen() {
         <Stack gap={12} style={{ marginTop: 14 }}>
           <View style={styles.sectionHeader}>
             <Text variant="heading">Demo scores</Text>
-            <Text variant="caption" color={Theme.textFaint}>offline</Text>
+            <Text variant="caption" color={Theme.textFaint}>curated</Text>
           </View>
           {DEMO_TRACKS.map((track) => (
             <TrackRow key={track.trackId} track={track} onPress={() => openTrack(track)} />

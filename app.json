@@ -15,6 +15,9 @@
     },
     "android": {
       "package": "com.musa.app",
+      "permissions": [
+        "VIBRATE"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#05060A",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

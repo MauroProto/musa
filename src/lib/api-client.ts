@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
-import type { EnergyPoint, SyncedLine, Track } from './types';
-import { DEMO_LYRICS, DEMO_TRACKS, isDemoTrack } from './fixtures';
+import type { EnergyPoint, StemAnalysis, SyncedLine, Track } from './types';
+import { DEMO_LYRICS, DEMO_TRACKS, STEM_DEMO_FALLBACK_LINES, isDemoTrack, searchDemoTracks } from './fixtures';
+import { isStemDemoTrack } from './demo-score-tracks';
 
 function apiBase(): string {
   if (Platform.OS === 'web') return '';
@@ -25,9 +26,7 @@ export async function searchTracksClient(q: string): Promise<{ tracks: Track[]; 
     const data = (await res.json()) as { tracks?: Track[]; source?: string };
     if (data.tracks) return { tracks: data.tracks, source: data.source ?? 'api' };
   }
-  const tracks = DEMO_TRACKS.filter((t) =>
-    `${t.title} ${t.artist}`.toLowerCase().includes(q.toLowerCase()),
-  );
+  const tracks = searchDemoTracks(q);
   return { tracks: tracks.length ? tracks : DEMO_TRACKS, source: 'fixtures' };
 }
 
@@ -42,6 +41,9 @@ export async function getLyricsClient(
     const data = (await res.json()) as { lines?: SyncedLine[]; source?: string; instrumental?: boolean };
     if (data.lines) return { lines: data.lines, source: data.source ?? 'api', instrumental: data.instrumental };
   }
+  if (isStemDemoTrack(trackId)) {
+    return { lines: STEM_DEMO_FALLBACK_LINES[trackId] ?? [], source: 'stem-demo' };
+  }
   return { lines: DEMO_LYRICS[9001], source: 'fixtures' };
 }
 
@@ -49,7 +51,9 @@ export async function getStemsClient(trackId: number): Promise<{
   energy: EnergyPoint[];
   beats: number[];
   durationMs: number;
+  bpm?: number;
   source: string;
+  stemAnalysis?: StemAnalysis;
 } | null> {
   const res = await safeFetch(`${apiBase()}/api/stems?trackId=${trackId}`);
   if (res && res.ok) {
@@ -57,7 +61,9 @@ export async function getStemsClient(trackId: number): Promise<{
       energy: EnergyPoint[];
       beats: number[];
       durationMs: number;
+      bpm?: number;
       source: string;
+      stemAnalysis?: StemAnalysis;
     };
   }
   return null;

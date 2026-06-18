@@ -25,6 +25,7 @@ expo-env.d.ts
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+.npm-cache/
 .playwright-cli/
 output/playwright/
 
@@ -35,6 +36,9 @@ output/playwright/
 # local env files
 .env
 .env*.local
+
+# local copyrighted stem inputs; commit derived features only
+assets/lalalai/*.mp3
 
 # typescript
 *.tsbuildinfo

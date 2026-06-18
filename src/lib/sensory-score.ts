@@ -10,6 +10,12 @@ import type {
   SensoryMood,
   SyncedLine,
 } from './types';
+import {
+  energyFromStemAnalysis,
+  grooveBeatsFromStemAnalysis,
+  hapticEventsFromStemAnalysis,
+  momentsFromStemAnalysis,
+} from './stem-sensory.ts';
 
 const DEFAULT_BPM = 120;
 const SUSTAIN_THRESHOLD_MS = 3500;
@@ -18,6 +24,7 @@ const CHORUS_WARNING_LEAD_MS = 8000;
 const CHORUS_WINDOW = 3;
 const CHORUS_MAX_BLOCK_GAP_MS = 3200;
 const MIN_LINES_FOR_CHORUS = 6;
+const STEM_EVENT_MERGE_WINDOW_MS = 180;
 
 export function normalizeLyric(raw: string): string {
   return raw
@@ -307,13 +314,76 @@ export function activeSensoryMoments(
     .slice(0, limit);
 }
 
+function eventPriority(type: HapticEventType): number {
+  switch (type) {
+    case 'chorus':
+      return 100;
+    case 'drum_fill':
+      return 90;
+    case 'guitar_strum':
+      return 88;
+    case 'bass_pulse':
+      return 84;
+    case 'energy_rise':
+      return 76;
+    case 'chorus_warning':
+      return 70;
+    case 'mood_shift':
+      return 62;
+    case 'sustain':
+      return 54;
+    case 'line_start':
+      return 42;
+    case 'section_end':
+      return 34;
+    case 'pause':
+      return 12;
+    case 'beat':
+      return 0;
+  }
+}
+
+function shouldReplaceEvent(next: HapticEvent, previous: HapticEvent): boolean {
+  const priorityDelta = eventPriority(next.type) - eventPriority(previous.type);
+  if (priorityDelta !== 0) return priorityDelta > 0;
+  return next.intensity > previous.intensity;
+}
+
+function coalesceStemBackedEvents(events: HapticEvent[]): HapticEvent[] {
+  const kept: HapticEvent[] = [];
+  for (const event of events) {
+    let collisionIndex = -1;
+    for (let i = kept.length - 1; i >= 0; i--) {
+      if (Math.abs(kept[i].t - event.t) > STEM_EVENT_MERGE_WINDOW_MS) break;
+      if (kept[i].type !== 'pause' && event.type !== 'pause') {
+        collisionIndex = i;
+        break;
+      }
+    }
+
+    if (collisionIndex < 0) {
+      kept.push(event);
+      continue;
+    }
+
+    if (shouldReplaceEvent(event, kept[collisionIndex])) {
+      kept[collisionIndex] = event;
+    }
+  }
+  return kept.sort((a, b) => a.t - b.t || eventPriority(b.type) - eventPriority(a.type));
+}
+
 export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
   const lines = [...input.lines].sort((a, b) => a.startMs - b.startMs);
-  const durationMs = computeDurationMs(lines, input.durationMs);
-  const bpm = input.bpm ?? DEFAULT_BPM;
+  const durationMs = computeDurationMs(lines, input.durationMs ?? input.stemAnalysis?.durationMs);
+  const bpm = input.bpm ?? input.stemAnalysis?.bpm ?? DEFAULT_BPM;
   const chorusRegions = detectChoruses(lines);
-  const energy = input.energy ?? estimateEnergy(lines, chorusRegions, durationMs);
-  const beats = generateBeats(lines, bpm, durationMs);
+  const energy = input.energy ?? (
+    input.stemAnalysis ? energyFromStemAnalysis(input.stemAnalysis) : estimateEnergy(lines, chorusRegions, durationMs)
+  );
+  const beats = input.stemAnalysis
+    ? grooveBeatsFromStemAnalysis(input.stemAnalysis)
+    : generateBeats(lines, bpm, durationMs);
 
   const events: HapticEvent[] = [];
   const chorusTimesMs = chorusRegions.map((r) => r.startMs);
@@ -407,19 +477,23 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
     });
   }
 
-  let lastBassT = -Infinity;
-  for (const beat of beats) {
-    const eAt = energyAt(energy, beat);
-    const inChorus = isInsideRegion(beat, chorusRegions);
-    if (!inChorus && eAt < 0.72) continue;
-    if (beat - lastBassT < 900) continue;
-    events.push({
-      t: beat,
-      type: 'bass_pulse',
-      intensity: clampIntensity(0.45 + eAt * 0.45),
-      durationMs: 220,
-    });
-    lastBassT = beat;
+  if (input.stemAnalysis) {
+    events.push(...hapticEventsFromStemAnalysis(input.stemAnalysis));
+  } else {
+    let lastBassT = -Infinity;
+    for (const beat of beats) {
+      const eAt = energyAt(energy, beat);
+      const inChorus = isInsideRegion(beat, chorusRegions);
+      if (!inChorus && eAt < 0.72) continue;
+      if (beat - lastBassT < 900) continue;
+      events.push({
+        t: beat,
+        type: 'bass_pulse',
+        intensity: clampIntensity(0.45 + eAt * 0.45),
+        durationMs: 220,
+      });
+      lastBassT = beat;
+    }
   }
 
   if (lines.length > 0) {
@@ -433,10 +507,24 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
   }
 
   const sections: SectionMark[] = buildSections(lines, chorusRegions, durationMs);
-  const moments = buildSensoryMoments({ lines, sections, energy, durationMs });
+  const moments = [
+    ...buildSensoryMoments({ lines, sections, energy, durationMs }),
+    ...(input.stemAnalysis ? momentsFromStemAnalysis(input.stemAnalysis) : []),
+  ].sort((a, b) => a.t - b.t || b.intensity - a.intensity);
 
-  events.sort((a, b) => a.t - b.t);
-  return { events, beats, sections, energy, moments, durationMs, chorusTimesMs };
+  events.sort((a, b) => a.t - b.t || eventPriority(b.type) - eventPriority(a.type));
+  const shapedEvents = input.stemAnalysis ? coalesceStemBackedEvents(events) : events;
+  return {
+    events: shapedEvents,
+    beats,
+    sections,
+    energy,
+    moments,
+    durationMs,
+    chorusTimesMs,
+    source: input.stemAnalysis?.source ?? 'semantic',
+    bpm,
+  };
 }
 
 function buildSections(

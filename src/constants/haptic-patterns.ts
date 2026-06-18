@@ -53,6 +53,16 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     intensity: 0.8,
   },
   {
+    type: 'guitar_strum',
+    icon: 'zap',
+    label: 'Guitar riff',
+    haptic: 'Tight brushed taps',
+    visual: 'Guitar layer lights',
+    why: 'Makes the riff/strum texture readable',
+    color: '#F2F2F2',
+    intensity: 0.8,
+  },
+  {
     type: 'energy_rise',
     icon: 'trending-up',
     label: 'Energy build',

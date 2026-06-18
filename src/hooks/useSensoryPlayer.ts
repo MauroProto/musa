@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getLyricsClient } from '../lib/api-client';
+import { getLyricsClient, getStemsClient } from '../lib/api-client';
 import {
   activeSensoryMoments,
   buildSensoryScore,
+  energyValueAt,
   getCurrentLineIndex,
   nearestChorusIn,
 } from '../lib/sensory-score';
 import { createHapticController, type HapticController } from '../lib/haptics';
+import { seekByDeltaMs, seekToMs } from '../lib/player-time';
 import { usePreferences } from '../store/preferences';
-import type { HapticEvent, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
+import type { HapticEvent, Intensity, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
 
 export type PlayerStatus = 'loading' | 'ready' | 'error';
 
@@ -35,6 +37,7 @@ export type SensoryPlayer = {
   toggle: () => void;
   restart: () => void;
   seekBy: (deltaMs: number) => void;
+  seekTo: (targetMs: number) => void;
 };
 
 export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }): SensoryPlayer {
@@ -96,16 +99,22 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
       setStatus('loading');
       setErrorMessage(undefined);
       try {
-        const { lines: fetched } = await getLyricsClient(trackId);
+        const [{ lines: fetched }, stems] = await Promise.all([
+          getLyricsClient(trackId),
+          getStemsClient(trackId),
+        ]);
         if (cancelled) return;
-        // Musixmatch does not provide audio, so avoid a second lyric fetch until real stems are available.
         const built = buildSensoryScore({
           lines: fetched,
-          durationMs: hints.durationMs && hints.durationMs > 0 ? hints.durationMs : undefined,
+          durationMs: hints.durationMs && hints.durationMs > 0 ? hints.durationMs : stems?.durationMs,
+          bpm: stems?.bpm,
+          stemAnalysis: stems?.stemAnalysis,
+          energy: stems?.stemAnalysis ? undefined : stems?.energy,
         });
         if (cancelled) return;
         setLines(fetched);
         setScore(built);
+        setEnergySource(built.source);
         setStatus('ready');
       } catch (e) {
         if (cancelled) return;
@@ -165,7 +174,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
         setBeatPulse((p) => (p + 1) % 1_000_000);
         const hasNearbySemanticCue = Math.abs(beatT - lastSemanticHapticMsRef.current) < 260;
         if (pulseOn && !visualOnly && !hasNearbySemanticCue) {
-          hapticRef.current?.fire('beat', 0.2);
+          hapticRef.current?.fire('beat', beatIntensityFromEnergy(energyValueAt(s.energy, beatT)));
         }
       }
     }
@@ -214,9 +223,7 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
     else play();
   }, [isPlaying, pause, play]);
 
-  const seekBy = useCallback(
-    (deltaMs: number) => {
-      const target = Math.max(0, Math.min(durationMs, currentMsRef.current + deltaMs));
+  const seekToPlaybackTime = useCallback((target: number) => {
       currentMsRef.current = target;
       setCurrentMs(target);
       resetCursors(target);
@@ -224,8 +231,21 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
         playStartMsRef.current = target;
         playStartWallRef.current = performance.now();
       }
+  }, [isPlaying, resetCursors]);
+
+  const seekBy = useCallback(
+    (deltaMs: number) => {
+      const target = seekByDeltaMs(currentMsRef.current, durationMs, deltaMs);
+      seekToPlaybackTime(target);
     },
-    [durationMs, isPlaying, resetCursors],
+    [durationMs, seekToPlaybackTime],
+  );
+
+  const seekTo = useCallback(
+    (targetMs: number) => {
+      seekToPlaybackTime(seekToMs(targetMs, durationMs));
+    },
+    [durationMs, seekToPlaybackTime],
   );
 
   const restart = useCallback(() => {
@@ -282,7 +302,14 @@ export function useSensoryPlayer(trackId: number, hints: { durationMs?: number }
     toggle,
     restart,
     seekBy,
+    seekTo,
   };
+}
+
+function beatIntensityFromEnergy(energy: number): Intensity {
+  if (energy >= 0.72) return 0.6;
+  if (energy >= 0.44) return 0.4;
+  return 0.2;
 }
 
 function lowerBound<T>(arr: T[], predicate: (item: T) => boolean): number {

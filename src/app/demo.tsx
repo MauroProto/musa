@@ -17,8 +17,8 @@ export default function DemoScreen() {
     <Screen scroll>
       <Text variant="largeTitle">Demo</Text>
       <Text dim style={{ marginBottom: 2 }}>
-        Original MUSA tracks with synced lyrics. Press play, hold your phone, and follow the music
-        through text, pulse and touch.
+        Curated MUSA scores. Press play, hold your phone, and follow the music through text,
+        pulse and touch.
       </Text>
 
       <Stack gap={10}>

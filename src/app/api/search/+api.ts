@@ -1,4 +1,5 @@
-import { DEMO_TRACKS, hasMusixmatchKey, searchTracks as mxSearch } from '../../../lib/api-server';
+import { DEMO_TRACKS, hasMusixmatchKey, searchDemoTracks, searchTracks as mxSearch } from '../../../lib/api-server';
+import type { Track } from '../../../lib/types';
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -15,15 +16,13 @@ export async function GET(req: Request): Promise<Response> {
   }
 
   if (!hasMusixmatchKey()) {
-    const tracks = DEMO_TRACKS.filter((t) =>
-      `${t.title} ${t.artist}`.toLowerCase().includes(q.toLowerCase()),
-    );
+    const tracks = searchDemoTracks(q);
     return json({ tracks, source: 'fixtures' });
   }
 
   try {
-    const tracks = await mxSearch(q);
-    return json({ tracks, source: 'musixmatch' });
+    const tracks = mergeTracks(searchDemoTracks(q), await mxSearch(q));
+    return json({ tracks, source: tracks.some((track) => searchDemoTracks(q).some((demo) => demo.trackId === track.trackId)) ? 'demo+musixmatch' : 'musixmatch' });
   } catch (err) {
     return json(
       {
@@ -34,4 +33,15 @@ export async function GET(req: Request): Promise<Response> {
       200,
     );
   }
+}
+
+function mergeTracks(priority: Track[], rest: Track[]): Track[] {
+  const seen = new Set<number>();
+  const merged: Track[] = [];
+  for (const track of [...priority, ...rest]) {
+    if (seen.has(track.trackId)) continue;
+    seen.add(track.trackId);
+    merged.push(track);
+  }
+  return merged;
 }
