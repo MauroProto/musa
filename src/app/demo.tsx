@@ -15,10 +15,9 @@ export default function DemoScreen() {
 
   return (
     <Screen scroll>
-      <Text variant="largeTitle">Demo</Text>
+      <Text variant="largeTitle">Feel Dani California</Text>
       <Text dim style={{ marginBottom: 2 }}>
-        Curated MUSA scores. Press play, hold your phone, and follow the music through text,
-        pulse and touch.
+        Start with the guided haptic demo. It works offline for sensory captions and native haptics; audio stems are optional.
       </Text>
 
       <Stack gap={10}>
@@ -38,12 +37,12 @@ export default function DemoScreen() {
       </Stack>
 
       <Card>
-        <Text variant="heading">What you’ll feel</Text>
+        <Text variant="heading">What you will feel</Text>
         <View style={{ gap: 11, marginTop: 2 }}>
-          <Bullet level={1} text="Double tap — a new lyric line starts" />
-          <Bullet level={0.7} text="Soft long vibration — a held phrase" />
-          <Bullet level={0.82} text="Three rising taps — the chorus is coming" />
-          <Bullet level={1} text="Strong hit — the chorus lands" />
+          <Bullet level={1} text="Drums count in with dry attack taps" />
+          <Bullet level={0.92} text="The signature guitar riff gets its own syncopated pattern" />
+          <Bullet level={0.78} text="Bass pulses carry the verse body" />
+          <Bullet level={1} text="The chorus lands as the strongest full-band hit" />
         </View>
       </Card>
 

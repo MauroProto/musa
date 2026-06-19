@@ -24,6 +24,7 @@ export default function RootLayout() {
         <Stack.Screen name="calibrate" />
         <Stack.Screen name="demo" />
         <Stack.Screen name="legend" />
+        <Stack.Screen name="tuner" />
       </Stack>
     </GestureHandlerRootView>
   );

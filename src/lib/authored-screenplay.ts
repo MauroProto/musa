@@ -36,7 +36,7 @@ export const DANI_CALIFORNIA_SCREENPLAY: AuthoredMoment[] = [
     detail: 'Frusciante’s choppy funk guitar — the part that defines the whole song.',
     intensity: 0.8,
     mood: 'driving',
-    cueType: 'guitar_strum',
+    cueType: 'guitar_riff',
     repeatEveryMs: 760,
   },
   {

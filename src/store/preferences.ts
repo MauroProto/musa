@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import type { AudioMode, StemKind } from '../lib/audio-client';
+import type { DemoTuningOverrides } from '../lib/demo-tuning';
 import type { HapticStrength, ListeningProfile } from '../lib/types';
 
 type FontScale = 'comfortable' | 'large' | 'xl';
@@ -16,6 +17,7 @@ type PreferencesState = {
   fontScale: FontScale;
   onboarded: boolean;
   lastTrackId: number | null;
+  demoTuningOverrides: DemoTuningOverrides;
   setProfile: (p: ListeningProfile) => void;
   setStrength: (s: HapticStrength) => void;
   setPulseOn: (v: boolean) => void;
@@ -24,6 +26,7 @@ type PreferencesState = {
   setIsolateStem: (s: StemKind) => void;
   setFontScale: (f: FontScale) => void;
   setLastTrackId: (id: number) => void;
+  setDemoTuningOverrides: (overrides: DemoTuningOverrides) => void;
   completeOnboarding: () => void;
   reset: () => void;
 };
@@ -33,6 +36,7 @@ type PersistedPreferences = Pick<
   | 'audioMode'
   | 'fontScale'
   | 'isolateStem'
+  | 'demoTuningOverrides'
   | 'lastTrackId'
   | 'onboarded'
   | 'profile'
@@ -53,6 +57,7 @@ const DEFAULT_PREFERENCES: PersistedPreferences = {
   fontScale: 'large',
   onboarded: false,
   lastTrackId: null,
+  demoTuningOverrides: {},
 };
 
 function canUseStorage(): boolean {
@@ -70,6 +75,7 @@ function pickPreferences(state: PreferencesState): PersistedPreferences {
     fontScale: state.fontScale,
     onboarded: state.onboarded,
     lastTrackId: state.lastTrackId,
+    demoTuningOverrides: state.demoTuningOverrides,
   };
 }
 
@@ -98,6 +104,7 @@ export const usePreferences = create<PreferencesState>()((set, get) => {
     setIsolateStem: (isolateStem) => setAndPersist({ isolateStem }),
     setFontScale: (fontScale) => setAndPersist({ fontScale }),
     setLastTrackId: (lastTrackId) => setAndPersist({ lastTrackId }),
+    setDemoTuningOverrides: (demoTuningOverrides) => setAndPersist({ demoTuningOverrides }),
     completeOnboarding: () => setAndPersist({ onboarded: true }),
     reset: () => setAndPersist(DEFAULT_PREFERENCES),
   };

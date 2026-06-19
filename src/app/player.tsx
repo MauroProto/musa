@@ -16,6 +16,7 @@ import { SeekBar } from '../components/player/SeekBar';
 import { ChorusCountdown } from '../components/player/ChorusCountdown';
 import { LyricDisplay } from '../components/player/LyricDisplay';
 import { SensoryPanel } from '../components/player/SensoryPanel';
+import { GuidedDemoChip } from '../components/player/GuidedDemoChip';
 
 export default function PlayerScreen() {
   const { isWide } = useResponsive();
@@ -43,6 +44,7 @@ export default function PlayerScreen() {
   const seekPlayerBy = player.seekBy;
 
   const showAudio = isStemDemoTrack(trackId);
+  const guided = params.guided === '1';
 
   // Web: teclado (espacio = play/pausa, flechas = seek)
   useEffect(() => {
@@ -93,9 +95,9 @@ export default function PlayerScreen() {
   }
 
   return isWide ? (
-    <WebPlayer player={player} title={title} artist={artist} progress={progress} insets={insets} showAudio={showAudio} />
+    <WebPlayer player={player} title={title} artist={artist} progress={progress} insets={insets} showAudio={showAudio} trackId={trackId} guided={guided} />
   ) : (
-    <MobilePlayer player={player} title={title} artist={artist} progress={progress} insets={insets} showAudio={showAudio} />
+    <MobilePlayer player={player} title={title} artist={artist} progress={progress} insets={insets} showAudio={showAudio} trackId={trackId} guided={guided} />
   );
 }
 
@@ -106,11 +108,13 @@ type LayoutProps = {
   progress: number;
   insets: { top: number; bottom: number; left: number; right: number };
   showAudio: boolean;
+  trackId: number;
+  guided: boolean;
 };
 
 /* ----------------------------- MÓVIL (app) ----------------------------- */
 
-function MobilePlayer({ player, title, artist, progress, insets, showAudio }: LayoutProps) {
+function MobilePlayer({ player, title, artist, progress, insets, showAudio, trackId, guided }: LayoutProps) {
   const f = useFontScale();
   const energy = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.5;
   return (
@@ -138,6 +142,7 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio }: La
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={30} contextSize={16} />
           <View style={{ height: 20 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
+          {guided ? <GuidedDemoChip trackId={trackId} currentMs={player.currentMs} seekTo={player.seekTo} /> : null}
           <SensoryPanel
             moments={player.activeMoments}
             cue={player.cue?.type}
@@ -178,7 +183,7 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio }: La
 
 /* ------------------------------ WEB (desktop) ------------------------------ */
 
-function WebPlayer({ player, title, artist, progress, insets, showAudio }: LayoutProps) {
+function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId, guided }: LayoutProps) {
   const energy = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.5;
   return (
     <View style={[styles.fill, { paddingTop: insets.top }]}>
@@ -204,6 +209,7 @@ function WebPlayer({ player, title, artist, progress, insets, showAudio }: Layou
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={62} contextSize={24} />
           <View style={{ height: 28 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
+          {guided ? <GuidedDemoChip trackId={trackId} currentMs={player.currentMs} seekTo={player.seekTo} /> : null}
           <SensoryPanel
             moments={player.activeMoments}
             cue={player.cue?.type}

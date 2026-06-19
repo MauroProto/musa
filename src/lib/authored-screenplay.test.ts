@@ -89,7 +89,7 @@ test('DANI_CALIFORNIA_SCREENPLAY is non-empty and covers the intro riff', () => 
   assert.ok(DANI_CALIFORNIA_SCREENPLAY.length >= 5);
   const riff = DANI_CALIFORNIA_SCREENPLAY.find((m) => m.label === 'The signature riff');
   assert.ok(riff, 'the defining riff moment must be authored');
-  assert.equal(riff?.cueType, 'guitar_strum');
+  assert.equal(riff?.cueType, 'guitar_riff');
   assert.ok(riff?.repeatEveryMs && riff.repeatEveryMs > 0, 'riff must repeat across its window');
   assert.ok(riff!.t < 10000, 'riff should start near the top of the song');
 });

@@ -93,6 +93,22 @@ test('guitar strum is a tight brushed texture, not a heavy bass hit', () => {
   assert.notEqual(sequence.steps[0].android, 'long-press');
 });
 
+test('guitar riff has a distinct syncopated signature from generic guitar strum', () => {
+  const riff = buildHapticSequence('guitar_riff', {
+    strength: 'strong',
+    intensity: 0.8,
+  });
+  const strum = buildHapticSequence('guitar_strum', {
+    strength: 'strong',
+    intensity: 0.8,
+  });
+
+  assert.ok(riff.steps.length > strum.steps.length);
+  assert.ok(riff.stopAfterMs > strum.stopAfterMs);
+  assert.notDeepEqual(riff.webPattern, strum.webPattern);
+  assert.ok(Array.isArray(riff.webPattern), 'riff must have a web fallback pattern');
+});
+
 test('energy rise has an ascending build shape', () => {
   const sequence = buildHapticSequence('energy_rise', {
     strength: 'strong',

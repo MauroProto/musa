@@ -2,107 +2,101 @@
 
 > **Lyrics you can read. Rhythm you can feel. Music you can follow.**
 
-MUSA turns **synced lyrics into a tactile and visual score** so Deaf, hard-of-hearing, cochlear-implant and hearing-aid users can follow a song through text, touch and rhythm — on a phone, without extra hardware.
-
-It is not "another lyrics app" and it is not vibration by volume. MUSA is **semantic-haptic**: every vibration means something — a new lyric line, a chorus coming, an emotional sustain, a vocal pause.
+MUSA turns synced lyrics, song structure, and stem-derived cues into a tactile score for Deaf, hard-of-hearing, cochlear-implant and hearing-aid users. The hackathon demo is Android-first because real haptics need native hardware; web remains a visual fallback.
 
 Built for **Musicathon 2026**.
 
----
+## Demo Path
 
-## How it works
+The judge-facing path is **Demo → Feel Dani California**. That route opens `/player?guided=1` and shows a compact guided chip for the key moments: drum count-in, signature guitar riff, verse bass, pre-chorus build, first chorus, bridge, and guitar solo.
 
-```
-Search a song
-  → Musixmatch track.search
-  → MUSA track.subtitle.get (synced LRC lyrics)
-  → Sensory Score engine (timestamps → haptic + visual events)
-  → Sensory Score screen: lyrics + pulse + energy + meaningful haptics
-```
+If the API is unreachable, the Dani demo still works for native haptics using bundled non-lyric sensory captions plus the generated LALAL stem analysis. Real Musixmatch lyrics and optional stem audio require a reachable API server.
 
-The engine (`src/lib/sensory-score.ts`) is pure, deterministic and unit-tested. It converts `SyncedLine[]` into:
+## Haptic Language
 
-- `events` — `line_start`, `sustain`, `pause`, `chorus_warning`, `chorus`, `section_end`
-- `beats` — a BPM grid for the visual pulse (and optional beat haptics)
-- `sections` — verse / chorus detection via repeated-lyric fingerprinting
-- `energy` — per-time energy, estimated from lyric density or enriched by **LALAL.AI** stems
+MUSA is semantic-haptic, not volume vibration. Core patterns:
 
-## Haptic language
-
-| Musical event | Haptic | Visual |
+| Layer | Meaning | Haptic |
 | --- | --- | --- |
-| New lyric line | Double tap | Line glows |
-| Main pulse | Short tap | Pulsing dot |
-| Emotional sustain | Soft long vibration | Expanded glow |
-| Chorus coming | Three rising taps | Countdown appears |
-| Chorus / drop | Strong hit | Screen blooms |
-| Vocal pause | Haptic silence | Open space |
+| Bass body | Physical low-end weight | Heavy low pulse |
+| Drum attack | Percussion turns and fills | Fast dry taps |
+| Signature riff | Recognizable guitar hook | Syncopated brushed taps |
+| Chorus / drop | Shared payoff | Heavy hit + rebound |
+| Mood shift | Emotional turn | Soft tone marker |
 
-## Run it
+Use `/calibrate` to learn the patterns, `/legend` to review the full alphabet, and hidden `/tuner` to tune Dani timings on a real phone.
 
-```bash
+## Run Locally
+
+```powershell
 npm install
-cp .env.example .env   # add your MUSIXMATCH_API_KEY
-npm run web            # web (dev server serves the API routes)
-npm run ios            # iOS simulator / device
-npm run android        # Android
+Copy-Item .env.example .env
+npm run web
 ```
 
-Without a Musixmatch key, the app falls back to an **original demo catalogue** (`Slow Light`, `Underwater`) so the experience always works.
+Add server-side keys to `.env` when available:
 
-### Environment
+```text
+MUSIXMATCH_API_KEY=...
+LALAL_API_KEY=...
+```
+
+For Expo Go on Android:
+
+```powershell
+npx expo start --host lan --clear
+```
+
+Open Expo Go with:
+
+```text
+exp://<your-lan-ip>:8081
+```
+
+For a judge APK preview:
+
+```powershell
+npx eas build --profile preview --platform android
+```
+
+The preview profile builds an APK. It does not embed raw LALAL stem audio; audio/isolate mode still requires an API route that can stream local stems. Silent guided haptics work without that API.
+
+## Environment
 
 | Var | Where | Purpose |
 | --- | --- | --- |
-| `MUSIXMATCH_API_KEY` | server only (`/.env`) | Real search + synced lyrics |
-| `LALAL_API_KEY` | server only (optional) | Real stem-based energy envelopes |
-| `EXPO_PUBLIC_API_BASE` | client (optional) | Public URL native clients use to reach the API routes (EAS Hosting URL) |
+| `MUSIXMATCH_API_KEY` | server only | Real search + synced lyrics |
+| `LALAL_API_KEY` | server only, optional | Stem-processing experiments |
+| `EXPO_PUBLIC_API_BASE` | client, optional | LAN/deployed API base for native clients |
 
-> **Musicathon rule respected:** Musixmatch content is used in real time only. No lyrics or subtitles are stored, cached or redistributed. The only persisted data is the user's profile, preferences and a `track_id`.
+Never prefix server keys with `EXPO_PUBLIC_`.
 
 ## Scripts
 
-```bash
-npm run test          # sensory-score engine tests (node:test)
-npm run typecheck     # tsc --noEmit
-npm run lint          # expo lint
-npm run web|ios|android
+```powershell
+npm test
+npm run typecheck
+npm run lint
+npm run web
+npm run android
 ```
 
 ## Architecture
 
-- **Universal Expo Router app** (iOS · Android · Web, one codebase) — `src/app/*`
-- **API routes** (`src/app/api/*/+api.ts`) keep API keys server-side: `/api/search`, `/api/lyrics`, `/api/stems`
-- **Sensory Score engine** — `src/lib/sensory-score.ts` (pure, tested)
-- **Cross-platform haptics** — `src/lib/haptics.ts` (`expo-haptics` on native, Web Vibration API on web)
-- **Player hook** — `src/hooks/useSensoryPlayer.ts` (rAF timer, event scheduling, beat pulses)
-- **Preferences** — `src/store/preferences.ts` (zustand + AsyncStorage, cross-platform)
+- Expo Router universal app in `src/app/*`.
+- API routes in `src/app/api/*/+api.ts`; keys stay server-side.
+- Pure deterministic Sensory Score engine in `src/lib/sensory-score.ts`.
+- Authored Dani screenplay in `src/lib/authored-screenplay.ts`.
+- Haptic alphabet in `src/lib/haptic-sequence.ts` and `src/constants/haptic-patterns.ts`.
+- Guided demo and fallback captions in `src/lib/demo-guided.ts`.
+- Internal timing overrides in `src/lib/demo-tuning.ts` and `/tuner`.
 
-## Project layout
+## Rules
 
-```
-src/
-  app/
-    _layout.tsx  welcome  profile-setup  search  player  calibrate  demo  legend
-    api/  search  lyrics  stems   (+api.ts)
-  components/   ui.tsx  player/{Pulse,EnergyBar,ChorusCountdown,LyricDisplay}.tsx
-  hooks/        useSensoryPlayer.ts
-  lib/          types  sensory-score (+test)  musixmatch  lalal  haptics  api-client  api-server  fixtures
-  store/        preferences.ts
-  constants/    theme  haptic-patterns
-```
+- Do not persist Musixmatch lyrics/subtitles.
+- Do not commit `.env`.
+- Do not commit raw LALAL stem MP3s.
+- Use `src/lib/haptics.ts` for haptic playback.
+- Keep score/tuning helpers pure and tested.
 
-## Notes on LALAL.AI
-
-Real stem separation needs the original audio (which Musixmatch doesn't provide) plus a LALAL key. `src/lib/lalal.ts` implements the full path (upload → split → ffmpeg RMS envelope). When audio or a key is absent, MUSA estimates energy **from the lyrics themselves** — which is the product's core semantic differentiator anyway.
-
-## Sources
-
-- [Musixmatch API](https://developer.musixmatch.com/)
-- [Expo Haptics](https://docs.expo.dev/versions/latest/sdk/haptics/)
-- [Apple Music Haptics](https://support.apple.com/en-il/guide/iphone/iphff2ceeb16/ios)
-- [LALAL.AI](https://www.lalal.ai/)
-
----
-
-*MUSA does not try to “fix” deafness. It tries to make music stop depending on hearing alone.*
+*MUSA does not try to fix deafness. It tries to make music stop depending on hearing alone.*

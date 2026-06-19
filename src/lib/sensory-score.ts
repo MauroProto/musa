@@ -335,6 +335,8 @@ function eventPriority(type: HapticEventType): number {
       return 100;
     case 'drum_fill':
       return 90;
+    case 'guitar_riff':
+      return 92;
     case 'guitar_strum':
       return 88;
     case 'bass_pulse':
@@ -371,6 +373,8 @@ function authoredCueDuration(type: HapticEventType): number {
       return 280;
     case 'drum_fill':
       return 340;
+    case 'guitar_riff':
+      return 360;
     case 'guitar_strum':
       return 220;
     case 'bass_pulse':

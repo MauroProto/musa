@@ -1,7 +1,9 @@
 import { Platform } from 'react-native';
 import type { EnergyPoint, StemAnalysis, SyncedLine, Track } from './types';
-import { DEMO_LYRICS, DEMO_TRACKS, STEM_DEMO_FALLBACK_LINES, isDemoTrack, searchDemoTracks } from './fixtures';
+import { DEMO_LYRICS, DEMO_TRACKS, isDemoTrack, searchDemoTracks } from './fixtures';
 import { isStemDemoTrack } from './demo-score-tracks';
+import { fallbackSensoryCaptionsForTrack } from './demo-guided';
+import { DANI_CALIFORNIA_STEM_ANALYSIS } from './generated/dani-california-stem-analysis';
 
 function apiBase(): string {
   if (Platform.OS === 'web') return '';
@@ -42,7 +44,7 @@ export async function getLyricsClient(
     if (data.lines) return { lines: data.lines, source: data.source ?? 'api', instrumental: data.instrumental };
   }
   if (isStemDemoTrack(trackId)) {
-    return { lines: STEM_DEMO_FALLBACK_LINES[trackId] ?? [], source: 'stem-demo' };
+    return { lines: fallbackSensoryCaptionsForTrack(trackId), source: 'stem-demo' };
   }
   return { lines: DEMO_LYRICS[9001], source: 'fixtures' };
 }
@@ -64,6 +66,16 @@ export async function getStemsClient(trackId: number): Promise<{
       bpm?: number;
       source: string;
       stemAnalysis?: StemAnalysis;
+    };
+  }
+  if (isStemDemoTrack(trackId)) {
+    return {
+      energy: [],
+      beats: [],
+      durationMs: DANI_CALIFORNIA_STEM_ANALYSIS.durationMs ?? 281000,
+      bpm: DANI_CALIFORNIA_STEM_ANALYSIS.bpm,
+      source: 'lalal-local',
+      stemAnalysis: DANI_CALIFORNIA_STEM_ANALYSIS,
     };
   }
   return null;

@@ -177,3 +177,75 @@ test('buildSensoryScore exposes readable sensory moments', () => {
   assert.ok(score.moments.some((m) => m.layer === 'emotion' && m.mood === 'melancholic'));
   assert.ok(score.moments.some((m) => m.layer === 'structure' && m.label === 'Chorus opens'));
 });
+
+test('guitar_riff wins collisions with generic guitar and drum cues, but not chorus', () => {
+  const score = buildSensoryScore({
+    lines: [line(0, 'intro'), line(2000, 'next')],
+    durationMs: 6000,
+    stemAnalysis: {
+      source: 'lalal-local',
+      durationMs: 6000,
+      bpm: 96,
+      frames: [
+        { t: 0, bass: 0.1, drums: 0.1, guitar: 0.1 },
+        { t: 1000, drums: 0.9, guitar: 0.9, onsetDrums: 0.9, onsetGuitar: 0.9 },
+        { t: 3000, drums: 0.1, guitar: 0.1 },
+        { t: 5000, drums: 0.1, guitar: 0.1 },
+      ],
+    },
+    authored: [
+      {
+        t: 1000,
+        endMs: 1400,
+        layer: 'guitar',
+        label: 'riff',
+        detail: 'curated',
+        intensity: 0.8,
+        cueType: 'guitar_riff',
+      },
+      {
+        t: 1020,
+        endMs: 1800,
+        layer: 'structure',
+        label: 'chorus',
+        detail: 'curated',
+        intensity: 1,
+        cueType: 'chorus',
+      },
+    ],
+  });
+
+  const near = score.events.filter((e) => Math.abs(e.t - 1000) <= 180);
+  assert.ok(near.some((e) => e.type === 'chorus'), 'chorus should remain highest priority');
+  assert.equal(near.some((e) => e.type === 'guitar_riff'), false, 'chorus should coalesce nearby riff');
+
+  const riffOnly = buildSensoryScore({
+    lines: [line(0, 'intro'), line(2000, 'next')],
+    durationMs: 6000,
+    stemAnalysis: {
+      source: 'lalal-local',
+      durationMs: 6000,
+      bpm: 96,
+      frames: [
+        { t: 0, bass: 0.1, drums: 0.1, guitar: 0.1 },
+        { t: 1000, drums: 0.9, guitar: 0.9, onsetDrums: 0.9, onsetGuitar: 0.9 },
+        { t: 3000, drums: 0.1, guitar: 0.1 },
+      ],
+    },
+    authored: [
+      {
+        t: 1000,
+        endMs: 1400,
+        layer: 'guitar',
+        label: 'riff',
+        detail: 'curated',
+        intensity: 0.8,
+        cueType: 'guitar_riff',
+      },
+    ],
+  });
+
+  const riffNear = riffOnly.events.filter((e) => Math.abs(e.t - 1000) <= 180);
+  assert.ok(riffNear.some((e) => e.type === 'guitar_riff'));
+  assert.equal(riffNear.some((e) => e.type === 'drum_fill' || e.type === 'guitar_strum'), false);
+});

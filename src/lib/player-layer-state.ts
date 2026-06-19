@@ -27,6 +27,7 @@ function cueLayer(type?: HapticEventType): PlayerLayerKey | null {
       return 'bass';
     case 'drum_fill':
       return 'drums';
+    case 'guitar_riff':
     case 'guitar_strum':
       return 'guitar';
     case 'line_start':

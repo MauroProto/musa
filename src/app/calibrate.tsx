@@ -14,6 +14,8 @@ const STRENGTHS: { id: HapticStrength; label: string; desc: string }[] = [
   { id: 'strong', label: 'Strong', desc: 'Maximum clarity for hard-to-miss cues' },
 ];
 
+const LEARN_TYPES = new Set(['bass_pulse', 'drum_fill', 'guitar_riff', 'chorus', 'mood_shift']);
+const LEARN_PATTERNS = HAPTIC_LEGEND.filter((item) => LEARN_TYPES.has(item.type));
 const TEST_PATTERNS = HAPTIC_LEGEND.filter((item) => item.type !== 'pause');
 
 export default function CalibrateScreen() {
@@ -33,10 +35,28 @@ export default function CalibrateScreen() {
   return (
     <Screen scroll>
       <Text variant="label" color={Theme.textFaint}>STEP 2 OF 2</Text>
-      <Text variant="largeTitle">Haptic strength</Text>
+      <Text variant="largeTitle">Learn the language</Text>
       <Text dim style={{ marginBottom: 2 }}>
-        Test the tactile language. Pick the level that feels clear without becoming tiring.
+        First learn what each tactile layer means. Then pick the strength that stays clear without becoming tiring.
       </Text>
+
+      <Card>
+        <Text variant="heading">Core patterns</Text>
+        <Text variant="caption" dim>
+          Tap each one before the demo: body, attack, riff, payoff, and emotion should feel different.
+        </Text>
+        <View style={styles.testRow}>
+          {LEARN_PATTERNS.map((item) => (
+            <TestButton
+              key={item.type}
+              label={item.label}
+              onPress={() => previewHaptic(item.type, strength, item.intensity)}
+            />
+          ))}
+        </View>
+      </Card>
+
+      <Text variant="heading">Haptic strength</Text>
 
       <Stack gap={8}>
         {STRENGTHS.map((s) => {
@@ -69,7 +89,7 @@ export default function CalibrateScreen() {
       <Card>
         <Text variant="heading">Pattern lab</Text>
         <Text variant="caption" dim>
-          Strong keeps the beat subtle, but makes section changes and chorus hits unmistakable.
+          Use this full lab for fine tuning after you know the core patterns.
         </Text>
         <View style={styles.testRow}>
           {TEST_PATTERNS.map((item) => (

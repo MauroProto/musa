@@ -40,6 +40,7 @@ export type HapticEventType =
   | 'bass_pulse' // pulso corporal de bajo / low-end
   | 'drum_fill' // textura percusiva breve antes de cambios
   | 'guitar_strum' // rasgueo / ataque de guitarra
+  | 'guitar_riff' // riff de guitarra curado / syncopado
   | 'energy_rise' // build-up / incremento de tensión
   | 'line_start' // nueva línea vocal (double tap)
   | 'mood_shift' // cambio emocional perceptible

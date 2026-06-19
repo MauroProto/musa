@@ -1,5 +1,7 @@
 import type { HapticEventType, Intensity } from '../lib/types';
 
+export type HapticLegendCategory = 'rhythm' | 'body' | 'texture' | 'structure' | 'emotion' | 'voice';
+
 export type HapticLegendItem = {
   type: HapticEventType;
   icon: string;
@@ -7,11 +9,94 @@ export type HapticLegendItem = {
   haptic: string;
   visual: string;
   why: string;
-  color: string; // monocromo: el brillo del gris indica la intensidad
+  role: string;
+  category: HapticLegendCategory;
+  color: string;
   intensity: Intensity;
 };
 
+export const HAPTIC_CATEGORY_LABELS: Record<HapticLegendCategory, string> = {
+  rhythm: 'Rhythm',
+  body: 'Body',
+  texture: 'Texture',
+  structure: 'Structure',
+  emotion: 'Emotion',
+  voice: 'Voice',
+};
+
 export const HAPTIC_LEGEND: HapticLegendItem[] = [
+  {
+    type: 'bass_pulse',
+    icon: 'volume-2',
+    label: 'Bass body',
+    haptic: 'Heavy low pulse',
+    visual: 'Low-end layer lights',
+    why: 'Transmits the physical weight of the track',
+    role: 'Feel the body of the song',
+    category: 'body',
+    color: '#FFFFFF',
+    intensity: 0.8,
+  },
+  {
+    type: 'drum_fill',
+    icon: 'fast-forward',
+    label: 'Drum attack',
+    haptic: 'Fast dry taps',
+    visual: 'Drum layer flickers',
+    why: 'Shows percussion turns and fills',
+    role: 'Read timing and attacks',
+    category: 'rhythm',
+    color: '#D8D8D8',
+    intensity: 0.8,
+  },
+  {
+    type: 'guitar_riff',
+    icon: 'zap',
+    label: 'Signature riff',
+    haptic: 'Syncopated brushed taps',
+    visual: 'Guitar layer locks on',
+    why: 'Makes a defining riff feel different from the beat',
+    role: 'Recognize the hook texture',
+    category: 'texture',
+    color: '#FFFFFF',
+    intensity: 0.8,
+  },
+  {
+    type: 'guitar_strum',
+    icon: 'zap',
+    label: 'Guitar strum',
+    haptic: 'Tight brushed taps',
+    visual: 'Guitar layer lights',
+    why: 'Makes strumming and lead texture readable',
+    role: 'Follow the surface motion',
+    category: 'texture',
+    color: '#F2F2F2',
+    intensity: 0.8,
+  },
+  {
+    type: 'chorus',
+    icon: 'zap',
+    label: 'Chorus / drop',
+    haptic: 'Heavy hit + rebound',
+    visual: 'Screen blooms',
+    why: 'The shared energy moment',
+    role: 'Feel the payoff',
+    category: 'structure',
+    color: '#FFFFFF',
+    intensity: 1,
+  },
+  {
+    type: 'mood_shift',
+    icon: 'aperture',
+    label: 'Mood shift',
+    haptic: 'Soft tone marker',
+    visual: 'Meaning label changes',
+    why: 'Marks when the lyric changes emotional color',
+    role: 'Feel emotional turns',
+    category: 'emotion',
+    color: '#C4C4C4',
+    intensity: 0.6,
+  },
   {
     type: 'line_start',
     icon: 'corner-down-right',
@@ -19,6 +104,8 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Two crisp taps',
     visual: 'Line highlights',
     why: 'Marks when a vocal phrase begins',
+    role: 'Track vocal phrasing',
+    category: 'voice',
     color: '#FFFFFF',
     intensity: 0.6,
   },
@@ -29,38 +116,10 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Quiet timing tick',
     visual: 'Pulsing dot',
     why: 'Helps you keep timing',
+    role: 'Keep time between events',
+    category: 'rhythm',
     color: '#7C7C7C',
     intensity: 0.2,
-  },
-  {
-    type: 'bass_pulse',
-    icon: 'volume-2',
-    label: 'Bass body',
-    haptic: 'Heavy low pulse',
-    visual: 'Energy meter thickens',
-    why: 'Transmits the physical weight of the track',
-    color: '#FFFFFF',
-    intensity: 0.8,
-  },
-  {
-    type: 'drum_fill',
-    icon: 'fast-forward',
-    label: 'Drum fill',
-    haptic: 'Fast tap texture',
-    visual: 'Pre-chorus flicker',
-    why: 'Signals that the arrangement is about to turn',
-    color: '#D8D8D8',
-    intensity: 0.8,
-  },
-  {
-    type: 'guitar_strum',
-    icon: 'zap',
-    label: 'Guitar riff',
-    haptic: 'Tight brushed taps',
-    visual: 'Guitar layer lights',
-    why: 'Makes the riff/strum texture readable',
-    color: '#F2F2F2',
-    intensity: 0.8,
   },
   {
     type: 'energy_rise',
@@ -69,6 +128,8 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Ascending pressure',
     visual: 'Meter climbs',
     why: 'Makes tension and release legible',
+    role: 'Anticipate the next section',
+    category: 'structure',
     color: '#ECECEC',
     intensity: 0.6,
   },
@@ -79,17 +140,9 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Textured pulse train',
     visual: 'Glowing line',
     why: 'Transmits a long, held phrase',
+    role: 'Hold a vocal feeling',
+    category: 'voice',
     color: '#B0B0B0',
-    intensity: 0.6,
-  },
-  {
-    type: 'mood_shift',
-    icon: 'aperture',
-    label: 'Mood shift',
-    haptic: 'Soft tone marker',
-    visual: 'Meaning label changes',
-    why: 'Marks when the lyric changes emotional color',
-    color: '#C4C4C4',
     intensity: 0.6,
   },
   {
@@ -99,18 +152,10 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Rising countdown',
     visual: 'Countdown appears',
     why: 'Anticipation + structure',
+    role: 'Prepare for the hook',
+    category: 'structure',
     color: '#D0D0D0',
     intensity: 0.6,
-  },
-  {
-    type: 'chorus',
-    icon: 'zap',
-    label: 'Chorus / drop',
-    haptic: 'Heavy hit + rebound',
-    visual: 'Screen blooms',
-    why: 'The shared energy moment',
-    color: '#FFFFFF',
-    intensity: 1,
   },
   {
     type: 'pause',
@@ -119,6 +164,8 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'No vibration',
     visual: 'Open space / breath',
     why: 'Feel absence and tension',
+    role: 'Notice silence',
+    category: 'voice',
     color: '#5A5A5A',
     intensity: 0.2,
   },
@@ -129,6 +176,8 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     haptic: 'Release tap',
     visual: 'Energy settles',
     why: 'Closes a verse, bridge, or chorus',
+    role: 'Feel closure',
+    category: 'structure',
     color: '#8C8C8C',
     intensity: 0.4,
   },

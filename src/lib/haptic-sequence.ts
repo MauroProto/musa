@@ -147,6 +147,21 @@ export function buildHapticSequence(
         tap(154, 'context-click', 'impact-medium', pulseMs(energy, 10, 22)),
       ]);
 
+    case 'guitar_riff': {
+      const base = [
+        tap(0, 'segment-tick', 'impact-light', pulseMs(energy, 8, 16)),
+        tap(46, 'virtual-key', 'impact-rigid', pulseMs(energy, 9, 18)),
+        tap(116, 'segment-frequent-tick', 'selection', pulseMs(energy, 7, 14)),
+        tap(188, 'virtual-key-release', 'impact-light', pulseMs(energy, 8, 16)),
+        tap(286, 'context-click', 'impact-medium', pulseMs(energy, 12, 24)),
+      ];
+      if (opts.strength !== 'strong') return finish(base);
+      return finish([
+        ...base,
+        tap(382, 'segment-tick', 'impact-rigid', pulseMs(energy, 9, 18)),
+      ]);
+    }
+
     case 'energy_rise': {
       const steps = [
         tap(0, 'segment-tick', 'impact-light', pulseMs(energy, 12, 24)),

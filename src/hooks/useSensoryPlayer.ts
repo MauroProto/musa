@@ -12,7 +12,7 @@ import { createHapticController, type HapticController } from '../lib/haptics';
 import { seekByDeltaMs, seekToMs } from '../lib/player-time';
 import { usePreferences } from '../store/preferences';
 import type { StemAudioController } from './useStemAudio';
-import type { HapticEvent, Intensity, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
+import type { AuthoredMoment, HapticEvent, Intensity, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
 
 export type PlayerStatus = 'loading' | 'ready' | 'error';
 
@@ -46,10 +46,12 @@ export function useSensoryPlayer(
   trackId: number,
   hints: { durationMs?: number },
   audio?: StemAudioController | null,
+  options: { authoredMoments?: AuthoredMoment[] } = {},
 ): SensoryPlayer {
   const strength = usePreferences((s) => s.strength);
   const pulseOn = usePreferences((s) => s.pulseOn);
   const visualOnly = usePreferences((s) => s.visualOnly);
+  const authoredMoments = options.authoredMoments;
 
   const [status, setStatus] = useState<PlayerStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -119,7 +121,7 @@ export function useSensoryPlayer(
           bpm: stems?.bpm,
           stemAnalysis: stems?.stemAnalysis,
           energy: stems?.stemAnalysis ? undefined : stems?.energy,
-          authored: getAuthoredScreenplay(trackId),
+          authored: authoredMoments ?? getAuthoredScreenplay(trackId),
         });
         if (cancelled) return;
         setLines(fetched);
@@ -141,7 +143,7 @@ export function useSensoryPlayer(
       }
       hapticRef.current?.stop();
     };
-  }, [trackId, hints.durationMs]);
+  }, [trackId, hints.durationMs, authoredMoments]);
 
   const durationMs = score?.durationMs ?? hints.durationMs ?? 0;
 
