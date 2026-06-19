@@ -1,4 +1,4 @@
-import { memo, useEffect } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -8,35 +8,49 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Theme, MOTION } from '../../constants/theme';
 import { useFontScale } from '../ui';
-import type { HapticEvent, SyncedLine } from '../../lib/types';
+import { resolvePlayerDisplayState } from '../../lib/player-display';
+import type { GuidedDemoStep } from '../../lib/demo-guided';
+import type { SensoryMoment, SyncedLine } from '../../lib/types';
 
 const EASE_OUT = Easing.bezier(MOTION.easeOut[0], MOTION.easeOut[1], MOTION.easeOut[2], MOTION.easeOut[3]);
 
 function LyricDisplayBase({
   lines,
   currentLineIndex,
-  cue,
+  isPlaying,
+  currentMs,
+  activeMoments,
+  guidedStep,
   currentSize = 29,
   contextSize = 16,
 }: {
   lines: SyncedLine[];
   currentLineIndex: number;
-  cue: { id: number; type: HapticEvent['type'] } | null;
+  isPlaying: boolean;
+  currentMs: number;
+  activeMoments: SensoryMoment[];
+  guidedStep?: GuidedDemoStep | null;
   currentSize?: number;
   contextSize?: number;
 }) {
   const f = useFontScale();
   const enter = useSharedValue(1);
+  const display = useMemo(
+    () => resolvePlayerDisplayState({
+      lines,
+      currentLineIndex,
+      isPlaying,
+      currentMs,
+      activeMoments,
+      guidedStep,
+    }),
+    [activeMoments, currentLineIndex, currentMs, guidedStep, isPlaying, lines],
+  );
 
   useEffect(() => {
-    if (currentLineIndex < 0) return;
     enter.value = 0;
     enter.value = withTiming(1, { duration: MOTION.dur.slow, easing: EASE_OUT });
-  }, [currentLineIndex, enter]);
-
-  const cur = currentLineIndex >= 0 ? lines[currentLineIndex] : null;
-  const prev = currentLineIndex > 0 ? lines[currentLineIndex - 1] : null;
-  const next = currentLineIndex >= 0 && currentLineIndex < lines.length - 1 ? lines[currentLineIndex + 1] : null;
+  }, [display.mode, display.primaryText, enter]);
 
   const currentStyle = useAnimatedStyle(() => ({
     opacity: 0.35 + 0.65 * enter.value,
@@ -45,30 +59,36 @@ function LyricDisplayBase({
 
   const curFs = Math.round(currentSize * f);
   const ctxFs = Math.round(contextSize * f);
+  const quietMode = display.mode === 'idle' || display.mode === 'empty';
 
   return (
     <View style={styles.wrap}>
-      {prev ? (
+      {display.previousText ? (
         <Text numberOfLines={2} style={[styles.context, { fontSize: ctxFs, lineHeight: Math.round(ctxFs * 1.4) }]}>
-          {prev.text}
+          {display.previousText}
+        </Text>
+      ) : display.statusLabel ? (
+        <Text numberOfLines={1} style={[styles.status, { fontSize: Math.round(ctxFs * 0.72), lineHeight: Math.round(ctxFs * 1.05) }]}>
+          {display.statusLabel.toUpperCase()}
         </Text>
       ) : (
         <View style={{ height: 8 }} />
       )}
 
-      {cur ? (
-        <Animated.Text style={[styles.current, { fontSize: curFs, lineHeight: Math.round(curFs * 1.12) }, currentStyle]}>
-          {cur.text}
-        </Animated.Text>
-      ) : (
-        <Text style={[styles.current, { color: Theme.textDim, fontSize: Math.round(20 * f), lineHeight: Math.round(24 * f) }]}>
-          {lines.length === 0 ? 'Waiting for synced lyrics…' : 'Press play'}
-        </Text>
-      )}
+      <Animated.Text
+        style={[
+          styles.current,
+          quietMode ? styles.currentIdle : null,
+          { fontSize: quietMode ? Math.round(20 * f) : curFs, lineHeight: quietMode ? Math.round(24 * f) : Math.round(curFs * 1.12) },
+          currentStyle,
+        ]}
+      >
+        {display.primaryText}
+      </Animated.Text>
 
-      {next ? (
+      {display.nextText ? (
         <Text numberOfLines={2} style={[styles.context, { fontSize: ctxFs, lineHeight: Math.round(ctxFs * 1.4) }]}>
-          {next.text}
+          {display.nextText}
         </Text>
       ) : (
         <View style={{ height: 8 }} />
@@ -87,9 +107,18 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0,
   },
+  currentIdle: {
+    color: Theme.textDim,
+  },
   context: {
     color: Theme.textFaint,
     textAlign: 'center',
     fontWeight: '500',
+  },
+  status: {
+    color: Theme.textGhost,
+    textAlign: 'center',
+    fontWeight: '700',
+    letterSpacing: 0,
   },
 });

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, router, useLocalSearchParams } from 'expo-router';
 import { ActivityIndicator, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,8 @@ import { ChorusCountdown } from '../components/player/ChorusCountdown';
 import { LyricDisplay } from '../components/player/LyricDisplay';
 import { SensoryPanel } from '../components/player/SensoryPanel';
 import { GuidedDemoChip } from '../components/player/GuidedDemoChip';
+import { TactileStatusBar } from '../components/player/TactileStatusBar';
+import { currentGuidedStep } from '../lib/demo-guided';
 
 export default function PlayerScreen() {
   const { isWide } = useResponsive();
@@ -116,7 +118,9 @@ type LayoutProps = {
 
 function MobilePlayer({ player, title, artist, progress, insets, showAudio, trackId, guided }: LayoutProps) {
   const f = useFontScale();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const energy = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.5;
+  const guidedStep = guided ? currentGuidedStep(trackId, player.currentMs) : null;
   return (
     <View style={[styles.fill, { paddingTop: insets.top + 8, paddingBottom: insets.bottom + 14 }]}>
       <Backdrop lift={0.07} />
@@ -139,22 +143,34 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio, trac
         </View>
 
         <Pressable style={styles.lyricArea} onPress={player.toggle}>
-          <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={30} contextSize={16} />
+          <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} isPlaying={player.isPlaying} currentMs={player.currentMs} activeMoments={player.activeMoments} guidedStep={guidedStep} currentSize={30} contextSize={16} />
           <View style={{ height: 20 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
           {guided ? <GuidedDemoChip trackId={trackId} currentMs={player.currentMs} seekTo={player.seekTo} /> : null}
-          <SensoryPanel
+        </Pressable>
+        <View style={{ gap: 14 }}>
+          <TactileStatusBar
             moments={player.activeMoments}
             cue={player.cue?.type}
             cueId={player.cue?.id}
             energy={energy}
-            source={player.energySource}
             section={player.currentSection?.kind}
             isPlaying={player.isPlaying}
+            focus={player.activeTactileFocus}
+            detailsOpen={detailsOpen}
+            onToggleDetails={() => setDetailsOpen((value) => !value)}
           />
-        </Pressable>
-
-        <View style={{ gap: 14 }}>
+          {detailsOpen ? (
+            <SensoryPanel
+              moments={player.activeMoments}
+              cue={player.cue?.type}
+              cueId={player.cue?.id}
+              energy={energy}
+              source={player.energySource}
+              section={player.currentSection?.kind}
+              isPlaying={player.isPlaying}
+            />
+          ) : null}
           <SeekBar
             progress={progress}
             beatPulse={player.beatPulse}
@@ -184,7 +200,9 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio, trac
 /* ------------------------------ WEB (desktop) ------------------------------ */
 
 function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId, guided }: LayoutProps) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const energy = player.score ? energyValueAt(player.score.energy, player.currentMs) : 0.5;
+  const guidedStep = guided ? currentGuidedStep(trackId, player.currentMs) : null;
   return (
     <View style={[styles.fill, { paddingTop: insets.top }]}>
       <Backdrop lift={0.06} />
@@ -206,24 +224,37 @@ function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId
 
       <Pressable style={styles.webStage} onPress={player.toggle}>
         <View style={{ width: '100%', maxWidth: 1040 }}>
-          <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} cue={player.cue} currentSize={62} contextSize={24} />
+          <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} isPlaying={player.isPlaying} currentMs={player.currentMs} activeMoments={player.activeMoments} guidedStep={guidedStep} currentSize={62} contextSize={24} />
           <View style={{ height: 28 }} />
           <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
           {guided ? <GuidedDemoChip trackId={trackId} currentMs={player.currentMs} seekTo={player.seekTo} /> : null}
-          <SensoryPanel
-            moments={player.activeMoments}
-            cue={player.cue?.type}
-            cueId={player.cue?.id}
-            energy={energy}
-            source={player.energySource}
-            section={player.currentSection?.kind}
-            isPlaying={player.isPlaying}
-          />
         </View>
       </Pressable>
 
       <View style={[styles.webDock, { paddingBottom: insets.bottom + 28 }]}>
         <View style={{ width: '100%', maxWidth: 920, gap: 16 }}>
+          <TactileStatusBar
+            moments={player.activeMoments}
+            cue={player.cue?.type}
+            cueId={player.cue?.id}
+            energy={energy}
+            section={player.currentSection?.kind}
+            isPlaying={player.isPlaying}
+            focus={player.activeTactileFocus}
+            detailsOpen={detailsOpen}
+            onToggleDetails={() => setDetailsOpen((value) => !value)}
+          />
+          {detailsOpen ? (
+            <SensoryPanel
+              moments={player.activeMoments}
+              cue={player.cue?.type}
+              cueId={player.cue?.id}
+              energy={energy}
+              source={player.energySource}
+              section={player.currentSection?.kind}
+              isPlaying={player.isPlaying}
+            />
+          ) : null}
           <SeekBar
             progress={progress}
             beatPulse={player.beatPulse}

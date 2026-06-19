@@ -9,6 +9,7 @@ import {
   nearestChorusIn,
 } from '../lib/sensory-score';
 import { createHapticController, type HapticController } from '../lib/haptics';
+import { resolveTactileFocus, shouldSuppressBeatAt, type TactileFocus } from '../lib/tactile-focus';
 import { seekByDeltaMs, seekToMs } from '../lib/player-time';
 import { usePreferences } from '../store/preferences';
 import type { StemAudioController } from './useStemAudio';
@@ -32,6 +33,7 @@ export type SensoryPlayer = {
   currentLineIndex: number;
   currentSection: SectionMark | null;
   activeMoments: SensoryMoment[];
+  activeTactileFocus: TactileFocus | null;
   nextChorusInMs: number | null;
   energySource: string;
   play: () => void;
@@ -51,7 +53,10 @@ export function useSensoryPlayer(
   const strength = usePreferences((s) => s.strength);
   const pulseOn = usePreferences((s) => s.pulseOn);
   const visualOnly = usePreferences((s) => s.visualOnly);
-  const authoredMoments = options.authoredMoments;
+  const authoredMoments = useMemo(
+    () => options.authoredMoments ?? getAuthoredScreenplay(trackId) ?? [],
+    [trackId, options.authoredMoments],
+  );
 
   const [status, setStatus] = useState<PlayerStatus>('loading');
   const [errorMessage, setErrorMessage] = useState<string | undefined>();
@@ -121,7 +126,7 @@ export function useSensoryPlayer(
           bpm: stems?.bpm,
           stemAnalysis: stems?.stemAnalysis,
           energy: stems?.stemAnalysis ? undefined : stems?.energy,
-          authored: authoredMoments ?? getAuthoredScreenplay(trackId),
+          authored: authoredMoments,
         });
         if (cancelled) return;
         setLines(fetched);
@@ -198,7 +203,8 @@ export function useSensoryPlayer(
         beatCursorRef.current += 1;
         setBeatPulse((p) => (p + 1) % 1_000_000);
         const hasNearbySemanticCue = Math.abs(beatT - lastSemanticHapticMsRef.current) < 260;
-        if (pulseOn && !visualOnly && !hasNearbySemanticCue) {
+        const focusSuppressesBeat = shouldSuppressBeatAt(authoredMoments, beatT);
+        if (pulseOn && !visualOnly && !hasNearbySemanticCue && !focusSuppressesBeat) {
           hapticRef.current?.fire('beat', beatIntensityFromEnergy(energyValueAt(s.energy, beatT)));
         }
       }
@@ -217,7 +223,7 @@ export function useSensoryPlayer(
       return;
     }
     rafRef.current = requestAnimationFrame(() => frameRef.current());
-  }, [durationMs, pulseOn, visualOnly, stopLoop]);
+  }, [authoredMoments, durationMs, pulseOn, visualOnly, stopLoop]);
 
   useEffect(() => {
     frameRef.current = frame;
@@ -311,6 +317,10 @@ export function useSensoryPlayer(
     () => (score ? activeSensoryMoments(score.moments, currentMs, 3) : []),
     [score, currentMs],
   );
+  const activeTactileFocus = useMemo(
+    () => resolveTactileFocus(authoredMoments, currentMs),
+    [authoredMoments, currentMs],
+  );
   const nextChorusInMs = useMemo(
     () => (score ? nearestChorusIn(score.chorusTimesMs, currentMs) : null),
     [score, currentMs],
@@ -330,6 +340,7 @@ export function useSensoryPlayer(
     currentLineIndex,
     currentSection,
     activeMoments,
+    activeTactileFocus,
     nextChorusInMs,
     energySource,
     play,

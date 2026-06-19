@@ -27,6 +27,7 @@ export const DANI_CALIFORNIA_SCREENPLAY: AuthoredMoment[] = [
     intensity: 0.6,
     mood: 'driving',
     cueType: 'drum_fill',
+    suppressBeat: false,
   },
   {
     t: 7500,
@@ -38,6 +39,7 @@ export const DANI_CALIFORNIA_SCREENPLAY: AuthoredMoment[] = [
     mood: 'driving',
     cueType: 'guitar_riff',
     repeatEveryMs: 760,
+    suppressBeat: true,
   },
   {
     t: 15580,
@@ -69,6 +71,7 @@ export const DANI_CALIFORNIA_SCREENPLAY: AuthoredMoment[] = [
     intensity: 1,
     mood: 'euphoric',
     cueType: 'chorus',
+    suppressBeat: true,
   },
   {
     t: 137120,
@@ -90,6 +93,7 @@ export const DANI_CALIFORNIA_SCREENPLAY: AuthoredMoment[] = [
     mood: 'euphoric',
     cueType: 'guitar_strum',
     repeatEveryMs: 520,
+    suppressBeat: false,
   },
 ];
 

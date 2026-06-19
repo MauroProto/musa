@@ -155,6 +155,8 @@ export type AuthoredMoment = {
   cueType: HapticEventType;
   /** If set, the cueType repeats every repeatEveryMs across [t, endMs] (e.g. a riff). */
   repeatEveryMs?: number;
+  /** If true, regular beat pulses pause while this authored moment is active. */
+  suppressBeat?: boolean;
 };
 
 /** Preferencias de usuaria que afectan la generación */

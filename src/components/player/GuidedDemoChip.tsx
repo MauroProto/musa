@@ -22,7 +22,7 @@ export function GuidedDemoChip({
   return (
     <View style={styles.wrap}>
       <View style={styles.iconMark}>
-        <Ionicons name="navigate-outline" size={14} color={Theme.text} />
+        <Ionicons name="navigate-outline" size={13} color={Theme.text} />
       </View>
       <View style={styles.copy}>
         <Text variant="label" color={Theme.textGhost} style={styles.eyebrow}>
@@ -31,13 +31,10 @@ export function GuidedDemoChip({
         <Text variant="caption" color={Theme.text} numberOfLines={1} weight="700">
           {active.label}
         </Text>
-        <Text variant="label" color={Theme.textDim} numberOfLines={1} style={styles.detail}>
-          {active.detail}
-        </Text>
       </View>
       {jumpTarget ? (
         <Touch onPress={() => seekTo(jumpTarget.jumpMs)} hitSlop={8} style={styles.jumpBtn}>
-          <Ionicons name="play-skip-forward-outline" size={14} color={Theme.bg} />
+          <Ionicons name="play-skip-forward-outline" size={13} color={Theme.bg} />
           <Text variant="label" color={Theme.bg} weight="800" style={styles.jumpText}>
             {current ? 'Next' : 'Jump'}
           </Text>
@@ -49,21 +46,21 @@ export function GuidedDemoChip({
 
 const styles = StyleSheet.create({
   wrap: {
-    minHeight: 54,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 9,
+    gap: 9,
+    paddingVertical: 7,
     paddingHorizontal: 10,
     borderRadius: RADIUS.lg,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: Theme.border,
   },
   iconMark: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Theme.surfaceStrong,
@@ -75,12 +72,8 @@ const styles = StyleSheet.create({
   eyebrow: {
     letterSpacing: 0,
   },
-  detail: {
-    letterSpacing: 0,
-    marginTop: 1,
-  },
   jumpBtn: {
-    minHeight: 34,
+    minHeight: 30,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
