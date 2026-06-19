@@ -20,7 +20,6 @@ import { LayerMixer } from '../components/player/LayerMixer';
 import { GuidedDemoChip } from '../components/player/GuidedDemoChip';
 import { CueCheatsheet } from '../components/player/CueCheatsheet';
 import { PlayerReactiveBg } from '../components/player/PlayerReactiveBg';
-import { PlayPulseHalo } from '../components/player/PlayPulseHalo';
 import { TactileStatusBar } from '../components/player/TactileStatusBar';
 import { currentGuidedStep } from '../lib/demo-guided';
 
@@ -328,12 +327,9 @@ function Transport({ player }: { player: SensoryPlayer }) {
       <GlassIconButton size={44} onPress={() => player.seekBy(-10000)} accessibilityLabel="Seek back 10 seconds">
         <Icon name="rewind" size={18} color={Theme.text} />
       </GlassIconButton>
-      <View style={styles.playWrap}>
-        <PlayPulseHalo size={60} playing={player.isPlaying} beat={player.beatPulse} />
-        <Touch onPress={player.toggle} style={styles.playBtn} scaleTo={0.94} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
-          <Icon name={player.isPlaying ? 'pause' : 'play'} size={24} weight="fill" color={Theme.bg} />
-        </Touch>
-      </View>
+      <Touch onPress={player.toggle} style={styles.playBtn} scaleTo={0.94} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
+        <Icon name={player.isPlaying ? 'pause' : 'play'} size={24} weight="fill" color={Theme.bg} />
+      </Touch>
       <GlassIconButton size={44} onPress={() => player.seekBy(10000)} accessibilityLabel="Seek forward 10 seconds">
         <Icon name="forward" size={18} color={Theme.text} />
       </GlassIconButton>
@@ -375,12 +371,6 @@ const styles = StyleSheet.create({
 
   // transport
   controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 22 },
-  playWrap: {
-    width: 60,
-    height: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   playBtn: {
     width: 60,
     height: 60,

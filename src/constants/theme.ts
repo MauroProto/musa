@@ -43,10 +43,10 @@ export const Theme = {
   success: '#0B0C0E',
   danger: '#D93636', // errors only
 
-  // ── Recording-button red ───────────────────────────────────────────────
-  // A medium-strong red used as a single accent (e.g. the Now Playing dot).
-  // Stays as the one chromatic punctuation in the monochrome system.
-  rec: '#E63946',
+  // ── Bright red ─────────────────────────────────────────────────────────
+  // A single bright-red accent — the one chromatic punctuation in the
+  // otherwise monochrome system.
+  rec: '#D30000',
 
   // ── Kept for compatibility (no longer used as a brand accent) ─────────
   teal: '#0B0C0E',

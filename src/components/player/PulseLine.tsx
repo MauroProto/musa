@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     backgroundColor: Theme.fill,
     overflow: 'hidden',
   },
-  fill: { height: '100%', borderRadius: 2, backgroundColor: Theme.text },
+  fill: { height: '100%', borderRadius: 2, backgroundColor: Theme.rec },
   dotWrap: {
     position: 'absolute',
     top: 0,
@@ -72,6 +72,6 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Theme.text,
+    backgroundColor: Theme.rec,
   },
 });
