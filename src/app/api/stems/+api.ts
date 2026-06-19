@@ -6,10 +6,7 @@ import {
   isDemoTrack,
 } from '../../../lib/api-server';
 import { buildSensoryScore } from '../../../lib/sensory-score';
-import {
-  DANI_CALIFORNIA_STEM_ANALYSIS,
-  DANI_CALIFORNIA_TRACK_IDS,
-} from '../../../lib/generated/dani-california-stem-analysis';
+import { getStemDemoAnalysis } from '../../../lib/stem-demo-analyses';
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -25,9 +22,7 @@ export async function GET(req: Request): Promise<Response> {
     return json({ error: 'trackId required' }, 400);
   }
 
-  const stemAnalysis = DANI_CALIFORNIA_TRACK_IDS.has(trackId)
-    ? DANI_CALIFORNIA_STEM_ANALYSIS
-    : undefined;
+  const stemAnalysis = getStemDemoAnalysis(trackId);
   let lines = stemAnalysis ? (STEM_DEMO_FALLBACK_LINES[trackId] ?? []) : DEMO_LYRICS[9001];
 
   if (isDemoTrack(trackId)) {

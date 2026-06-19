@@ -1,5 +1,5 @@
 import type { SyncedLine, Track } from './types';
-import { DANI_CALIFORNIA_TRACK_ID } from './demo-score-tracks.ts';
+import { DANI_CALIFORNIA_TRACK_ID, ORDINARY_TRACK_ID } from './demo-score-tracks.ts';
 
 export const DEMO_TRACKS: Track[] = [
   {
@@ -10,6 +10,15 @@ export const DEMO_TRACKS: Track[] = [
     hasSubtitles: true,
     instrumental: false,
     durationMs: 281000,
+  },
+  {
+    trackId: ORDINARY_TRACK_ID,
+    title: 'Ordinary',
+    artist: 'Alex Warren',
+    album: 'LALAL.AI stem score',
+    hasSubtitles: true,
+    instrumental: false,
+    durationMs: 187000,
   },
   {
     trackId: 9001,
@@ -74,6 +83,14 @@ export const STEM_DEMO_FALLBACK_LINES: Record<number, SyncedLine[]> = {
     { startMs: 0, text: 'Stem score ready' },
     { startMs: 8000, text: 'Bass and drums lead the tactile map' },
     { startMs: 18000, text: 'Live lyrics load from Musixmatch' },
+  ],
+  [ORDINARY_TRACK_ID]: [
+    { startMs: 0, text: 'Acoustic pulse opens the space' },
+    { startMs: 18000, text: 'Close vocal phrase comes forward' },
+    { startMs: 39000, text: 'First lift lands across the body' },
+    { startMs: 76000, text: 'Strings begin the long rise' },
+    { startMs: 112000, text: 'Drums widen the final build' },
+    { startMs: 146000, text: 'Last lift holds, then releases' },
   ],
 };
 

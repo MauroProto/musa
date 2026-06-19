@@ -4,17 +4,40 @@ import path from 'node:path';
 import ffmpegPath from 'ffmpeg-static';
 
 const root = process.cwd();
-const inputDir = path.join(root, 'assets', 'lalalai');
-const outputFile = path.join(root, 'src', 'lib', 'generated', 'dani-california-stem-analysis.ts');
 const sampleRate = 2000;
 const windowMs = 100;
 const samplesPerWindow = Math.round((sampleRate * windowMs) / 1000);
 
-const stems = {
-  bass: '_bass_',
-  drums: '_drum_',
-  guitar: '_electric_guitar_',
-  vocals: '_vocals_',
+const trackConfigs = {
+  dani: {
+    inputDir: path.join(root, 'assets', 'lalalai'),
+    outputFile: path.join(root, 'src', 'lib', 'generated', 'dani-california-stem-analysis.ts'),
+    trackIdsExport: 'DANI_CALIFORNIA_TRACK_IDS',
+    analysisExport: 'DANI_CALIFORNIA_STEM_ANALYSIS',
+    trackIds: [95574135],
+    bpm: 96,
+    stems: {
+      bass: '_bass_',
+      drums: '_drum_',
+      guitar: '_electric_guitar_',
+      vocals: '_vocals_',
+    },
+  },
+  ordinary: {
+    inputDir: path.join(root, 'assets', 'lalalai', 'ordinary'),
+    outputFile: path.join(root, 'src', 'lib', 'generated', 'ordinary-stem-analysis.ts'),
+    trackIdsExport: 'ORDINARY_TRACK_IDS',
+    analysisExport: 'ORDINARY_STEM_ANALYSIS',
+    trackIds: [324489197],
+    bpm: 79,
+    stems: {
+      // Ordinary has no separated bass stem; strings feed the body/low layer.
+      bass: '_strings_split_by_lalalai',
+      drums: '_drum_split_by_lalalai',
+      guitar: '_acoustic_guitar_split_by_lalalai',
+      vocals: '_vocals_split_by_lalalai',
+    },
+  },
 };
 
 function clamp01(value) {
@@ -28,13 +51,16 @@ function percentile(values, p) {
   return sorted[idx];
 }
 
-async function findStemFiles() {
-  const files = await readdir(inputDir);
+async function findStemFiles(config) {
+  const files = await readdir(config.inputDir);
   const found = {};
-  for (const [name, marker] of Object.entries(stems)) {
-    const file = files.find((candidate) => candidate.includes(marker) && candidate.endsWith('.mp3'));
-    if (!file) throw new Error(`Missing LALAL stem with marker ${marker}`);
-    found[name] = path.join(inputDir, file);
+  for (const [name, marker] of Object.entries(config.stems)) {
+    const candidates = files.filter((candidate) => candidate.includes(marker) && candidate.endsWith('.mp3'));
+    const file = marker.startsWith('_no_')
+      ? candidates[0]
+      : candidates.find((candidate) => !candidate.includes('_no_')) ?? candidates[0];
+    if (!file) throw new Error(`Missing LALAL stem with marker ${marker} in ${config.inputDir}`);
+    found[name] = path.join(config.inputDir, file);
   }
   return found;
 }
@@ -129,9 +155,8 @@ function trimSilentTail(frames) {
   return frames.slice(0, Math.max(1, lastActiveIndex + 2));
 }
 
-async function main() {
-  if (!ffmpegPath) throw new Error('ffmpeg-static did not resolve a binary');
-  const files = await findStemFiles();
+async function analyzeTrack(config) {
+  const files = await findStemFiles(config);
   const envelopes = {};
   for (const [name, file] of Object.entries(files)) {
     const pcm = await decodeMonoPcm(file);
@@ -141,17 +166,27 @@ async function main() {
   const frames = trimSilentTail(buildFrames(envelopes));
   const durationMs = frames.at(-1)?.t ? frames.at(-1).t + windowMs : 0;
   const body = `import type { StemAnalysis } from '../types';\n\n` +
-    `export const DANI_CALIFORNIA_TRACK_IDS = new Set([95574135]);\n\n` +
-    `export const DANI_CALIFORNIA_STEM_ANALYSIS: StemAnalysis = ${JSON.stringify({
+    `export const ${config.trackIdsExport} = new Set(${JSON.stringify(config.trackIds)});\n\n` +
+    `export const ${config.analysisExport}: StemAnalysis = ${JSON.stringify({
       source: 'lalal-local',
       durationMs,
-      bpm: 96,
+      bpm: config.bpm,
       frames,
     }, null, 2)};\n`;
 
-  await mkdir(path.dirname(outputFile), { recursive: true });
-  await writeFile(outputFile, body);
-  console.log(`Wrote ${path.relative(root, outputFile)} with ${frames.length} frames`);
+  await mkdir(path.dirname(config.outputFile), { recursive: true });
+  await writeFile(config.outputFile, body);
+  console.log(`Wrote ${path.relative(root, config.outputFile)} with ${frames.length} frames`);
+}
+
+async function main() {
+  if (!ffmpegPath) throw new Error('ffmpeg-static did not resolve a binary');
+  const requested = process.argv[2] ?? 'dani';
+  const config = trackConfigs[requested];
+  if (!config) {
+    throw new Error(`Unknown track '${requested}'. Expected one of: ${Object.keys(trackConfigs).join(', ')}`);
+  }
+  await analyzeTrack(config);
 }
 
 main().catch((error) => {

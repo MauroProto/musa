@@ -39,6 +39,7 @@ output/playwright/
 
 # local copyrighted stem inputs; commit derived features only
 assets/lalalai/*.mp3
+assets/lalalai/**/*.mp3
 
 # typescript
 *.tsbuildinfo

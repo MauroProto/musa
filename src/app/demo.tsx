@@ -15,9 +15,9 @@ export default function DemoScreen() {
 
   return (
     <Screen scroll>
-      <Text variant="largeTitle">Feel Dani California</Text>
+      <Text variant="largeTitle">Feel the demo scores</Text>
       <Text dim style={{ marginBottom: 2 }}>
-        Start with the guided haptic demo. It works offline for sensory captions and native haptics; audio stems are optional.
+        Start with a guided haptic demo. These work offline for sensory captions and native haptics; audio stems are optional.
       </Text>
 
       <Stack gap={10}>

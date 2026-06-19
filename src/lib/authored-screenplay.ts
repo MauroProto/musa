@@ -15,7 +15,7 @@
  * against the stems during the Expo Go smoke test (see HANDOFF / Phase 5).
  */
 import type { AuthoredMoment } from './types';
-import { DANI_CALIFORNIA_TRACK_ID } from './demo-score-tracks.ts';
+import { DANI_CALIFORNIA_TRACK_ID, ORDINARY_TRACK_ID } from './demo-score-tracks.ts';
 
 export const DANI_CALIFORNIA_SCREENPLAY: AuthoredMoment[] = [
   {
@@ -97,8 +97,77 @@ export const DANI_CALIFORNIA_SCREENPLAY: AuthoredMoment[] = [
   },
 ];
 
+
+export const ORDINARY_SCREENPLAY: AuthoredMoment[] = [
+  {
+    t: 0,
+    endMs: 18500,
+    layer: 'guitar',
+    label: 'Acoustic pulse opens',
+    detail: 'A close acoustic pattern gives the hand a steady entry point.',
+    intensity: 0.4,
+    mood: 'calm',
+    cueType: 'guitar_strum',
+    repeatEveryMs: 980,
+    suppressBeat: true,
+  },
+  {
+    t: 18500,
+    endMs: 39000,
+    layer: 'voice',
+    label: 'Vocal close-up',
+    detail: 'The lead voice moves forward while the tactile field stays narrow.',
+    intensity: 0.4,
+    mood: 'melancholic',
+    cueType: 'sustain',
+  },
+  {
+    t: 39000,
+    endMs: 59000,
+    layer: 'structure',
+    label: 'First body lift',
+    detail: 'The arrangement opens into a broader full-body arrival.',
+    intensity: 0.8,
+    mood: 'euphoric',
+    cueType: 'chorus',
+    suppressBeat: true,
+  },
+  {
+    t: 76000,
+    endMs: 99000,
+    layer: 'emotion',
+    label: 'Strings rise underneath',
+    detail: 'Sustained strings become the emotional lift beneath the pulse.',
+    intensity: 0.6,
+    mood: 'euphoric',
+    cueType: 'energy_rise',
+  },
+  {
+    t: 112000,
+    endMs: 146000,
+    layer: 'drums',
+    label: 'Drums widen the frame',
+    detail: 'Percussion sharpens the edges around the growing arrangement.',
+    intensity: 0.6,
+    mood: 'driving',
+    cueType: 'drum_fill',
+    repeatEveryMs: 1600,
+  },
+  {
+    t: 146000,
+    endMs: 184000,
+    layer: 'structure',
+    label: 'Final lift and release',
+    detail: 'The last large arrival holds, then clears into a softer ending.',
+    intensity: 1,
+    mood: 'euphoric',
+    cueType: 'chorus',
+    suppressBeat: true,
+  },
+];
 export const AUTHORED_SCREENPLAYS: Record<number, AuthoredMoment[]> = {
   [DANI_CALIFORNIA_TRACK_ID]: DANI_CALIFORNIA_SCREENPLAY,
+  [ORDINARY_TRACK_ID]: ORDINARY_SCREENPLAY,
 };
 
 export function getAuthoredScreenplay(trackId: number): AuthoredMoment[] | undefined {

@@ -1,4 +1,4 @@
-import { DANI_CALIFORNIA_TRACK_ID } from './demo-score-tracks.ts';
+import { DANI_CALIFORNIA_TRACK_ID, ORDINARY_TRACK_ID } from './demo-score-tracks.ts';
 import type { HapticEventType, SyncedLine } from './types.ts';
 
 export type GuidedDemoStep = {
@@ -69,9 +69,64 @@ const DANI_GUIDED_STEPS: GuidedDemoStep[] = [
   },
 ];
 
+const ORDINARY_GUIDED_STEPS: GuidedDemoStep[] = [
+  {
+    id: 'acoustic-open',
+    label: 'Acoustic pulse opens',
+    detail: 'A close guitar pattern sets the tactile room before the full arrangement grows.',
+    jumpMs: 0,
+    endMs: 18500,
+    cueType: 'guitar_strum',
+  },
+  {
+    id: 'vocal-closeup',
+    label: 'Vocal close-up',
+    detail: 'The phone softens into longer vocal texture while the arrangement stays narrow.',
+    jumpMs: 18500,
+    endMs: 39000,
+    cueType: 'sustain',
+  },
+  {
+    id: 'first-lift',
+    label: 'First body lift',
+    detail: 'The first large arrival becomes a broader, stronger tactile impact.',
+    jumpMs: 39000,
+    endMs: 59000,
+    cueType: 'chorus',
+  },
+  {
+    id: 'strings-rise',
+    label: 'Strings rise underneath',
+    detail: 'Sustained strings feed the body layer and pull the song upward.',
+    jumpMs: 76000,
+    endMs: 99000,
+    cueType: 'energy_rise',
+  },
+  {
+    id: 'drums-widen',
+    label: 'Drums widen the frame',
+    detail: 'Percussion enters as sharper taps around the larger emotional swell.',
+    jumpMs: 112000,
+    endMs: 146000,
+    cueType: 'drum_fill',
+  },
+  {
+    id: 'final-lift',
+    label: 'Final lift and release',
+    detail: 'The strongest body cue holds, then clears into a softer ending.',
+    jumpMs: 146000,
+    endMs: 184000,
+    cueType: 'chorus',
+  },
+];
+
+const GUIDED_STEPS_BY_TRACK: Record<number, GuidedDemoStep[]> = {
+  [DANI_CALIFORNIA_TRACK_ID]: DANI_GUIDED_STEPS,
+  [ORDINARY_TRACK_ID]: ORDINARY_GUIDED_STEPS,
+};
+
 export function guidedStepsForTrack(trackId: number): GuidedDemoStep[] {
-  if (trackId !== DANI_CALIFORNIA_TRACK_ID) return [];
-  return DANI_GUIDED_STEPS;
+  return GUIDED_STEPS_BY_TRACK[trackId] ?? [];
 }
 
 export function currentGuidedStep(trackId: number, currentMs: number): GuidedDemoStep | null {
@@ -85,8 +140,7 @@ export function nextGuidedStep(trackId: number, currentMs: number): GuidedDemoSt
 }
 
 export function fallbackSensoryCaptionsForTrack(trackId: number): SyncedLine[] {
-  if (trackId !== DANI_CALIFORNIA_TRACK_ID) return [];
-  return DANI_GUIDED_STEPS.map((step) => ({
+  return guidedStepsForTrack(trackId).map((step) => ({
     startMs: step.jumpMs,
     endMs: step.endMs,
     text: step.label,

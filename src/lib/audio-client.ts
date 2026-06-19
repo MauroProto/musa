@@ -20,7 +20,7 @@ export const ISOLATABLE_STEMS: { key: StemKind; label: string }[] = [
   { key: 'vocals', label: 'Vocals' },
   { key: 'guitar', label: 'Guitar' },
   { key: 'drums', label: 'Drums' },
-  { key: 'bass', label: 'Bass' },
+  { key: 'bass', label: 'Body' },
 ];
 
 export const AUDIO_MODE_OPTIONS: { key: AudioMode; label: string; hint: string }[] = [

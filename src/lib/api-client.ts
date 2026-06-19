@@ -3,7 +3,7 @@ import type { EnergyPoint, StemAnalysis, SyncedLine, Track } from './types';
 import { DEMO_LYRICS, DEMO_TRACKS, isDemoTrack, searchDemoTracks } from './fixtures';
 import { isStemDemoTrack } from './demo-score-tracks';
 import { fallbackSensoryCaptionsForTrack } from './demo-guided';
-import { DANI_CALIFORNIA_STEM_ANALYSIS } from './generated/dani-california-stem-analysis';
+import { getStemDemoAnalysis } from './stem-demo-analyses';
 
 function apiBase(): string {
   if (Platform.OS === 'web') return '';
@@ -69,14 +69,17 @@ export async function getStemsClient(trackId: number): Promise<{
     };
   }
   if (isStemDemoTrack(trackId)) {
-    return {
-      energy: [],
-      beats: [],
-      durationMs: DANI_CALIFORNIA_STEM_ANALYSIS.durationMs ?? 281000,
-      bpm: DANI_CALIFORNIA_STEM_ANALYSIS.bpm,
-      source: 'lalal-local',
-      stemAnalysis: DANI_CALIFORNIA_STEM_ANALYSIS,
-    };
+    const stemAnalysis = getStemDemoAnalysis(trackId);
+    if (stemAnalysis) {
+      return {
+        energy: [],
+        beats: [],
+        durationMs: stemAnalysis.durationMs ?? 60000,
+        bpm: stemAnalysis.bpm,
+        source: 'lalal-local',
+        stemAnalysis,
+      };
+    }
   }
   return null;
 }
