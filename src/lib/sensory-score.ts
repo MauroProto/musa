@@ -16,6 +16,7 @@ import {
   grooveBeatsFromStemAnalysis,
   hapticEventsFromStemAnalysis,
   momentsFromStemAnalysis,
+  vocalEnergyFromStemAnalysis,
 } from './stem-sensory.ts';
 
 const DEFAULT_BPM = 120;
@@ -617,6 +618,7 @@ export function buildSensoryScore(input: SensoryScoreInput): SensoryScore {
     beats,
     sections,
     energy,
+    vocalEnergy: input.stemAnalysis ? vocalEnergyFromStemAnalysis(input.stemAnalysis) : undefined,
     moments,
     durationMs,
     chorusTimesMs: [...chorusTimesMs, ...authoredChorusTimes].sort((a, b) => a - b),

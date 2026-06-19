@@ -1,63 +1,110 @@
-import { Link, router } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { router } from 'expo-router';
+import { ImageBackground, Pressable, StyleSheet, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { Backdrop } from '../components/Backdrop';
-import { Screen, Text, Button, Stack, Touch, useResponsive } from '../components/ui';
+import { Wordmark } from '../components/Glass';
+import { Icon } from '../components/Icon';
+import { Text, Button, Touch, useResponsive } from '../components/ui';
 import { Theme } from '../constants/theme';
 
-const SCORE_BARS = [0.28, 0.52, 0.78, 0.42, 0.68, 0.34, 0.86, 0.58, 0.46, 0.74, 0.38, 0.62];
+const HERO = require('../../assets/images/musa-hero-background-person.png');
 
 export default function WelcomeScreen() {
   const { isWide } = useResponsive();
   return isWide ? <WebLanding /> : <MobileWelcome />;
 }
 
-/* ------------------------------ WEB (landing) ------------------------------ */
+/* ------------------------------ MOBILE ------------------------------ */
+
+function MobileWelcome() {
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.fill, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 22 }]}>
+      <View style={styles.brandRow}>
+        <Wordmark style={styles.brand}>MUSA</Wordmark>
+        <Text variant="label" color={Theme.textFaint} style={styles.kicker}>Haptic captions for music</Text>
+      </View>
+
+      {/* Inset hero card — fixed aspect ratio (predictable cover on every device). */}
+      <View style={styles.heroCard}>
+        <ImageBackground source={HERO} resizeMode="cover" style={StyleSheet.absoluteFill} imageStyle={styles.heroImg}>
+          <LinearGradient
+            colors={['transparent', 'transparent', 'rgba(0,0,0,0.55)']}
+            locations={[0, 0.55, 1]}
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.heroCaption}>
+            <Text style={styles.heroCaptionText}>Feel the music in your hands.</Text>
+          </View>
+        </ImageBackground>
+      </View>
+
+      <View style={styles.body}>
+        <Text style={styles.headline}>Music you can feel.</Text>
+        <Text style={styles.lede}>
+          Lyrics to read, rhythm to see, and cues you feel in your hands. One sensory score, built deaf-first.
+        </Text>
+        <View style={{ gap: 12, marginTop: 20 }}>
+          <Button label="Start" onPress={() => router.push('/profile-setup')} />
+          <Button
+            label="Try the demo"
+            variant="secondary"
+            icon={<Icon name="play" size={15} weight="fill" color={Theme.text} />}
+            onPress={() => router.push('/demo')}
+          />
+          <Pressable onPress={() => router.push('/legend')} hitSlop={8} style={styles.ghostLink}>
+            <Text variant="caption" color={Theme.textDim} weight="600">Explore the touch language</Text>
+          </Pressable>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/* ------------------------------ WEB ------------------------------ */
 
 function WebLanding() {
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ flex: 1, backgroundColor: Theme.bg }}>
-      <Backdrop lift={0.07} />
-
-      <View style={[styles.nav, { paddingTop: insets.top + 22 }]}>
-        <Text variant="heading" weight="800">MUSA</Text>
+    <View style={[styles.fill, { paddingTop: insets.top + 28, paddingHorizontal: 56 }]}>
+      <View style={styles.webTop}>
+        <Wordmark style={{ fontSize: 20 }}>MUSA</Wordmark>
         <View style={styles.navLinks}>
           <NavLink label="Demo" onPress={() => router.push('/demo')} />
-          <NavLink label="Language" onPress={() => router.push('/legend')} />
+          <NavLink label="Touch language" onPress={() => router.push('/legend')} />
           <Touch onPress={() => router.push('/search')} style={styles.navCta}>
-            <Ionicons name="search-outline" size={16} color={Theme.bg} />
-            <Text variant="caption" weight="700" color={Theme.bg}>Search</Text>
+            <Text variant="caption" weight="700" color={Theme.accentText}>Open app</Text>
           </Touch>
         </View>
       </View>
 
-      <View style={styles.heroWrap}>
-        <View style={styles.heroContent}>
-          <ScorePreview />
-          <Text variant="label" align="center" color={Theme.textFaint}>HAPTIC CAPTIONS FOR MUSIC</Text>
-          <Text align="center" style={styles.heroTitle}>MUSA</Text>
-          <Text dim align="center" style={styles.heroCopy}>
-            Lyrics, rhythm and touch in one sensory score.
+      <View style={styles.webSplit}>
+        <View style={styles.webCopy}>
+          <Text variant="label" color={Theme.textFaint} style={styles.kicker}>HAPTIC CAPTIONS FOR MUSIC</Text>
+          <Text style={styles.headlineWeb}>Music you{'\n'}can feel.</Text>
+          <Text style={styles.ledeWeb}>
+            Lyrics to read, rhythm to see, and cues you feel in your hands. One sensory score, built deaf-first, for every way you listen.
           </Text>
-          <View style={styles.heroCtas}>
+          <View style={styles.webCtas}>
+            <Button label="Start" full={false} style={{ paddingHorizontal: 30 }} onPress={() => router.push('/profile-setup')} />
             <Button
-              label="Get started"
-              full={false}
-              icon={<Ionicons name="sparkles-outline" size={18} color={Theme.bg} />}
-              style={{ paddingHorizontal: 34 }}
-              onPress={() => router.push('/profile-setup')}
-            />
-            <Button
-              label="Try demo"
+              label="Try the demo"
               variant="secondary"
               full={false}
-              icon={<Ionicons name="play-outline" size={18} color={Theme.text} />}
-              style={{ paddingHorizontal: 34 }}
+              icon={<Icon name="play" size={15} weight="fill" color={Theme.text} />}
+              style={{ paddingHorizontal: 30 }}
               onPress={() => router.push('/demo')}
             />
           </View>
+        </View>
+        <View style={styles.heroCardWeb}>
+          <ImageBackground source={HERO} resizeMode="cover" style={StyleSheet.absoluteFill} imageStyle={styles.heroImg}>
+            <LinearGradient
+              colors={['transparent', 'transparent', 'rgba(0,0,0,0.5)']}
+              locations={[0, 0.6, 1]}
+              style={StyleSheet.absoluteFill}
+            />
+          </ImageBackground>
         </View>
       </View>
     </View>
@@ -72,157 +119,30 @@ function NavLink({ label, onPress }: { label: string; onPress: () => void }) {
   );
 }
 
-/* ------------------------------ MÓVIL (onboarding) ------------------------------ */
-
-function MobileWelcome() {
-  return (
-    <Screen scroll center lift={0.07}>
-      <View style={styles.brand}>
-        <Text variant="hero" align="center">MUSA</Text>
-        <Text variant="label" align="center" color={Theme.textFaint} style={{ marginTop: 10 }}>
-          HAPTIC CAPTIONS FOR MUSIC
-        </Text>
-      </View>
-
-      <ScorePreview />
-
-      <View style={styles.headline}>
-        <Text variant="largeTitle" align="center">Read it.</Text>
-        <Text variant="largeTitle" align="center">Feel it.</Text>
-        <Text variant="largeTitle" align="center">Follow it.</Text>
-      </View>
-
-      <Text dim align="center" style={{ paddingHorizontal: 12, marginTop: 2 }}>
-        A clean sensory score for lyrics, rhythm and haptics.
-      </Text>
-
-      <View style={{ marginTop: 14 }}>
-        <Stack gap={12}>
-          <Button
-            label="Get started"
-            icon={<Ionicons name="sparkles-outline" size={18} color={Theme.bg} />}
-            onPress={() => router.push('/profile-setup')}
-          />
-          <Link href="/demo" asChild>
-            <Button label="Try demo" variant="secondary" icon={<Ionicons name="play-outline" size={18} color={Theme.text} />} />
-          </Link>
-          <Link href="/legend" asChild>
-            <Button label="Haptic language" variant="ghost" />
-          </Link>
-        </Stack>
-      </View>
-    </Screen>
-  );
-}
-
-function ScorePreview() {
-  return (
-    <View style={styles.scorePreview}>
-      <View style={styles.scoreHeader}>
-        <View style={styles.miniLines}>
-          <View style={[styles.miniLine, { width: '58%', opacity: 0.72 }]} />
-          <View style={[styles.miniLine, { width: '82%', opacity: 0.26 }]} />
-        </View>
-        <View style={styles.pulseRing}>
-          <View style={styles.pulseDot} />
-        </View>
-      </View>
-
-      <View style={styles.scoreBars}>
-        {SCORE_BARS.map((height, i) => (
-          <View key={`${height}-${i}`} style={styles.scoreRail}>
-            <View style={[styles.scoreBar, { height: `${height * 100}%`, opacity: i === 6 ? 1 : 0.34 + height * 0.5 }]} />
-          </View>
-        ))}
-      </View>
-
-      <View style={styles.scoreTimeline}>
-        <View style={styles.timelineFill} />
-        <View style={styles.timelineHead} />
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
+  fill: { flex: 1, backgroundColor: Theme.bg },
+
+  // mobile
+  brandRow: { paddingHorizontal: 24, marginBottom: 18, gap: 4 },
+  brand: { fontSize: 22 },
+  kicker: { letterSpacing: 1 },
+  heroCard: { marginHorizontal: 24, aspectRatio: 0.82, borderRadius: 24, overflow: 'hidden', backgroundColor: Theme.card },
+  heroImg: { borderRadius: 24 },
+  heroCaption: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 20 },
+  heroCaptionText: { color: '#FFFFFF', fontSize: 17, fontWeight: '700', letterSpacing: -0.3 },
+  body: { marginTop: 26, paddingHorizontal: 24 },
+  headline: { fontSize: 40, lineHeight: 42, fontWeight: '800', letterSpacing: -1, color: Theme.text },
+  lede: { fontSize: 16, lineHeight: 24, color: Theme.textDim, marginTop: 12, maxWidth: 380 },
+  ghostLink: { alignItems: 'center', paddingVertical: 10 },
+
   // web
-  nav: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 40,
-    paddingBottom: 10,
-  },
-  navLinks: { flexDirection: 'row', alignItems: 'center', gap: 26 },
-  navCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    backgroundColor: Theme.text,
-    paddingVertical: 9,
-    paddingHorizontal: 18,
-    borderRadius: 999,
-  },
-  heroWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40, paddingBottom: 60 },
-  heroContent: { width: '100%', maxWidth: 780, alignItems: 'center', gap: 18 },
-  heroTitle: { fontSize: 82, lineHeight: 86, fontWeight: '800', letterSpacing: 0, color: Theme.text },
-  heroCopy: { maxWidth: 480, fontSize: 18, lineHeight: 27 },
-  heroCtas: { flexDirection: 'row', gap: 12, marginTop: 34, flexWrap: 'wrap', justifyContent: 'center' },
-
-  // móvil
-  brand: { alignItems: 'center', marginTop: 8 },
-  headline: { gap: 1, marginTop: 16 },
-
-  // shared preview
-  scorePreview: {
-    width: '100%',
-    maxWidth: 520,
-    alignSelf: 'center',
-    gap: 18,
-    paddingVertical: 8,
-  },
-  scoreHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  miniLines: { flex: 1, gap: 9 },
-  miniLine: { height: 7, borderRadius: 4, backgroundColor: Theme.text },
-  pulseRing: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.borderStrong,
-  },
-  pulseDot: { width: 13, height: 13, borderRadius: 7, backgroundColor: Theme.text },
-  scoreBars: { height: 138, flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
-  scoreRail: {
-    flex: 1,
-    height: '100%',
-    justifyContent: 'flex-end',
-    borderRadius: 8,
-    backgroundColor: Theme.surface,
-    overflow: 'hidden',
-  },
-  scoreBar: {
-    width: '100%',
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-    backgroundColor: Theme.text,
-  },
-  scoreTimeline: {
-    height: 2,
-    borderRadius: 2,
-    backgroundColor: Theme.fill,
-  },
-  timelineFill: { width: '56%', height: '100%', borderRadius: 2, backgroundColor: Theme.text },
-  timelineHead: {
-    position: 'absolute',
-    left: '56%',
-    top: -4,
-    width: 10,
-    height: 10,
-    marginLeft: -5,
-    borderRadius: 5,
-    backgroundColor: Theme.text,
-  },
+  webTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 36 },
+  navLinks: { flexDirection: 'row', alignItems: 'center', gap: 24 },
+  navCta: { backgroundColor: Theme.accent, paddingVertical: 9, paddingHorizontal: 16, borderRadius: 999 },
+  webSplit: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 56, paddingBottom: 40 },
+  webCopy: { flex: 1, maxWidth: 520, gap: 4 },
+  headlineWeb: { fontSize: 72, lineHeight: 70, fontWeight: '800', letterSpacing: -2, color: Theme.text, marginTop: 10 },
+  ledeWeb: { fontSize: 18, lineHeight: 28, color: Theme.textDim, marginTop: 16, maxWidth: 480 },
+  webCtas: { flexDirection: 'row', gap: 12, marginTop: 28, flexWrap: 'wrap' },
+  heroCardWeb: { flex: 1, maxWidth: 460, aspectRatio: 0.82, borderRadius: 24, overflow: 'hidden', backgroundColor: Theme.card },
 });

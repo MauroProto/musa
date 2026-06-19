@@ -1,9 +1,7 @@
 import {
-  DEMO_LYRICS,
   STEM_DEMO_FALLBACK_LINES,
   getSyncedLyrics,
   hasMusixmatchKey,
-  isDemoTrack,
 } from '../../../lib/api-server';
 import { isStemDemoTrack } from '../../../lib/demo-score-tracks';
 
@@ -21,10 +19,6 @@ export async function GET(req: Request): Promise<Response> {
     return json({ error: 'trackId required' }, 400);
   }
 
-  if (isDemoTrack(trackId)) {
-    return json({ lines: DEMO_LYRICS[trackId], source: 'fixtures', instrumental: false });
-  }
-
   if (!hasMusixmatchKey()) {
     if (isStemDemoTrack(trackId)) {
       return json({
@@ -35,8 +29,8 @@ export async function GET(req: Request): Promise<Response> {
       });
     }
     return json({
-      lines: DEMO_LYRICS[9001],
-      source: 'fixtures',
+      lines: [],
+      source: 'none',
       fallback: true,
       instrumental: false,
     });
@@ -59,8 +53,8 @@ export async function GET(req: Request): Promise<Response> {
     }
     return json(
       {
-        lines: DEMO_LYRICS[9001],
-        source: 'fixtures',
+        lines: [],
+        source: 'none',
         fallback: true,
         error: err instanceof Error ? err.message : 'lyrics failed',
       },

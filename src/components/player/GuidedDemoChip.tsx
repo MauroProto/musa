@@ -1,87 +1,42 @@
 import { StyleSheet, View } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { Theme, RADIUS } from '../../constants/theme';
-import { Text, Touch } from '../ui';
-import { currentGuidedStep, nextGuidedStep } from '../../lib/demo-guided';
+import { Text } from '../ui';
+import { Theme } from '../../constants/theme';
+import { currentGuidedStep, guidedStepsForTrack, nextGuidedStep } from '../../lib/demo-guided';
 
-export function GuidedDemoChip({
-  trackId,
-  currentMs,
-  seekTo,
-}: {
-  trackId: number;
-  currentMs: number;
-  seekTo: (targetMs: number) => void;
-}) {
-  const current = currentGuidedStep(trackId, currentMs);
-  const next = nextGuidedStep(trackId, currentMs);
-  const active = current ?? next;
-  if (!active) return null;
+/**
+ * Guided-demo caption — clean and passive. No skip controls: the demo plays
+ * itself. It just names the sensation you're feeling right now and shows where
+ * you are in the walkthrough.
+ */
+export function GuidedDemoChip({ trackId, currentMs }: { trackId: number; currentMs: number }) {
+  const steps = guidedStepsForTrack(trackId);
+  const active = currentGuidedStep(trackId, currentMs) ?? nextGuidedStep(trackId, currentMs);
+  if (!active || steps.length === 0) return null;
+  const index = Math.max(0, steps.findIndex((s) => s.id === active.id));
 
-  const jumpTarget = current ? next : active;
   return (
     <View style={styles.wrap}>
-      <View style={styles.iconMark}>
-        <Ionicons name="navigate-outline" size={13} color={Theme.text} />
+      <Text variant="label" color={Theme.textFaint} style={styles.eyebrow}>
+        GUIDED · {index + 1} / {steps.length}
+      </Text>
+      <Text variant="heading" align="center" weight="700">{active.label}</Text>
+      <Text variant="caption" dim align="center" style={styles.detail} numberOfLines={2}>
+        {active.detail}
+      </Text>
+      <View style={styles.dots}>
+        {steps.map((s, i) => (
+          <View key={s.id} style={[styles.dot, i === index ? styles.dotActive : null]} />
+        ))}
       </View>
-      <View style={styles.copy}>
-        <Text variant="label" color={Theme.textGhost} style={styles.eyebrow}>
-          GUIDED DEMO
-        </Text>
-        <Text variant="caption" color={Theme.text} numberOfLines={1} weight="700">
-          {active.label}
-        </Text>
-      </View>
-      {jumpTarget ? (
-        <Touch onPress={() => seekTo(jumpTarget.jumpMs)} hitSlop={8} style={styles.jumpBtn}>
-          <Ionicons name="play-skip-forward-outline" size={13} color={Theme.bg} />
-          <Text variant="label" color={Theme.bg} weight="800" style={styles.jumpText}>
-            {current ? 'Next' : 'Jump'}
-          </Text>
-        </Touch>
-      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: {
-    minHeight: 44,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderRadius: RADIUS.lg,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
-  },
-  iconMark: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Theme.surfaceStrong,
-  },
-  copy: {
-    flex: 1,
-    minWidth: 0,
-  },
-  eyebrow: {
-    letterSpacing: 0,
-  },
-  jumpBtn: {
-    minHeight: 30,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 10,
-    borderRadius: RADIUS.pill,
-    backgroundColor: Theme.text,
-  },
-  jumpText: {
-    letterSpacing: 0,
-  },
+  wrap: { alignItems: 'center', gap: 6, paddingHorizontal: 24, maxWidth: 460, alignSelf: 'center' },
+  eyebrow: { letterSpacing: 1.5 },
+  detail: { maxWidth: 360, lineHeight: 19 },
+  dots: { flexDirection: 'row', gap: 6, marginTop: 6 },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Theme.textGhost },
+  dotActive: { backgroundColor: Theme.text, width: 18 },
 });

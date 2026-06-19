@@ -1,9 +1,7 @@
 import {
-  DEMO_LYRICS,
   STEM_DEMO_FALLBACK_LINES,
   getSyncedLyrics,
   hasMusixmatchKey,
-  isDemoTrack,
 } from '../../../lib/api-server';
 import { buildSensoryScore } from '../../../lib/sensory-score';
 import { getStemDemoAnalysis } from '../../../lib/stem-demo-analyses';
@@ -23,16 +21,21 @@ export async function GET(req: Request): Promise<Response> {
   }
 
   const stemAnalysis = getStemDemoAnalysis(trackId);
-  let lines = stemAnalysis ? (STEM_DEMO_FALLBACK_LINES[trackId] ?? []) : DEMO_LYRICS[9001];
+  let lines: import('../../../lib/types').SyncedLine[] = stemAnalysis
+    ? (STEM_DEMO_FALLBACK_LINES[trackId] ?? [])
+    : [];
 
-  if (isDemoTrack(trackId)) {
-    lines = DEMO_LYRICS[trackId];
-  } else if (hasMusixmatchKey()) {
+  if (hasMusixmatchKey()) {
     const fetched = await getSyncedLyrics(trackId).catch(() => ({
-      lines: stemAnalysis ? (STEM_DEMO_FALLBACK_LINES[trackId] ?? []) : DEMO_LYRICS[9001],
+      lines: stemAnalysis ? (STEM_DEMO_FALLBACK_LINES[trackId] ?? []) : [],
       instrumental: false,
     }));
-    lines = fetched.lines.length > 0 ? fetched.lines : (stemAnalysis ? (STEM_DEMO_FALLBACK_LINES[trackId] ?? []) : DEMO_LYRICS[9001]);
+    lines =
+      fetched.lines.length > 0
+        ? fetched.lines
+        : stemAnalysis
+          ? (STEM_DEMO_FALLBACK_LINES[trackId] ?? [])
+          : [];
   }
 
   const lastStart = lines[lines.length - 1]?.startMs ?? 0;

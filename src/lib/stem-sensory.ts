@@ -92,6 +92,28 @@ export function energyFromStemAnalysis(analysis: StemAnalysis): EnergyPoint[] {
   });
 }
 
+/**
+ * Vocal envelope curve, 0–1, for the visual atmosphere (the reactive
+ * background "blooms" with the voice). Blends the sustained RMS vocal level
+ * with its transient onset so consonants/attacks register, then smooths with a
+ * light EMA so the visuals breathe rather than jitter. Pure & deterministic.
+ */
+export function vocalEnergyFromStemAnalysis(analysis: StemAnalysis): EnergyPoint[] {
+  const frames = orderedFrames(analysis);
+  if (frames.length === 0) return [];
+  const alpha = 0.45; // EMA responsiveness
+  let ema = 0;
+  const points: EnergyPoint[] = [];
+  for (const frame of frames) {
+    const rms = value(frame, 'vocals');
+    const onset = clamp01(frame.onsetVocals ?? 0);
+    const raw = clamp01(Math.max(rms, onset * 0.85));
+    ema += alpha * (raw - ema);
+    points.push({ t: frame.t, value: clamp01(ema) });
+  }
+  return points;
+}
+
 export function grooveBeatsFromStemAnalysis(analysis: StemAnalysis): number[] {
   const frames = orderedFrames(analysis);
   if (frames.length === 0) return [];

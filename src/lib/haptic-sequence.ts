@@ -182,28 +182,30 @@ export function buildHapticSequence(
       ]);
 
     case 'mood_shift':
+      // A soft swell that rises and settles — an emotional turn, not a tap.
       return finish([
-        tap(0, 'context-click', 'impact-soft', pulseMs(energy, 16, 30)),
-        tap(170, 'gesture-start', 'notification-warning', pulseMs(energy, 20, 40)),
+        tap(0, 'context-click', 'impact-soft', pulseMs(energy, 18, 34)),
+        tap(120, 'segment-frequent-tick', 'selection', pulseMs(energy, 22, 40)),
+        tap(250, 'gesture-start', 'notification-warning', pulseMs(energy, 26, 46)),
+        tap(400, 'clock-tick', 'impact-soft', pulseMs(energy, 16, 30)),
       ]);
 
     case 'sustain': {
-      const baseSteps = [
-        tap(0, 'segment-tick', 'impact-soft', pulseMs(energy, 16, 28)),
-        lightTap(120, energy),
-        tap(240, 'clock-tick', 'impact-light', pulseMs(energy, 12, 24)),
-      ];
-      if (opts.strength === 'soft') return finish(baseSteps);
-      const mediumSteps = [
-        ...baseSteps,
-        lightTap(360, energy),
-        tap(500, 'context-click', 'impact-soft', pulseMs(energy, 14, 28)),
-      ];
-      if (opts.strength === 'medium') return finish(mediumSteps);
-      return finish([
-        ...mediumSteps,
-        tap(640, 'segment-tick', 'impact-medium', pulseMs(energy, 18, 34)),
-      ]);
+      // A continuous, textured vibration — the voice is HELD, not tapped.
+      // Closely-spaced pulses with long durations leave tiny gaps, so it reads
+      // as one sustained shimmer rather than a string of separate taps.
+      const count = opts.strength === 'soft' ? 6 : opts.strength === 'medium' ? 9 : 12;
+      const spacing = 70;
+      const steps: HapticStep[] = [];
+      for (let i = 0; i < count; i++) {
+        const delay = i * spacing;
+        steps.push(
+          i % 2 === 0
+            ? tap(delay, 'segment-tick', 'impact-soft', pulseMs(energy, 44, 64))
+            : tap(delay, 'segment-frequent-tick', 'selection', pulseMs(energy, 40, 58)),
+        );
+      }
+      return finish(steps);
     }
 
     case 'chorus_warning': {

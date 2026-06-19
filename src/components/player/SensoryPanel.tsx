@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Icon } from '../Icon';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -10,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Theme, MOTION, RADIUS } from '../../constants/theme';
 import { Text, Touch } from '../ui';
+import { GlassSurface } from '../Glass';
 import { buildPlayerLayerStates, type PlayerLayerState } from '../../lib/player-layer-state';
 import { cueDetail, cueIcon, cueLabel, layerIcon } from './sensory-panel-copy';
 import type { HapticEvent, SectionMark, SensoryMoment } from '../../lib/types';
@@ -50,10 +51,10 @@ export function SensoryPanel({
   const visibleLayers = expanded ? layers : chooseCompactLayers(layers);
 
   return (
-    <View style={[styles.wrap, expanded ? styles.wrapExpanded : null]}>
+    <GlassSurface radius={RADIUS.lg} elevation="none" chroma chromaStrength={0.4} intensity={26} style={[styles.wrap, expanded ? styles.wrapExpanded : null]}>
       <View style={styles.header}>
         <View style={styles.cueMark}>
-          <Ionicons name={cueIcon(cue)} size={18} color={Theme.text} />
+          <Icon name={cueIcon(cue)} size={18} color={Theme.teal} weight="bold" />
         </View>
         <View style={styles.headerText}>
           <Text variant="label" color={Theme.textGhost} style={styles.label}>
@@ -75,7 +76,7 @@ export function SensoryPanel({
           style={styles.expandBtn}
           accessibilityLabel={expanded ? 'Hide full tactile layers' : 'Show full tactile layers'}
         >
-          <Ionicons name={expanded ? 'chevron-up' : 'layers-outline'} size={15} color={Theme.text} />
+          <Icon name={expanded ? 'chevronUp' : 'layers'} size={15} color={Theme.text} />
           <Text variant="label" color={Theme.text} style={styles.expandText}>
             {expanded ? 'Hide' : 'Full'}
           </Text>
@@ -97,7 +98,7 @@ export function SensoryPanel({
           )
         ))}
       </View>
-    </View>
+    </GlassSurface>
   );
 }
 
@@ -110,7 +111,7 @@ function chooseCompactLayers(layers: PlayerLayerState[]): PlayerLayerState[] {
 function CompactLayer({ layer }: { layer: PlayerLayerState }) {
   return (
     <View style={[styles.compactLayer, layer.active ? styles.compactLayerActive : null]}>
-      <Ionicons name={layerIcon(layer.key)} size={12} color={layer.active ? Theme.bg : Theme.textDim} />
+      <Icon name={layerIcon(layer.key)} size={12} color={layer.active ? Theme.bg : Theme.textDim} />
       <Text variant="label" color={layer.active ? Theme.bg : Theme.textDim} numberOfLines={1} style={styles.compactLayerText}>
         {layer.label}
       </Text>
@@ -148,7 +149,7 @@ function LayerRow({ layer, cueId }: { layer: PlayerLayerState; cueId: number }) 
   return (
     <Animated.View style={[styles.layerRow, rowStyle]}>
       <View style={styles.layerLabel}>
-        <Ionicons name={layerIcon(layer.key)} size={13} color={layer.active ? Theme.text : Theme.textDim} />
+        <Icon name={layerIcon(layer.key)} size={13} color={layer.active ? Theme.teal : Theme.textDim} />
         <Text variant="label" color={layer.active ? Theme.text : Theme.textDim} numberOfLines={1} style={styles.layerText}>
           {layer.label}
         </Text>
@@ -168,12 +169,7 @@ function isLalalSource(source: string): boolean {
 const styles = StyleSheet.create({
   wrap: {
     gap: 10,
-    marginTop: 18,
     padding: 12,
-    borderRadius: RADIUS.lg,
-    backgroundColor: Theme.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
   },
   wrapExpanded: {
     padding: 14,
@@ -237,12 +233,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: RADIUS.pill,
     backgroundColor: Theme.fill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
   },
   compactLayerActive: {
     backgroundColor: Theme.text,
-    borderColor: Theme.text,
   },
   compactLayerText: {
     letterSpacing: 0,
@@ -272,7 +265,7 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 5,
     overflow: 'hidden',
-    backgroundColor: 'rgba(255,255,255,0.10)',
+    backgroundColor: 'rgba(11,12,14,0.10)',
   },
   layerFill: {
     width: '100%',

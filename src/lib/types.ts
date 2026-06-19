@@ -120,6 +120,8 @@ export type SensoryScore = {
   beats: number[];
   sections: SectionMark[];
   energy: EnergyPoint[];
+  /** Vocal envelope (0–1) for the reactive visual atmosphere. Stem tracks only. */
+  vocalEnergy?: EnergyPoint[];
   moments: SensoryMoment[];
   durationMs: number;
   chorusTimesMs: number[];

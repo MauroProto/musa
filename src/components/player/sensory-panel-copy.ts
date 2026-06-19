@@ -1,8 +1,6 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
+import type { IconName } from '../Icon';
 import type { HapticEvent } from '../../lib/types';
 import type { PlayerLayerState } from '../../lib/player-layer-state';
-
-type IconName = keyof typeof Ionicons.glyphMap;
 
 const CUE_LABELS: Record<HapticEvent['type'], string> = {
   bass_pulse: 'Bass body',
@@ -37,26 +35,26 @@ const CUE_DETAILS: Record<HapticEvent['type'], string> = {
 };
 
 const CUE_ICONS: Partial<Record<HapticEvent['type'], IconName>> = {
-  bass_pulse: 'radio-outline',
-  chorus: 'flash-outline',
-  chorus_warning: 'flash-outline',
-  drum_fill: 'pulse-outline',
-  energy_rise: 'flash-outline',
-  guitar_riff: 'flash-outline',
-  guitar_strum: 'flash-outline',
-  line_start: 'musical-notes-outline',
-  mood_shift: 'heart-outline',
-  sustain: 'musical-notes-outline',
+  bass_pulse: 'bass',
+  chorus: 'flash',
+  chorus_warning: 'trendUp',
+  drum_fill: 'drums',
+  energy_rise: 'energy',
+  guitar_riff: 'guitar',
+  guitar_strum: 'guitar',
+  line_start: 'voice',
+  mood_shift: 'emotion',
+  sustain: 'wind',
 };
 
 const LAYER_ICONS: Record<PlayerLayerState['key'], IconName> = {
-  bass: 'radio-outline',
-  drums: 'pulse-outline',
-  emotion: 'heart-outline',
-  energy: 'analytics-outline',
-  guitar: 'flash-outline',
-  structure: 'git-branch-outline',
-  voice: 'mic-outline',
+  bass: 'bass',
+  drums: 'drums',
+  emotion: 'emotion',
+  energy: 'energy',
+  guitar: 'guitar',
+  structure: 'structure',
+  voice: 'voice',
 };
 
 export function cueLabel(type: HapticEvent['type']): string {
@@ -68,7 +66,7 @@ export function cueDetail(type: HapticEvent['type']): string {
 }
 
 export function cueIcon(type?: HapticEvent['type']): IconName {
-  return type ? CUE_ICONS[type] ?? 'disc-outline' : 'disc-outline';
+  return type ? CUE_ICONS[type] ?? 'disc' : 'disc';
 }
 
 export function layerIcon(key: PlayerLayerState['key']): IconName {

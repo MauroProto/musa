@@ -19,11 +19,9 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="welcome" />
         <Stack.Screen name="profile-setup" />
-        <Stack.Screen name="search" />
-        <Stack.Screen name="player" />
-        <Stack.Screen name="calibrate" />
-        <Stack.Screen name="demo" />
-        <Stack.Screen name="legend" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="player" options={{ animation: Platform.OS === 'web' ? 'none' : 'slide_from_bottom' }} />
+        <Stack.Screen name="calibrate" options={{ animation: Platform.OS === 'web' ? 'none' : 'slide_from_bottom' }} />
         <Stack.Screen name="tuner" />
       </Stack>
     </GestureHandlerRootView>

@@ -9,6 +9,7 @@ import {
   nearestChorusIn,
 } from '../lib/sensory-score';
 import { createHapticController, type HapticController } from '../lib/haptics';
+import { clampToIntensity, gainForEventType, MUTE_THRESHOLD } from '../lib/layer-gains';
 import { resolveTactileFocus, shouldSuppressBeatAt, type TactileFocus } from '../lib/tactile-focus';
 import { seekByDeltaMs, seekToMs } from '../lib/player-time';
 import { usePreferences } from '../store/preferences';
@@ -53,6 +54,7 @@ export function useSensoryPlayer(
   const strength = usePreferences((s) => s.strength);
   const pulseOn = usePreferences((s) => s.pulseOn);
   const visualOnly = usePreferences((s) => s.visualOnly);
+  const layerGains = usePreferences((s) => s.layerGains);
   const authoredMoments = useMemo(
     () => options.authoredMoments ?? getAuthoredScreenplay(trackId) ?? [],
     [trackId, options.authoredMoments],
@@ -83,6 +85,9 @@ export function useSensoryPlayer(
   const audioRef = useRef<StemAudioController | null | undefined>(audio);
   audioRef.current = audio;
   const prevHadAudioRef = useRef(false);
+  // Live mixer gains — read via ref so changes apply without rebuilding the loop.
+  const layerGainsRef = useRef(layerGains);
+  layerGainsRef.current = layerGains;
 
   useEffect(() => {
     scoreRef.current = score;
@@ -192,8 +197,12 @@ export function useSensoryPlayer(
         const e = s.events[eventCursorRef.current];
         eventCursorRef.current += 1;
         if (e.type !== 'beat') {
-          hapticRef.current?.fire(e.type, e.intensity);
-          lastSemanticHapticMsRef.current = e.t;
+          // Live mixer: scale this cue by its layer gain; skip if muted.
+          const scaled = e.intensity * gainForEventType(e.type, layerGainsRef.current);
+          if (scaled >= MUTE_THRESHOLD) {
+            hapticRef.current?.fire(e.type, clampToIntensity(scaled));
+            lastSemanticHapticMsRef.current = e.t;
+          }
           cueIdRef.current += 1;
           setCue({ id: cueIdRef.current, type: e.type, t: e.t });
         }
@@ -205,7 +214,11 @@ export function useSensoryPlayer(
         const hasNearbySemanticCue = Math.abs(beatT - lastSemanticHapticMsRef.current) < 260;
         const focusSuppressesBeat = shouldSuppressBeatAt(authoredMoments, beatT);
         if (pulseOn && !visualOnly && !hasNearbySemanticCue && !focusSuppressesBeat) {
-          hapticRef.current?.fire('beat', beatIntensityFromEnergy(energyValueAt(s.energy, beatT)));
+          // The beat is the drums layer — scale by its gain too.
+          const beatScaled = beatIntensityFromEnergy(energyValueAt(s.energy, beatT)) * layerGainsRef.current.drums;
+          if (beatScaled >= MUTE_THRESHOLD) {
+            hapticRef.current?.fire('beat', clampToIntensity(beatScaled));
+          }
         }
       }
     }

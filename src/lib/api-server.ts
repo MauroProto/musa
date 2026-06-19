@@ -9,4 +9,4 @@ export {
   parseLrc,
 } from './musixmatch';
 export { hasLalalKey, getStemEnergy, type StemEnergyResult } from './lalal';
-export { DEMO_TRACKS, DEMO_LYRICS, STEM_DEMO_FALLBACK_LINES, isDemoTrack, searchDemoTracks } from './fixtures';
+export { DEMO_TRACKS, STEM_DEMO_FALLBACK_LINES, searchDemoTracks } from './fixtures';

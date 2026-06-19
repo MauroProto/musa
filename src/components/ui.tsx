@@ -20,7 +20,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme, FONT_SCALE_MULTIPLIER, RADIUS, MOTION } from '../constants/theme';
 import { usePreferences, type FontScale } from '../store/preferences';
-import { Backdrop } from './Backdrop';
+import { GlassSurface } from './Glass';
 
 const WEB_FONT =
   '-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, "Helvetica Neue", sans-serif';
@@ -28,12 +28,15 @@ const WEB_FONT =
 const EASE_OUT = Easing.bezier(MOTION.easeOut[0], MOTION.easeOut[1], MOTION.easeOut[2], MOTION.easeOut[3]);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/** Vertical clearance so content never hides behind the floating tab bar. */
+export const TAB_BAR_CLEARANCE = 108;
+
 export function useFontScale(): number {
   const scale = usePreferences((s) => s.fontScale) as FontScale;
   return FONT_SCALE_MULTIPLIER[scale] ?? 1;
 }
 
-/** Breakpoint único: en web ancho usamos la interfaz "desktop"; el resto, la móvil. */
+/** Single breakpoint: wide web uses the "desktop" layout; everything else, mobile. */
 export const WIDE_BREAKPOINT = 860;
 export function useResponsive() {
   const { width, height } = useWindowDimensions();
@@ -45,7 +48,7 @@ function fontFamily(): string | undefined {
   return Platform.OS === 'web' ? WEB_FONT : undefined;
 }
 
-/** Presionable con feedback de escala suave (ease-out) — el detalle que hace todo "vivo". */
+/** Pressable with a soft scale feedback (ease-out) — the detail that makes things feel alive. */
 export function Touch({
   children,
   style,
@@ -175,19 +178,24 @@ export function Screen({
   scroll = true,
   pad = 24,
   style,
-  lift = 0.05,
   maxWidth = 560,
   center = false,
+  bottomBarSpace = false,
+  backdrop,
 }: {
   children: ReactNode;
   scroll?: boolean;
   pad?: number;
   style?: ViewStyle;
-  lift?: number;
   maxWidth?: number | null;
   center?: boolean;
+  /** Add clearance for the floating tab bar. */
+  bottomBarSpace?: boolean;
+  /** Replace the default plain background entirely. */
+  backdrop?: ReactNode;
 }) {
   const insets = useSafeAreaInsets();
+  const extraBottom = bottomBarSpace ? TAB_BAR_CLEARANCE : 0;
   const containerStyle: ViewStyle = {
     flex: 1,
     paddingTop: insets.top + 8,
@@ -199,15 +207,15 @@ export function Screen({
     alignSelf: 'center',
   };
   const inner = (
-    <View style={[{ paddingHorizontal: pad, gap: 20, paddingBottom: 48 }, column]}>{children}</View>
+    <View style={[{ paddingHorizontal: pad, gap: 20, paddingBottom: 48 + extraBottom }, column]}>{children}</View>
   );
   return (
     <View style={{ flex: 1, backgroundColor: Theme.bg }}>
-      <Backdrop lift={lift} />
+      {backdrop ?? null}
       {scroll ? (
         <View style={containerStyle}>
           <ScrollView
-            contentContainerStyle={{ flexGrow: 1, justifyContent: center ? 'center' : 'flex-start', ...style }}
+            contentContainerStyle={{ flexGrow: 1, justifyContent: center ? 'center' : 'flex-start', paddingBottom: extraBottom, ...style }}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -216,7 +224,7 @@ export function Screen({
         </View>
       ) : (
         <View style={[containerStyle, style]}>
-          <View style={[{ paddingHorizontal: pad, flex: 1, gap: 20 }, column]}>{children}</View>
+          <View style={[{ paddingHorizontal: pad, flex: 1, gap: 20, paddingBottom: extraBottom }, column]}>{children}</View>
         </View>
       )}
     </View>
@@ -241,39 +249,60 @@ export function Button({
   full?: boolean;
 }) {
   const f = useFontScale();
-  const palette = {
-    primary: { bg: Theme.accent, fg: Theme.accentText, border: 'transparent' as string },
-    secondary: { bg: Theme.surfaceStrong, fg: Theme.text, border: Theme.border },
-    ghost: { bg: 'transparent' as string, fg: Theme.textDim, border: 'transparent' as string },
-  }[variant];
+  const labelNode = (color: string) => (
+    <StyledText
+      style={{
+        color,
+        fontSize: Math.round(16.5 * f),
+        fontWeight: '600',
+        letterSpacing: 0,
+        textAlign: 'center',
+        fontFamily: fontFamily(),
+      }}
+    >
+      {label}
+    </StyledText>
+  );
+
+  // Secondary → soft grey surface.
+  if (variant === 'secondary') {
+    return (
+      <GlassSurface
+        onPress={onPress}
+        disabled={disabled}
+        radius={RADIUS.pill}
+        elevation="none"
+        fill="regular"
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        style={[styles.button, { width: full ? '100%' : undefined }, style as ViewStyle]}
+      >
+        <View style={styles.buttonInner}>
+          {icon}
+          {labelNode(Theme.text)}
+        </View>
+      </GlassSurface>
+    );
+  }
+
+  const palette =
+    variant === 'ghost'
+      ? { bg: 'transparent' as string, fg: Theme.textDim }
+      : { bg: Theme.accent, fg: Theme.accentText };
+
   return (
     <Touch
       onPress={onPress}
       disabled={disabled}
       style={[
         styles.button,
-        {
-          backgroundColor: palette.bg,
-          borderColor: palette.border,
-          borderWidth: variant === 'secondary' ? StyleSheet.hairlineWidth : 0,
-          width: full ? '100%' : undefined,
-        },
+        styles.buttonInner,
+        { backgroundColor: palette.bg, width: full ? '100%' : undefined },
         style as ViewStyle,
       ]}
     >
       {icon}
-      <StyledText
-        style={{
-          color: palette.fg,
-          fontSize: Math.round(16.5 * f),
-          fontWeight: '600',
-          letterSpacing: 0,
-          textAlign: 'center',
-          fontFamily: fontFamily(),
-        }}
-      >
-        {label}
-      </StyledText>
+      {labelNode(palette.fg)}
     </Touch>
   );
 }
@@ -287,14 +316,18 @@ export function Card({
   style?: ViewStyle;
   onPress?: () => void;
 }) {
-  if (onPress) {
-    return (
-      <Touch onPress={onPress} style={[styles.card, style as ViewStyle]}>
-        {children}
-      </Touch>
-    );
-  }
-  return <View style={[styles.card, style]}>{children}</View>;
+  return (
+    <GlassSurface
+      onPress={onPress}
+      radius={RADIUS.card}
+      elevation="card"
+      fill="regular"
+      style={[styles.card, style as ViewStyle]}
+      accessibilityRole={onPress ? 'button' : undefined}
+    >
+      {children}
+    </GlassSurface>
+  );
 }
 
 export function Stack({ children, gap = 14, style }: { children: ReactNode; gap?: number; style?: ViewStyle }) {
@@ -303,21 +336,20 @@ export function Stack({ children, gap = 14, style }: { children: ReactNode; gap?
 
 const styles = StyleSheet.create({
   button: {
+    borderRadius: RADIUS.pill,
+    minHeight: 56,
+    justifyContent: 'center',
+  },
+  buttonInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     paddingVertical: 17,
     paddingHorizontal: 22,
-    borderRadius: RADIUS.pill,
-    minHeight: 56,
   },
   card: {
-    backgroundColor: Theme.surface,
-    borderRadius: RADIUS.lg,
     padding: 20,
     gap: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
   },
 });

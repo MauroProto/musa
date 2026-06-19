@@ -6,6 +6,7 @@ import {
   grooveBeatsFromStemAnalysis,
   hapticEventsFromStemAnalysis,
   momentsFromStemAnalysis,
+  vocalEnergyFromStemAnalysis,
 } from './stem-sensory.ts';
 import type { StemAnalysis, SyncedLine } from './types.ts';
 
@@ -33,6 +34,44 @@ test('energyFromStemAnalysis weights bass and drums into a normalized energy cur
   assert.ok(energy[1].value > energy[0].value, 'bass/drum hit should lift energy');
   assert.ok(energy[1].value > energy[2].value, 'low-end and drums should carry more tactile weight than guitar alone');
   assert.ok(energy.every((p) => p.value >= 0 && p.value <= 1));
+});
+
+test('vocalEnergyFromStemAnalysis tracks the voice and stays inside 0..1', () => {
+  const vocal = vocalEnergyFromStemAnalysis(stem([
+    { t: 0, vocals: 0.0 },
+    { t: 250, vocals: 0.9, onsetVocals: 0.95 },
+    { t: 500, vocals: 0.85 },
+    { t: 750, vocals: 0.05 },
+    { t: 1000, vocals: 0.0 },
+  ]));
+
+  assert.equal(vocal.length, 5);
+  assert.ok(vocal.every((p) => p.value >= 0 && p.value <= 1));
+  assert.ok(vocal[2].value > vocal[0].value, 'envelope should rise while the voice is present');
+  assert.ok(vocal[4].value < vocal[2].value, 'envelope should decay after the voice stops');
+});
+
+test('vocalEnergyFromStemAnalysis reacts to a sharp onset even with modest RMS', () => {
+  const vocal = vocalEnergyFromStemAnalysis(stem([
+    { t: 0, vocals: 0.1, onsetVocals: 0.1 },
+    { t: 250, vocals: 0.2, onsetVocals: 0.9 },
+  ]));
+  assert.ok(vocal[1].value > vocal[0].value, 'a vocal transient should lift the envelope');
+});
+
+test('buildSensoryScore attaches a vocal envelope for stem-backed tracks only', () => {
+  const stemScore = buildSensoryScore({
+    lines: [line(0, 'a'), line(2000, 'b')],
+    stemAnalysis: stem([
+      { t: 0, vocals: 0.1 },
+      { t: 500, vocals: 0.8, onsetVocals: 0.7 },
+      { t: 1000, vocals: 0.2 },
+    ]),
+  });
+  assert.ok(stemScore.vocalEnergy && stemScore.vocalEnergy.length === 3);
+
+  const semanticScore = buildSensoryScore({ lines: [line(0, 'a'), line(2000, 'b')] });
+  assert.equal(semanticScore.vocalEnergy, undefined);
 });
 
 test('grooveBeatsFromStemAnalysis locks the beat grid to the strongest drum phase', () => {

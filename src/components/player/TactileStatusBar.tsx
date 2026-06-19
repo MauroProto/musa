@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Icon } from '../Icon';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Theme, MOTION, RADIUS } from '../../constants/theme';
 import { Text, Touch } from '../ui';
+import { GlassSurface } from '../Glass';
 import { buildPlayerLayerStates, type PlayerLayerKey } from '../../lib/player-layer-state';
 import type { TactileFocus } from '../../lib/tactile-focus';
 import type { HapticEvent, SectionMark, SensoryLayer, SensoryMoment } from '../../lib/types';
@@ -65,35 +66,37 @@ export function TactileStatusBar({
   }));
 
   return (
-    <Animated.View style={[styles.wrap, animatedStyle]}>
-      <View style={styles.iconMark}>
-        <Ionicons name={cueIcon(cueType)} size={15} color={Theme.text} />
-      </View>
-      <View style={styles.copy}>
-        <Text variant="label" color={Theme.textGhost} numberOfLines={1} style={styles.eyebrow}>
-          TACTILE FOCUS
-        </Text>
-        <Text variant="caption" color={Theme.text} weight="800" numberOfLines={1}>
-          {label}
-        </Text>
-      </View>
-      {activeLayer ? (
-        <View style={styles.layerPill}>
-          <Ionicons name={layerIcon(activeLayer.key)} size={12} color={Theme.textDim} />
-          <Text variant="label" color={Theme.textDim} numberOfLines={1} style={styles.layerText}>
-            {activeLayer.label}
+    <Animated.View style={animatedStyle}>
+      <GlassSurface radius={RADIUS.lg} elevation="none" chroma chromaStrength={0.4} intensity={28} style={styles.wrap}>
+        <View style={styles.iconMark}>
+          <Icon name={cueIcon(cueType)} size={15} color={Theme.teal} weight="bold" />
+        </View>
+        <View style={styles.copy}>
+          <Text variant="label" color={Theme.textGhost} numberOfLines={1} style={styles.eyebrow}>
+            TACTILE FOCUS
+          </Text>
+          <Text variant="caption" color={Theme.text} weight="800" numberOfLines={1}>
+            {label}
           </Text>
         </View>
-      ) : null}
-      <Touch
-        onPress={onToggleDetails}
-        hitSlop={8}
-        scaleTo={0.94}
-        style={detailsOpen ? styles.detailsBtnOpen : styles.detailsBtn}
-        accessibilityLabel={detailsOpen ? 'Hide tactile details' : 'Show tactile details'}
-      >
-        <Ionicons name={detailsOpen ? 'chevron-down' : 'layers-outline'} size={14} color={detailsOpen ? Theme.bg : Theme.text} />
-      </Touch>
+        {activeLayer ? (
+          <View style={styles.layerPill}>
+            <Icon name={layerIcon(activeLayer.key)} size={12} color={Theme.textDim} />
+            <Text variant="label" color={Theme.textDim} numberOfLines={1} style={styles.layerText}>
+              {activeLayer.label}
+            </Text>
+          </View>
+        ) : null}
+        <Touch
+          onPress={onToggleDetails}
+          hitSlop={8}
+          scaleTo={0.94}
+          style={detailsOpen ? styles.detailsBtnOpen : styles.detailsBtn}
+          accessibilityLabel={detailsOpen ? 'Hide tactile details' : 'Show tactile details'}
+        >
+          <Icon name={detailsOpen ? 'chevronDown' : 'layers'} size={14} color={detailsOpen ? Theme.bg : Theme.text} />
+        </Touch>
+      </GlassSurface>
     </Animated.View>
   );
 }
@@ -121,11 +124,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 9,
     paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: RADIUS.lg,
-    backgroundColor: 'rgba(255,255,255,0.055)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
+    paddingHorizontal: 12,
   },
   iconMark: {
     width: 28,
@@ -166,11 +165,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Theme.surfaceStrong,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
   },
   detailsBtnOpen: {
     backgroundColor: Theme.text,
-    borderColor: Theme.text,
   },
 });

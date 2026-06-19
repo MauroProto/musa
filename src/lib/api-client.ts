@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import type { EnergyPoint, StemAnalysis, SyncedLine, Track } from './types';
-import { DEMO_LYRICS, DEMO_TRACKS, isDemoTrack, searchDemoTracks } from './fixtures';
+import { DEMO_TRACKS, searchDemoTracks } from './fixtures';
 import { isStemDemoTrack } from './demo-score-tracks';
 import { fallbackSensoryCaptionsForTrack } from './demo-guided';
 import { getStemDemoAnalysis } from './stem-demo-analyses';
@@ -35,9 +35,6 @@ export async function searchTracksClient(q: string): Promise<{ tracks: Track[]; 
 export async function getLyricsClient(
   trackId: number,
 ): Promise<{ lines: SyncedLine[]; source: string; instrumental?: boolean }> {
-  if (isDemoTrack(trackId)) {
-    return { lines: DEMO_LYRICS[trackId], source: 'fixtures' };
-  }
   const res = await safeFetch(`${apiBase()}/api/lyrics?trackId=${trackId}`);
   if (res && res.ok) {
     const data = (await res.json()) as { lines?: SyncedLine[]; source?: string; instrumental?: boolean };
@@ -46,7 +43,7 @@ export async function getLyricsClient(
   if (isStemDemoTrack(trackId)) {
     return { lines: fallbackSensoryCaptionsForTrack(trackId), source: 'stem-demo' };
   }
-  return { lines: DEMO_LYRICS[9001], source: 'fixtures' };
+  return { lines: [], source: 'none' };
 }
 
 export async function getStemsClient(trackId: number): Promise<{
