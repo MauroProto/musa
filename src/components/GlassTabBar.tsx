@@ -16,6 +16,7 @@ import { Text } from './ui';
 import { MOTION, Theme } from '../constants/theme';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { previewHaptic } from '../lib/haptics';
+import { liveShows } from '../lib/live-shows';
 import { usePreferences } from '../store/preferences';
 
 const EASE_OUT = Easing.bezier(MOTION.easeOut[0], MOTION.easeOut[1], MOTION.easeOut[2], MOTION.easeOut[3]);
@@ -24,6 +25,7 @@ type TabMeta = { label: string; icon: IconName };
 
 const TAB_META: Record<string, TabMeta> = {
   search: { label: 'Songs', icon: 'search' },
+  live: { label: 'Live', icon: 'broadcast' },
   demo: { label: 'Demo', icon: 'vinyl' },
   legend: { label: 'Touch', icon: 'wave' },
 };
@@ -42,6 +44,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps) {
 
   const routes = state.routes.filter((r) => TAB_META[r.name]);
   const itemCount = routes.length + 1; // + Settings
+  const hasLiveShow = liveShows().length > 0;
   const innerPad = 6;
   const itemWidth = barWidth > 0 ? (barWidth - innerPad * 2) / itemCount : 0;
 
@@ -92,12 +95,15 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps) {
                 accessibilityLabel={meta.label}
                 hitSlop={6}
               >
-                <Icon
-                  name={meta.icon}
-                  size={22}
-                  weight={isFocused ? 'fill' : 'regular'}
-                  color={isFocused ? Theme.text : Theme.textFaint}
-                />
+                <View>
+                  <Icon
+                    name={meta.icon}
+                    size={22}
+                    weight={isFocused ? 'fill' : 'regular'}
+                    color={isFocused ? Theme.text : Theme.textFaint}
+                  />
+                  {route.name === 'live' && hasLiveShow ? <View style={styles.liveDot} /> : null}
+                </View>
                 <Text
                   variant="label"
                   color={isFocused ? Theme.text : Theme.textFaint}
@@ -170,5 +176,14 @@ const styles = StyleSheet.create({
   label: {
     letterSpacing: 0,
     fontSize: Platform.OS === 'web' ? 11 : 10.5,
+  },
+  liveDot: {
+    position: 'absolute',
+    top: -1,
+    right: -3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: Theme.rec,
   },
 });

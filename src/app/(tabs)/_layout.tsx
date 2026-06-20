@@ -14,6 +14,7 @@ export default function TabsLayout() {
       tabBar={(props) => <GlassTabBar {...props} />}
     >
       <Tabs.Screen name="search" options={{ title: 'Songs' }} />
+      <Tabs.Screen name="live" options={{ title: 'Live' }} />
       <Tabs.Screen name="demo" options={{ title: 'Demo' }} />
       <Tabs.Screen name="legend" options={{ title: 'Touch' }} />
     </Tabs>

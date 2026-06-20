@@ -22,6 +22,9 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="player" options={{ animation: Platform.OS === 'web' ? 'none' : 'slide_from_bottom' }} />
         <Stack.Screen name="calibrate" options={{ animation: Platform.OS === 'web' ? 'none' : 'slide_from_bottom' }} />
+        <Stack.Screen name="live/[showId]" />
+        <Stack.Screen name="live/[showId]/pocket" options={{ animation: Platform.OS === 'web' ? 'none' : 'slide_from_bottom' }} />
+        <Stack.Screen name="live/[showId]/host" />
         <Stack.Screen name="tuner" />
       </Stack>
     </GestureHandlerRootView>

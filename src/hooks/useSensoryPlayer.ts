@@ -14,7 +14,7 @@ import { resolveTactileFocus, shouldSuppressBeatAt, type TactileFocus } from '..
 import { seekByDeltaMs, seekToMs } from '../lib/player-time';
 import { usePreferences } from '../store/preferences';
 import type { StemAudioController } from './useStemAudio';
-import type { AuthoredMoment, HapticEvent, Intensity, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
+import type { AuthoredMoment, HapticEvent, HapticStrength, Intensity, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
 
 export type PlayerStatus = 'loading' | 'ready' | 'error';
 
@@ -49,11 +49,19 @@ export function useSensoryPlayer(
   trackId: number,
   hints: { durationMs?: number },
   audio?: StemAudioController | null,
-  options: { authoredMoments?: AuthoredMoment[] } = {},
+  options: {
+    authoredMoments?: AuthoredMoment[];
+    /** Force a haptic strength regardless of saved preference (e.g. Live pocket mode). */
+    strengthOverride?: HapticStrength;
+    /** Force visual-only on/off regardless of saved preference. */
+    visualOnlyOverride?: boolean;
+  } = {},
 ): SensoryPlayer {
-  const strength = usePreferences((s) => s.strength);
+  const strengthPref = usePreferences((s) => s.strength);
   const pulseOn = usePreferences((s) => s.pulseOn);
-  const visualOnly = usePreferences((s) => s.visualOnly);
+  const visualOnlyPref = usePreferences((s) => s.visualOnly);
+  const strength = options.strengthOverride ?? strengthPref;
+  const visualOnly = options.visualOnlyOverride ?? visualOnlyPref;
   const layerGains = usePreferences((s) => s.layerGains);
   const authoredMoments = useMemo(
     () => options.authoredMoments ?? getAuthoredScreenplay(trackId) ?? [],

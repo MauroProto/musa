@@ -2,6 +2,7 @@ import {
   ArrowClockwise,
   ArrowCounterClockwise,
   ArrowRight,
+  Broadcast,
   CaretDown,
   CaretLeft,
   CaretRight,
@@ -58,6 +59,7 @@ const MAP = {
   // chrome / nav
   search: MagnifyingGlass,
   vinyl: VinylRecord,
+  broadcast: Broadcast,
   wave: Waveform,
   vibrate: Vibrate,
   settings: SlidersHorizontal,
