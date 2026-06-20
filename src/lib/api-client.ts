@@ -3,6 +3,7 @@ import type { EnergyPoint, StemAnalysis, SyncedLine, Track } from './types';
 import { DEMO_TRACKS, searchDemoTracks } from './fixtures';
 import { isStemDemoTrack } from './demo-score-tracks';
 import { fallbackSensoryCaptionsForTrack } from './demo-guided';
+import { fallbackLiveCaptionsForTrack } from './live-shows';
 import { getStemDemoAnalysis } from './stem-demo-analyses';
 
 function apiBase(): string {
@@ -42,6 +43,10 @@ export async function getLyricsClient(
   }
   if (isStemDemoTrack(trackId)) {
     return { lines: fallbackSensoryCaptionsForTrack(trackId), source: 'stem-demo' };
+  }
+  const liveCaptions = fallbackLiveCaptionsForTrack(trackId);
+  if (liveCaptions.length > 0) {
+    return { lines: liveCaptions, source: 'live-sim' };
   }
   return { lines: [], source: 'none' };
 }

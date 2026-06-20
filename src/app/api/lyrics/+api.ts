@@ -4,6 +4,7 @@ import {
   hasMusixmatchKey,
 } from '../../../lib/api-server';
 import { isStemDemoTrack } from '../../../lib/demo-score-tracks';
+import { fallbackLiveCaptionsForTrack } from '../../../lib/live-shows';
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -17,6 +18,15 @@ export async function GET(req: Request): Promise<Response> {
   const trackId = Number(url.searchParams.get('trackId') ?? 0);
   if (!trackId) {
     return json({ error: 'trackId required' }, 400);
+  }
+  const liveCaptions = fallbackLiveCaptionsForTrack(trackId);
+  if (liveCaptions.length > 0) {
+    return json({
+      lines: liveCaptions,
+      source: 'live-sim',
+      fallback: true,
+      instrumental: false,
+    });
   }
 
   if (!hasMusixmatchKey()) {

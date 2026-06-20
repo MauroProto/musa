@@ -22,6 +22,10 @@ import { CueCheatsheet } from '../components/player/CueCheatsheet';
 import { PlayerReactiveBg } from '../components/player/PlayerReactiveBg';
 import { TactileStatusBar } from '../components/player/TactileStatusBar';
 import { currentGuidedStep } from '../lib/demo-guided';
+import { playerHeaderRailWidth } from '../lib/player-header-layout';
+
+const MOBILE_HEADER_RAIL_WIDTH = playerHeaderRailWidth({ buttonSize: 42, actionCount: 2, gap: 10 });
+const WEB_HEADER_RAIL_WIDTH = playerHeaderRailWidth({ buttonSize: 44, actionCount: 2, gap: 16 });
 
 export default function PlayerScreen() {
   const { isWide } = useResponsive();
@@ -162,21 +166,25 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio, trac
       <CueCheatsheet visible={cheatOpen} onClose={() => setCheatOpen(false)} activeCueType={player.cue?.type} />
       <View style={styles.mobilePad}>
         <View style={styles.topBar}>
-          <GlassIconButton size={42} onPress={() => router.back()} accessibilityLabel="Back">
-            <Icon name="back" size={22} color={Theme.text} />
-          </GlassIconButton>
-          <View style={{ flex: 1 }}>
+          <View style={styles.mobileHeaderSide}>
+            <GlassIconButton size={42} onPress={() => router.back()} accessibilityLabel="Back">
+              <Icon name="back" size={22} color={Theme.text} />
+            </GlassIconButton>
+          </View>
+          <View style={styles.trackTitleBlock}>
             <Text variant="caption" weight="700" numberOfLines={1} align="center">{title}</Text>
             <Text variant="label" color={Theme.textFaint} numberOfLines={1} align="center" style={{ letterSpacing: 0, marginTop: 2 }}>
               {artist.toUpperCase()}
             </Text>
           </View>
-          <GlassIconButton size={42} onPress={() => setCheatOpen(true)} accessibilityLabel="What am I feeling? Touch cheatsheet">
-            <Icon name="help" size={20} color={Theme.text} />
-          </GlassIconButton>
-          <GlassIconButton size={42} onPress={() => router.push('/calibrate')} accessibilityLabel="Settings">
-            <Icon name="settings" size={20} color={Theme.text} />
-          </GlassIconButton>
+          <View style={[styles.mobileHeaderSide, styles.mobileHeaderActions]}>
+            <GlassIconButton size={42} onPress={() => setCheatOpen(true)} accessibilityLabel="What am I feeling? Touch cheatsheet">
+              <Icon name="help" size={20} color={Theme.text} />
+            </GlassIconButton>
+            <GlassIconButton size={42} onPress={() => router.push('/calibrate')} accessibilityLabel="Settings">
+              <Icon name="settings" size={20} color={Theme.text} />
+            </GlassIconButton>
+          </View>
         </View>
 
         <Pressable style={styles.lyricArea} onPress={player.toggle} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
@@ -248,18 +256,24 @@ function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId
       <CueCheatsheet visible={cheatOpen} onClose={() => setCheatOpen(false)} activeCueType={player.cue?.type} />
 
       <View style={styles.webTopBar}>
-        <GlassIconButton size={44} onPress={() => router.back()} accessibilityLabel="Back">
-          <Icon name="back" size={20} color={Theme.text} />
-        </GlassIconButton>
-        <Text variant="caption" color={Theme.textDim} numberOfLines={1} style={{ flex: 1, textAlign: 'center' }}>
-          {title}  ·  {artist}
-        </Text>
-        <GlassIconButton size={44} onPress={() => setCheatOpen(true)} accessibilityLabel="What am I feeling? Touch cheatsheet">
-          <Icon name="help" size={20} color={Theme.text} />
-        </GlassIconButton>
-        <GlassIconButton size={44} onPress={() => router.push('/calibrate')} accessibilityLabel="Settings">
-          <Icon name="settings" size={20} color={Theme.text} />
-        </GlassIconButton>
+        <View style={styles.webHeaderSide}>
+          <GlassIconButton size={44} onPress={() => router.back()} accessibilityLabel="Back">
+            <Icon name="back" size={20} color={Theme.text} />
+          </GlassIconButton>
+        </View>
+        <View style={styles.trackTitleBlock}>
+          <Text variant="caption" color={Theme.textDim} numberOfLines={1} align="center">
+            {title}  ·  {artist}
+          </Text>
+        </View>
+        <View style={[styles.webHeaderSide, styles.webHeaderActions]}>
+          <GlassIconButton size={44} onPress={() => setCheatOpen(true)} accessibilityLabel="What am I feeling? Touch cheatsheet">
+            <Icon name="help" size={20} color={Theme.text} />
+          </GlassIconButton>
+          <GlassIconButton size={44} onPress={() => router.push('/calibrate')} accessibilityLabel="Settings">
+            <Icon name="settings" size={20} color={Theme.text} />
+          </GlassIconButton>
+        </View>
       </View>
 
       <Pressable style={styles.webStage} onPress={player.toggle} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
@@ -351,7 +365,10 @@ const styles = StyleSheet.create({
 
   // mobile
   mobilePad: { flex: 1, paddingHorizontal: 18, gap: 12 },
-  topBar: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  topBar: { flexDirection: 'row', alignItems: 'center' },
+  mobileHeaderSide: { width: MOBILE_HEADER_RAIL_WIDTH, flexDirection: 'row', alignItems: 'center' },
+  mobileHeaderActions: { justifyContent: 'flex-end', gap: 10 },
+  trackTitleBlock: { flex: 1, minWidth: 0, alignItems: 'center' },
   lyricArea: { flex: 1, justifyContent: 'center' },
   dock: { padding: 14, gap: 10 },
   timeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -364,6 +381,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     paddingVertical: 20,
   },
+  webHeaderSide: { width: WEB_HEADER_RAIL_WIDTH, flexDirection: 'row', alignItems: 'center' },
+  webHeaderActions: { justifyContent: 'flex-end', gap: 16 },
   webStage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 48 },
   webDock: { alignItems: 'center', paddingHorizontal: 40, paddingTop: 16 },
   webDockGlass: { padding: 18, gap: 14 },

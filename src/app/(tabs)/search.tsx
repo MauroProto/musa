@@ -3,11 +3,12 @@ import { router } from 'expo-router';
 import { ActivityIndicator, ImageBackground, StyleSheet, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon, type IconName } from '../../components/Icon';
-import { Screen, Text, Stack, Touch, useFontScale } from '../../components/ui';
+import { Screen, Text, Stack, Touch, useFontScale, useResponsive } from '../../components/ui';
 import { GlassSurface, Wordmark } from '../../components/Glass';
 import { Theme, RADIUS } from '../../constants/theme';
 import { searchTracksClient } from '../../lib/api-client';
 import { DEMO_TRACKS } from '../../lib/fixtures';
+import { songsHeroBannerHeight } from '../../lib/songs-layout';
 import { usePreferences } from '../../store/preferences';
 import type { Track } from '../../lib/types';
 
@@ -15,6 +16,7 @@ const HERO = require('../../../assets/images/musa-hero-background-person.png');
 
 export default function SearchScreen() {
   const f = useFontScale();
+  const { width } = useResponsive();
   const setLastTrackId = usePreferences((s) => s.setLastTrackId);
   const [q, setQ] = useState('');
   const [results, setResults] = useState<Track[] | null>(null);
@@ -67,7 +69,7 @@ export default function SearchScreen() {
 
   return (
     <Screen scroll bottomBarSpace pad={20}>
-      {!searching ? <HeroBanner onDemo={() => router.push('/demo')} /> : null}
+      {!searching ? <HeroBanner height={songsHeroBannerHeight(width)} onDemo={() => router.push('/demo')} /> : null}
 
       <GlassSurface radius={RADIUS.field} elevation="none" intensity={28} style={styles.inputWrap}>
         <View style={{ marginLeft: 16 }}>
@@ -131,18 +133,20 @@ export default function SearchScreen() {
   );
 }
 
-function HeroBanner({ onDemo }: { onDemo: () => void }) {
+function HeroBanner({ height, onDemo }: { height: number; onDemo: () => void }) {
   return (
-    <View style={styles.banner}>
+    <View style={[styles.banner, { height }]}>
       <ImageBackground source={HERO} resizeMode="cover" style={styles.bannerImg} imageStyle={styles.bannerImgInner}>
         <LinearGradient
-          colors={['rgba(6,7,10,0.2)', 'rgba(6,7,10,0.1)', 'rgba(6,7,10,0.92)']}
-          locations={[0, 0.5, 1]}
+          colors={['rgba(6,7,10,0.2)', 'rgba(6,7,10,0.42)', 'rgba(6,7,10,0.9)']}
+          locations={[0, 0.44, 1]}
           style={StyleSheet.absoluteFill}
         />
         <View style={styles.bannerContent}>
-          <Wordmark style={{ fontSize: 22, color: '#FFFFFF' }}>MUSA</Wordmark>
-          <Text style={styles.bannerHeadline}>Music you can feel</Text>
+          <View style={styles.bannerTextBlock}>
+            <Wordmark style={styles.bannerWordmark}>MUSA</Wordmark>
+            <Text style={styles.bannerHeadline}>Music you can feel</Text>
+          </View>
           <Touch onPress={onDemo} style={styles.bannerCta} accessibilityLabel="Open guided demo">
             <Icon name="play" size={14} weight="fill" color={Theme.accentText} />
             <Text variant="caption" weight="700" color={Theme.accentText}>Guided demo</Text>
@@ -198,21 +202,28 @@ function formatDuration(ms: number) {
 }
 
 const styles = StyleSheet.create({
-  banner: { height: 320, borderRadius: RADIUS.card, overflow: 'hidden' },
-  bannerImg: { flex: 1, justifyContent: 'flex-end' },
+  banner: { borderRadius: RADIUS.card, overflow: 'hidden' },
+  bannerImg: { flex: 1, justifyContent: 'center' },
   bannerImgInner: { borderRadius: RADIUS.card },
-  bannerContent: { padding: 22, gap: 8 },
-  bannerHeadline: { fontSize: 30, lineHeight: 34, fontWeight: '800', letterSpacing: -0.8, color: '#FFFFFF' },
+  bannerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: 14,
+    padding: 16,
+  },
+  bannerTextBlock: { flex: 1, gap: 4, minWidth: 0 },
+  bannerWordmark: { fontSize: 18, color: '#FFFFFF', letterSpacing: 0 },
+  bannerHeadline: { fontSize: 22, lineHeight: 25, fontWeight: '800', letterSpacing: 0, color: '#FFFFFF' },
   bannerCta: {
-    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
     backgroundColor: Theme.accent,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 9,
+    paddingHorizontal: 13,
     borderRadius: 999,
-    marginTop: 6,
   },
   inputWrap: { flexDirection: 'row', alignItems: 'center' },
   clearBtn: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center', marginRight: 4 },
