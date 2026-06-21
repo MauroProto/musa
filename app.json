@@ -40,7 +40,17 @@
     },
     "extra": {
       "musixmatchBaseUrl": "https://api.musixmatch.com/ws/1.1",
-      "lalalBaseUrl": "https://www.lalal.ai/api"
+      "lalalBaseUrl": "https://www.lalal.ai/api",
+      "router": {},
+      "eas": {
+        "projectId": "b42e4087-875c-4d04-92d0-f8f42eba92e4"
+      }
+    },
+    "owner": "nachoestevo",
+    "sdkVersion": "54.0.0",
+    "runtimeVersion": "exposdk:54.0.0",
+    "updates": {
+      "url": "https://u.expo.dev/b42e4087-875c-4d04-92d0-f8f42eba92e4"
     }
   }
 }
