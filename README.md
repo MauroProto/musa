@@ -120,11 +120,14 @@ exp://<your-lan-ip>:8081
 
 For the public judge Expo Go update:
 
-```bash
-npx eas-cli update --branch judges --platform all --message "MUSA judge R2 audio playback"
+```powershell
+$env:EXPO_NO_DOTENV='1'
+$env:EXPO_NO_CLIENT_ENV_VARS='1'
+npx eas-cli update --branch judges --platform all --message "MUSA judge update"
+Remove-Item Env:\EXPO_NO_DOTENV, Env:\EXPO_NO_CLIENT_ENV_VARS -ErrorAction SilentlyContinue
 ```
 
-Share the `qr.expo.dev` QR/link for the `judges` channel, not the private Expo dashboard page.
+This keeps local `.env` values, especially `EXPO_PUBLIC_API_BASE=http://<lan-ip>:8081`, out of the public update. Share the `qr.expo.dev` QR/link for the `judges` channel, not the private Expo dashboard page.
 
 For a judge APK preview:
 

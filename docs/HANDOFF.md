@@ -73,8 +73,13 @@ npx eas build --profile preview --platform android
 Public Expo Go update for judges:
 
 ```powershell
-npx eas-cli update --branch judges --platform all --message "MUSA judge R2 audio playback"
+$env:EXPO_NO_DOTENV='1'
+$env:EXPO_NO_CLIENT_ENV_VARS='1'
+npx eas-cli update --branch judges --platform all --message "MUSA judge update"
+Remove-Item Env:\EXPO_NO_DOTENV, Env:\EXPO_NO_CLIENT_ENV_VARS -ErrorAction SilentlyContinue
 ```
+
+Do not publish the public `judges` channel with the normal local `.env` loaded. If `EXPO_PUBLIC_API_BASE=http://<lan-ip>:8081` is embedded, judges outside the LAN will get a broken build.
 
 Share a `qr.expo.dev/eas-update` QR/link for project `b42e4087-875c-4d04-92d0-f8f42eba92e4`, runtime `exposdk:54.0.0`, channel `judges`, and `slug=exp`. Do not share the Expo dashboard preview URL as the primary judge link.
 
