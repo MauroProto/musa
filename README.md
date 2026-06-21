@@ -1,176 +1,99 @@
-# MUSA - Haptic Captions for Music
+# MUSA
 
-> Lyrics you can read. Rhythm you can feel. Music you can follow.
+**Haptic captions for music.**
 
-MUSA is a phone-first accessibility layer for music. It turns synced lyrics, song structure, and stem cues into **visual captions plus meaningful haptics**, so a song can be followed through sight, touch, hearing aids, cochlear implants, or the phone alone.
+MUSA turns synced lyrics and song structure into a tactile, visual score for people who follow music through sight, touch, hearing aids, cochlear implants, or a phone in their hands.
 
-MUSA does not try to replace music. It translates the parts that usually stay hidden in audio: line entrances, silence, sustained phrases, drum attacks, bass body, riff patterns, chorus energy, and live moments before they land.
-
-[Live landing](https://musa-landing-vercel.vercel.app) · [GitHub](https://github.com/MauroProto/musa) · [Musicathon](https://www.musixmatch.com/pro/api/musicathon) · [Rules](https://www.musixmatch.com/pro/api/musicathon/rules)
+> Lyrics you can read. Rhythm you can feel.
 
 <p align="center">
-  <img src="assets/images/musa-hero-gradient.png" alt="MUSA landing hero showing the phone-first haptic music experience" width="100%" />
+  <a href="https://musa-landing-vercel.vercel.app">
+    <img src="https://api.microlink.io/?url=https%3A%2F%2Fmusa-landing-vercel.vercel.app&amp;screenshot=true&amp;embed=screenshot.url" alt="MUSA landing homepage preview" width="100%" />
+  </a>
 </p>
 
-## Demo Videos
+<p align="center">
+  <a href="https://musa-landing-vercel.vercel.app"><strong>Live landing</strong></a>
+  ·
+  <a href="https://github.com/MauroProto/musa"><strong>GitHub</strong></a>
+  ·
+  <a href="https://www.musixmatch.com/pro/api/musicathon"><strong>Musicathon</strong></a>
+  ·
+  <a href="https://www.musixmatch.com/pro/api/musicathon/rules"><strong>Rules</strong></a>
+</p>
 
-The landing uses short looped videos to show how MUSA feels in motion. They are stored in `public/` and are also available from the public landing deployment.
+## Product
 
-| Moment | Video |
+Most music accessibility stops at lyrics. Lyrics help, but they do not tell you when the drums enter, when a bass line carries the room, when a chorus is about to hit, or when a singer holds tension before releasing it.
+
+MUSA adds a second layer: a **sensory score**. It reads lyric timing, stem energy, and authored musical moments, then translates them into large captions, visual rhythm, and meaningful haptic cues.
+
+MUSA is not raw vibration. Each cue means something:
+
+| Cue | Meaning |
 | --- | --- |
-| Guided score and haptic captions | [Watch MP4](https://musa-landing-vercel.vercel.app/musa-scroll-1.mp4) |
-| Haptic language and readable rhythm | [Watch MP4](https://musa-landing-vercel.vercel.app/musa-scroll-2.mp4) |
-| Live concert mode | [Watch MP4](https://musa-landing-vercel.vercel.app/musa-scroll-3.mp4) |
-| Card demo loop | [Watch MP4](https://musa-landing-vercel.vercel.app/musa-card-1.mp4) |
+| Short tap | A lyric line begins. |
+| Long soft pulse | A vocal phrase is sustained. |
+| Crisp repeated taps | Drums or percussion are driving the moment. |
+| Lower rolling pulse | Bass is carrying the body of the song. |
+| Patterned taps | A recognizable riff or instrumental hook is active. |
+| Strong bloom | A chorus, drop, or emotional release is landing. |
 
-Local files:
+## Demo
 
-```text
-public/musa-scroll-1.mp4
-public/musa-scroll-2.mp4
-public/musa-scroll-3.mp4
-public/musa-card-1.mp4
-```
+The hackathon demo is phone-first because real haptics need real hardware. Web is useful for the landing and visual fallback; the strongest experience is on Android through Expo or an APK preview.
 
-## Screens
+Recommended judging flow:
 
-<table>
-  <tr>
-    <td width="33%">
-      <img src="assets/images/app-home.png" alt="MUSA app home with demo catalogue and search" width="100%" />
-    </td>
-    <td width="33%">
-      <img src="assets/images/musa-player-clean-variation.png" alt="MUSA player with synced haptic captions" width="100%" />
-    </td>
-    <td width="33%">
-      <img src="assets/images/musa-qr.png" alt="Expo QR code for opening MUSA on a phone" width="100%" />
-    </td>
-  </tr>
-  <tr>
-    <td><strong>Demo catalogue</strong><br />Open curated tracks or search a song.</td>
-    <td><strong>Guided player</strong><br />Captions, progress, stem cues, and haptics in one flow.</td>
-    <td><strong>Phone-first</strong><br />Expo development path for testing on real hardware.</td>
-  </tr>
-</table>
+1. Open the app on a phone.
+2. Start the guided demo from the catalogue.
+3. Choose a stronger haptic profile in calibration.
+4. Press play and hold the phone.
+5. Follow the guided chip as the song moves through intro, verse, build, chorus, and instrumental moments.
 
-<table>
-  <tr>
-    <td width="50%">
-      <img src="assets/images/card-language-field.png" alt="Natural field image used for the haptic language card" width="100%" />
-    </td>
-    <td width="50%">
-      <img src="assets/images/card-live-concert.png" alt="Live concert image used for real-time haptic captions" width="100%" />
-    </td>
-  </tr>
-  <tr>
-    <td><strong>A language you can learn</strong><br />Each pattern has a meaning: voice, drums, bass, silence, chorus, and build.</td>
-    <td><strong>Live, in the moment</strong><br />MUSA can follow a show and turn stage energy into captions and touch.</td>
-  </tr>
-</table>
+Demo tracks:
 
-## What It Solves
-
-Most music accessibility stops at lyrics. Lyrics help, but they do not explain when the drums enter, when a chorus is about to hit, when a bass line carries the room, or when a singer holds tension before releasing it.
-
-MUSA adds a **sensory score** on top of a song:
-
-- Large synced captions for readable lyric timing.
-- Visual rhythm rails for timing without audio.
-- Semantic haptics, not raw vibration.
-- Stem-aware cues for drums, bass, guitar, vocals, and chorus moments.
-- Calibration so the phone can feel soft, clear, or strong depending on the listener.
-
-The goal is simple: music should not depend on hearing alone.
-
-## How It Works
-
-1. A listener opens a curated demo or searches for a song.
-2. MUSA requests synced lyric timing through server-side API routes.
-3. Stem cues and authored moments are converted into a deterministic Sensory Score.
-4. The player renders readable captions, rhythm state, and haptic events.
-5. Native haptics run on phone hardware; web keeps a visual fallback.
-
-The Sensory Score engine is pure and deterministic. It lives outside React and platform APIs so it can be tested directly.
-
-## Hackathon Demo
-
-MUSA was built for **Musicathon 2026** with a judge-facing Android demo.
-
-Recommended demo path:
-
-1. Run the app on a real phone.
-2. Open the demo catalogue.
-3. Start **Ordinary** or **Dani California** in guided mode.
-4. Go to calibration and choose a stronger haptic profile.
-5. Press play and hold the phone.
-6. Follow the guided chip as the song moves through verse, build, chorus, and instrumental moments.
-
-Demo tracks include:
-
-- **Dani California** - Red Hot Chili Peppers, Musixmatch `trackId = 95574135`.
-- **Ordinary** - Alex Warren, stem-backed demo score.
+- **Ordinary** by Alex Warren, stem-backed guided score.
+- **Dani California** by Red Hot Chili Peppers, Musixmatch `trackId = 95574135`.
 
 The bundled demo captions are original, non-lyric sensory captions. MUSA does not persist Musixmatch lyrics or subtitles.
 
-## Haptic Language
+## Video Loops
 
-| Musical event | Haptic idea | What it tells the listener |
-| --- | --- | --- |
-| Line start | Short tap | A lyric phrase begins. |
-| Sustained vocal | Soft long pulse | A voice is being held. |
-| Drum attack | Fast crisp pulse | Percussion is driving the beat. |
-| Bass body | Lower rolling pulse | The low end is carrying weight. |
-| Signature riff | Patterned taps | A recognizable instrumental hook is active. |
-| Chorus / drop | Strong bloom | Energy is opening up. |
-| Silence / pause | No pulse, visual hold | The song is creating space. |
+| Moment | Link |
+| --- | --- |
+| Guided player and haptic captions | [Watch MP4](https://musa-landing-vercel.vercel.app/musa-scroll-1.mp4) |
+| Haptic language and rhythm | [Watch MP4](https://musa-landing-vercel.vercel.app/musa-scroll-2.mp4) |
+| Live concert mode | [Watch MP4](https://musa-landing-vercel.vercel.app/musa-scroll-3.mp4) |
+| Landing card motion | [Watch MP4](https://musa-landing-vercel.vercel.app/musa-card-1.mp4) |
 
-## Powered By
+## How It Works
 
-MUSA uses hackathon sponsor technology as part of the demo workflow:
+1. **Lyrics set the clock.** Synced lyric timing gives MUSA a readable timeline.
+2. **Stems reveal structure.** Stem analysis helps identify drums, bass, vocals, guitar, and energy changes.
+3. **The Sensory Score is generated.** A deterministic engine converts timing and structure into tactile events.
+4. **The player performs it.** The phone shows captions and rhythm while native haptics fire in sync.
+5. **Calibration adapts the feel.** Users can make patterns softer, clearer, or stronger.
 
-- [Musixmatch](https://www.musixmatch.com) for synced lyric metadata and Musicathon context.
-- [LALAL.AI](https://www.lalal.ai) for stem separation used in demo analysis.
+## Built With
 
-API keys stay server-side only. Do not expose them with `EXPO_PUBLIC_`.
+- Expo Router for iOS, Android, and web.
+- React Native and React Native Web.
+- `expo-haptics` for native tactile feedback.
+- Expo API routes for server-side API access.
+- Musixmatch for synced lyric metadata.
+- LALAL.AI for stem separation in the demo workflow.
 
 ## Team
 
 - [Mauro Protocassina](https://www.linkedin.com/in/mauroprotocassina/)
 - [Ignacio Estevo](https://www.linkedin.com/in/ignacio-estevo/)
 
-## Tech Stack
-
-- Expo Router universal app for iOS, Android, and web.
-- React Native, React Native Web, and Expo modules.
-- `expo-haptics` for native phone feedback.
-- `navigator.vibrate` fallback on supported web browsers.
-- Expo API routes for server-side Musixmatch and LALAL.AI access.
-- Node test runner for deterministic Sensory Score tests.
-
-## Run Locally
-
-Install dependencies:
+## Local Development
 
 ```bash
 npm install
-```
-
-Create local environment variables:
-
-```bash
 cp .env.example .env
-```
-
-Add server-side keys when available:
-
-```bash
-MUSIXMATCH_API_KEY=...
-LALAL_API_KEY=...
-```
-
-Start Expo:
-
-```bash
 npm run web
 ```
 
@@ -180,47 +103,16 @@ For phone testing:
 npx expo start --host lan --clear
 ```
 
-Then scan the Expo QR code with Expo Go or open the LAN URL from the phone.
-
-## Scripts
+Server-side environment variables:
 
 ```bash
-npm run test        # Sensory Score and app logic tests
-npm run typecheck   # TypeScript check
-npm run lint        # Expo lint
-npm run web         # Expo web
-npm run ios         # Expo iOS
-npm run android     # Expo Android
+MUSIXMATCH_API_KEY=...
+LALAL_API_KEY=...
 ```
 
-## Project Map
-
-```text
-src/app/                 Expo Router screens and API routes
-src/app/api/             Server-side API routes
-src/lib/sensory-score.ts Pure sensory score engine
-src/lib/haptics.ts       Native/web haptic controller
-src/lib/demo-guided.ts   Guided demo captions and moments
-src/hooks/               Player and stem audio hooks
-assets/images/           README, landing, app, and demo imagery
-assets/lalalai/          Permissioned hackathon demo stem assets
-public/                  Landing demo videos
-docs/HANDOFF.md          Demo handoff and manual QA notes
-```
-
-## Rules And Constraints
-
-- Never commit `.env`.
-- Never put API keys in `EXPO_PUBLIC_` variables.
-- Never import server-only API helpers into client screens, components, or hooks.
-- Do not persist Musixmatch lyrics or subtitles.
-- Keep `src/lib/sensory-score.ts` pure and deterministic.
-- Use `src/lib/haptics.ts` for haptic playback.
-- Demo stem assets are included only for the MUSA hackathon/demo context and should not be reused or redistributed outside that scope.
+Do not expose server keys with `EXPO_PUBLIC_`.
 
 ## Verification
-
-Before shipping changes:
 
 ```bash
 npm run test
@@ -228,4 +120,11 @@ npm run typecheck
 npm run lint
 ```
 
-The most important manual check is on a real phone: web is useful for layout, but haptic quality needs native hardware.
+## Project Rules
+
+- Do not commit `.env`.
+- Do not persist Musixmatch lyrics or subtitles.
+- Keep API keys server-side only.
+- Keep `src/lib/sensory-score.ts` pure and deterministic.
+- Use `src/lib/haptics.ts` for native and web haptic playback.
+- Demo stem assets are included only for the MUSA hackathon/demo context and should not be reused or redistributed outside that scope.
