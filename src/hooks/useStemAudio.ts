@@ -1,14 +1,15 @@
-import type { AudioMode, StemKind } from '../lib/audio-client';
-import type { LayerGains } from '../lib/layer-gains';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { getStemAudioSource, type AudioMode, type StemKind } from '../lib/audio-client';
+import { clampGain, type LayerGains } from '../lib/layer-gains';
 
 /**
- * Expo Go judge build: keep the player on the deterministic internal clock.
+ * Optional demo audio controller.
  *
- * The full stem-audio mixer is intentionally not loaded in the public Expo Go
- * path. Expo Go is the easiest no-install demo path for judges, but it is also
- * the least forgiving runtime for large streamed media + native audio state.
- * Haptics, captions, guided moments and stem analysis still run from bundled
- * data. Full audio belongs in an APK/dev build.
+ * - silent: haptics + captions only.
+ * - mix: no_vocals + vocals from R2, enough to reconstruct the full song while
+ *   keeping Expo Go to two native audio players.
+ * - isolate: one stem from R2, used to teach a tactile/audio layer.
  */
 export type StemAudioController = {
   ready: boolean;
@@ -18,11 +19,159 @@ export type StemAudioController = {
   getCurrentMs(): number | null;
 };
 
+type ExpoAudioPlayer = ReturnType<typeof useAudioPlayer>;
+
+const AUDIO_OPTIONS = { updateInterval: 250, downloadFirst: false, keepAudioSessionActive: true };
+const NO_SOURCE = null;
+
 export function useStemAudio(
-  _trackId: number,
-  _mode: AudioMode,
-  _isolateStem: StemKind,
-  _layerGains: LayerGains,
+  trackId: number,
+  mode: AudioMode,
+  isolateStem: StemKind,
+  layerGains: LayerGains,
 ): StemAudioController | null {
-  return null;
+  const bedSource = useMemo(
+    () => (mode === 'mix' ? getStemAudioSource(trackId, 'no_vocals') : NO_SOURCE),
+    [trackId, mode],
+  );
+  const vocalSource = useMemo(
+    () => (mode === 'mix' ? getStemAudioSource(trackId, 'vocals') : NO_SOURCE),
+    [trackId, mode],
+  );
+  const isolateSource = useMemo(
+    () => (mode === 'isolate' ? getStemAudioSource(trackId, isolateStem) : NO_SOURCE),
+    [trackId, mode, isolateStem],
+  );
+
+  const bed = useAudioPlayer(bedSource, AUDIO_OPTIONS);
+  const vocals = useAudioPlayer(vocalSource, AUDIO_OPTIONS);
+  const isolate = useAudioPlayer(isolateSource, AUDIO_OPTIONS);
+
+  const bedStatus = useAudioPlayerStatus(bed);
+  const vocalsStatus = useAudioPlayerStatus(vocals);
+  const isolateStatus = useAudioPlayerStatus(isolate);
+
+  const ready =
+    mode === 'mix'
+      ? bedStatus.isLoaded && vocalsStatus.isLoaded
+      : mode === 'isolate'
+        ? isolateStatus.isLoaded
+        : false;
+
+  const playersRef = useRef({ bed, vocals, isolate });
+  playersRef.current = { bed, vocals, isolate };
+
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
+  const playingRef = useRef(false);
+  const lastSeekSecondsRef = useRef(0);
+
+  const activePlayers = useCallback((): ExpoAudioPlayer[] => {
+    const players = playersRef.current;
+    if (modeRef.current === 'mix') return [players.bed, players.vocals];
+    if (modeRef.current === 'isolate') return [players.isolate];
+    return [];
+  }, []);
+
+  const pauseAll = useCallback(() => {
+    for (const p of [playersRef.current.bed, playersRef.current.vocals, playersRef.current.isolate]) {
+      try {
+        p.pause();
+      } catch {
+        /* no-op */
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (mode === 'silent') {
+      playingRef.current = false;
+      pauseAll();
+      return;
+    }
+    setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+  }, [mode, pauseAll]);
+
+  useEffect(() => {
+    if (mode === 'silent') return;
+    try {
+      const bedGain = clampGain((layerGains.bass + layerGains.drums + layerGains.guitar) / 3);
+      bed.volume = mode === 'mix' ? Math.min(1, bedGain) : 0;
+      vocals.volume = mode === 'mix' ? Math.min(1, clampGain(layerGains.vocals)) : 0;
+      isolate.volume = mode === 'isolate' ? 1 : 0;
+    } catch {
+      /* player may not be ready yet */
+    }
+  }, [bed, vocals, isolate, mode, layerGains]);
+
+  const seekTo = useCallback(
+    (ms: number) => {
+      const seconds = Math.max(0, ms / 1000);
+      lastSeekSecondsRef.current = seconds;
+      for (const p of activePlayers()) {
+        void p.seekTo(seconds).catch(() => {});
+      }
+    },
+    [activePlayers],
+  );
+
+  const play = useCallback(() => {
+    if (modeRef.current === 'silent') return;
+    playingRef.current = true;
+    for (const p of activePlayers()) {
+      try {
+        p.play();
+      } catch {
+        /* stream may still be loading */
+      }
+    }
+  }, [activePlayers]);
+
+  const pause = useCallback(() => {
+    playingRef.current = false;
+    pauseAll();
+  }, [pauseAll]);
+
+  const getCurrentMs = useCallback((): number | null => {
+    if (modeRef.current === 'silent') return null;
+    const players = playersRef.current;
+    const clock = modeRef.current === 'mix' ? players.bed : players.isolate;
+    if (!clock.isLoaded || !clock.playing) return null;
+    if (!Number.isFinite(clock.currentTime) || clock.currentTime < 0) return null;
+    return clock.currentTime * 1000;
+  }, []);
+
+  useEffect(() => {
+    if (!ready || !playingRef.current) return;
+    const seconds = lastSeekSecondsRef.current;
+    for (const p of activePlayers()) {
+      void p.seekTo(seconds).then(() => p.play()).catch(() => {});
+    }
+  }, [ready, activePlayers]);
+
+  useEffect(() => {
+    if (mode !== 'mix') return;
+    const id = setInterval(() => {
+      if (!playingRef.current) return;
+      const { bed: lead, vocals: follower } = playersRef.current;
+      if (!lead.isLoaded || !follower.isLoaded) return;
+      const driftMs = Math.abs(lead.currentTime - follower.currentTime) * 1000;
+      if (driftMs > 220) void follower.seekTo(lead.currentTime).catch(() => {});
+      if (!follower.playing) {
+        try {
+          follower.play();
+        } catch {
+          /* keep haptic clock running */
+        }
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [mode]);
+
+  useEffect(() => pause, [pause]);
+
+  return useMemo(
+    () => (mode === 'silent' ? null : { ready, play, pause, seekTo, getCurrentMs }),
+    [mode, ready, play, pause, seekTo, getCurrentMs],
+  );
 }

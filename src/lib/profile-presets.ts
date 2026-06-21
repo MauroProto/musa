@@ -42,26 +42,26 @@ export const PROFILE_PRESETS: Record<ListeningProfile, ProfilePreset> = {
   hard_of_hearing: {
     strength: 'medium',
     visualOnly: false,
-    audioMode: 'silent',
+    audioMode: 'mix',
     fontScale: 'large',
     layerGains: { drums: 1, bass: 1, guitar: 1, vocals: 1.3 },
-    rationale: 'Balanced haptics with the voice layer lifted — the part most easily lost.',
+    rationale: 'Plays the mix with the voice lifted — the part most easily lost.',
   },
   // Cochlear implant — rhythm and voice come through, texture is missed, so the
   // guitar/texture layer is boosted.
   cochlear_implant: {
     strength: 'medium',
     visualOnly: false,
-    audioMode: 'silent',
+    audioMode: 'isolate',
     fontScale: 'large',
     layerGains: { drums: 1, bass: 1, guitar: 1.35, vocals: 1.1 },
-    rationale: 'Boosts the texture layer so guitar and detail are easier to feel.',
+    rationale: 'Boosts the texture layer you miss, and lets you isolate one stem.',
   },
   // Hearing aid — clarity over rumble. Tame the low end, lift the voice.
   hearing_aid: {
     strength: 'medium',
     visualOnly: false,
-    audioMode: 'silent',
+    audioMode: 'mix',
     fontScale: 'large',
     layerGains: { drums: 1, bass: 0.7, guitar: 1, vocals: 1.2 },
     rationale: 'Tames low-end rumble and lifts the voice for clarity.',
@@ -70,7 +70,7 @@ export const PROFILE_PRESETS: Record<ListeningProfile, ProfilePreset> = {
   feel_more: {
     strength: 'strong',
     visualOnly: false,
-    audioMode: 'silent',
+    audioMode: 'mix',
     fontScale: 'large',
     layerGains: { drums: 1.2, bass: 1.2, guitar: 1.2, vocals: 1.2 },
     rationale: 'Everything turned up — the fullest multisensory version.',

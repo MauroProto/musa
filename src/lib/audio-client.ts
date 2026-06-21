@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { getRemoteStemAudioUrl } from './stem-audio-assets.ts';
+import type { StemAudioKind, StemKind } from './stem-audio-assets.ts';
 
 /**
  * MUSA — client-safe audio mode + stem streaming URLs.
@@ -14,8 +15,6 @@ import { getRemoteStemAudioUrl } from './stem-audio-assets.ts';
 /** Which audio experience the player uses. */
 export type AudioMode = 'silent' | 'mix' | 'isolate';
 
-/** A stem the user can isolate. `no_vocals` (instrumental) is internal to mix only. */
-export type StemKind = 'bass' | 'drums' | 'guitar' | 'vocals';
 type AudioSource = { uri: string };
 
 export const ISOLATABLE_STEMS: { key: StemKind; label: string }[] = [
@@ -36,19 +35,19 @@ function apiBase(): string {
   return process.env.EXPO_PUBLIC_API_BASE ?? '';
 }
 
-export function getStemStreamUrl(trackId: number, stem: 'bass' | 'drums' | 'guitar' | 'vocals' | 'no_vocals'): string {
+export function getStemStreamUrl(trackId: number, stem: StemAudioKind): string {
   return `${apiBase()}/api/audio?trackId=${trackId}&stem=${stem}`;
 }
 
 export function usesRemoteStemAudio(): boolean {
-  return Platform.OS !== 'web' && apiBase().length === 0;
+  return apiBase().length === 0;
 }
 
-export function getStemAudioSource(trackId: number, stem: StemKind): AudioSource | null {
-  if (Platform.OS !== 'web') {
-    const remoteUri = getRemoteStemAudioUrl(trackId, stem);
-    if (remoteUri) return { uri: remoteUri };
-    if (apiBase().length === 0) return null;
-  }
+export function getStemAudioSource(trackId: number, stem: StemAudioKind): AudioSource | null {
+  const remoteUri = getRemoteStemAudioUrl(trackId, stem);
+  if (remoteUri) return { uri: remoteUri };
+  if (Platform.OS !== 'web' && apiBase().length === 0) return null;
   return { uri: getStemStreamUrl(trackId, stem) };
 }
+
+export type { StemAudioKind, StemKind };

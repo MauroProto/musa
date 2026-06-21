@@ -58,7 +58,13 @@ Demo tracks:
 
 The bundled demo captions are original, non-lyric sensory captions. MUSA does not persist Musixmatch lyrics or subtitles. If the API is unreachable, Dani and Ordinary still work for native haptics using bundled sensory captions plus generated LALAL stem analysis.
 
-The public Expo Go judge build is haptics/captions first. It intentionally does **not** load the native stem-audio mixer, because Expo Go is a constrained shared runtime and the judge link has to work for people outside the repo/account. Full audio/stem playback belongs in an APK/dev build or a deployed API/static audio host.
+The public Expo Go judge build streams approved demo audio from Cloudflare R2:
+
+```text
+https://pub-c392c19f21d2456aa30d465e6f0a9d40.r2.dev
+```
+
+Full mix uses the `no_vocals + vocals` stems for the selected demo track. Isolate mode plays one stem. EAS Update stays free of MP3 assets; the update ships code while audio streams from R2.
 
 ## Video Loops
 
@@ -83,6 +89,7 @@ The public Expo Go judge build is haptics/captions first. It intentionally does 
 - React Native and React Native Web.
 - `expo-haptics` for native tactile feedback.
 - Expo API routes for server-side API access.
+- Cloudflare R2 for judge-safe demo audio streaming.
 - Musixmatch for synced lyric metadata.
 - LALAL.AI for stem separation in the demo workflow.
 
@@ -114,7 +121,7 @@ exp://<your-lan-ip>:8081
 For the public judge Expo Go update:
 
 ```bash
-npx eas-cli update --branch judges --platform all --message "MUSA judge Expo Go safe haptics"
+npx eas-cli update --branch judges --platform all --message "MUSA judge R2 audio playback"
 ```
 
 Share the `qr.expo.dev` QR/link for the `judges` channel, not the private Expo dashboard page.
@@ -125,7 +132,7 @@ For a judge APK preview:
 npx eas build --profile preview --platform android
 ```
 
-Use the APK path when you want native audio/stem playback in addition to the Expo Go haptic demo.
+Use the APK path when you want a direct Android install. Expo Go and APK both stream the same R2 audio.
 
 Server-side environment variables:
 
@@ -153,4 +160,4 @@ npm run lint
 - Use `src/lib/haptics.ts` for native and web haptic playback.
 - Demo stem assets are included only for the MUSA hackathon/demo context and should not be reused or redistributed outside that scope.
 - Only commit audio stems that are explicitly approved for this demo.
-- Keep EAS Update free of MP3 assets; serve audio through API/static URLs or a later bucket if full playback is needed.
+- Keep EAS Update free of MP3 assets; demo playback streams from the Cloudflare R2 bucket.

@@ -7,7 +7,7 @@ function readRepoFile(relativePath: string): string {
   return readFileSync(path.join(process.cwd(), relativePath), 'utf8');
 }
 
-test('public Expo Go build does not import or configure expo-audio', () => {
+test('public Expo Go build keeps native audio enabled for R2 streams', () => {
   const packageJson = JSON.parse(readRepoFile('package.json')) as {
     dependencies?: Record<string, string>;
   };
@@ -17,11 +17,9 @@ test('public Expo Go build does not import or configure expo-audio', () => {
   const stemAudioHook = readRepoFile('src/hooks/useStemAudio.ts');
   const player = readRepoFile('src/app/player.tsx');
 
-  assert.equal(packageJson.dependencies?.['expo-audio'], undefined);
-  assert.deepEqual(
-    appJson.expo?.plugins?.filter((plugin) => plugin === 'expo-audio'),
-    [],
-  );
-  assert.equal(stemAudioHook.includes('expo-audio'), false);
-  assert.equal(player.includes('AudioModeControl'), false);
+  assert.ok(packageJson.dependencies?.['expo-audio']);
+  assert.ok(appJson.expo?.plugins?.includes('expo-audio'));
+  assert.equal(stemAudioHook.includes('useAudioPlayer'), true);
+  assert.equal(stemAudioHook.includes('getStemAudioSource'), true);
+  assert.equal(player.includes('AudioModeControl'), true);
 });
