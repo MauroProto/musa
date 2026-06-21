@@ -11,6 +11,10 @@ function apiBase(): string {
   return process.env.EXPO_PUBLIC_API_BASE ?? '';
 }
 
+function usesLocalStemDemoData(trackId: number): boolean {
+  return Platform.OS !== 'web' && isStemDemoTrack(trackId);
+}
+
 async function safeFetch(path: string, init?: RequestInit, timeoutMs = 8000): Promise<Response | null> {
   try {
     const ctrl = new AbortController();
@@ -36,6 +40,9 @@ export async function searchTracksClient(q: string): Promise<{ tracks: Track[]; 
 export async function getLyricsClient(
   trackId: number,
 ): Promise<{ lines: SyncedLine[]; source: string; instrumental?: boolean }> {
+  if (usesLocalStemDemoData(trackId)) {
+    return { lines: fallbackSensoryCaptionsForTrack(trackId), source: 'stem-demo' };
+  }
   const res = await safeFetch(`${apiBase()}/api/lyrics?trackId=${trackId}`);
   if (res && res.ok) {
     const data = (await res.json()) as { lines?: SyncedLine[]; source?: string; instrumental?: boolean };
@@ -59,6 +66,19 @@ export async function getStemsClient(trackId: number): Promise<{
   source: string;
   stemAnalysis?: StemAnalysis;
 } | null> {
+  if (usesLocalStemDemoData(trackId)) {
+    const stemAnalysis = getStemDemoAnalysis(trackId);
+    if (stemAnalysis) {
+      return {
+        energy: [],
+        beats: [],
+        durationMs: stemAnalysis.durationMs ?? 60000,
+        bpm: stemAnalysis.bpm,
+        source: 'lalal-local',
+        stemAnalysis,
+      };
+    }
+  }
   const res = await safeFetch(`${apiBase()}/api/stems?trackId=${trackId}`);
   if (res && res.ok) {
     return (await res.json()) as {

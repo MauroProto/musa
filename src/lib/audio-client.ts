@@ -45,8 +45,10 @@ export function usesBundledStemAudio(): boolean {
 }
 
 export function getStemAudioSource(trackId: number, stem: StemKind): AudioSource | null {
-  if (usesBundledStemAudio()) {
-    return getBundledStemAudioSource(trackId, stem);
+  if (Platform.OS !== 'web') {
+    const bundled = getBundledStemAudioSource(trackId, stem);
+    if (bundled) return bundled;
+    if (apiBase().length === 0) return null;
   }
   return { uri: getStemStreamUrl(trackId, stem) };
 }
