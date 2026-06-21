@@ -1,7 +1,6 @@
-import type { AudioSource } from 'expo-audio';
 import { DANI_CALIFORNIA_TRACK_ID, ORDINARY_TRACK_ID } from './demo-score-tracks.ts';
-import type { StemKind } from './audio-client.ts';
 
+type StemKind = 'bass' | 'drums' | 'guitar' | 'vocals';
 type StemSourceMap = Record<StemKind, string>;
 
 const DEFAULT_STEM_AUDIO_BASE_URL =
@@ -23,7 +22,11 @@ const STEM_AUDIO_PATHS: Record<number, StemSourceMap> = {
 };
 
 function stemAudioBaseUrl(): string {
-  return (process.env.EXPO_PUBLIC_STEM_AUDIO_BASE_URL ?? DEFAULT_STEM_AUDIO_BASE_URL).replace(/\/+$/, '');
+  const env =
+    typeof process !== 'undefined' && process.env
+      ? process.env.EXPO_PUBLIC_STEM_AUDIO_BASE_URL
+      : undefined;
+  return (env ?? DEFAULT_STEM_AUDIO_BASE_URL).replace(/\/+$/, '');
 }
 
 export function getRemoteStemAudioUrl(trackId: number, stem: StemKind): string | null {
@@ -31,11 +34,6 @@ export function getRemoteStemAudioUrl(trackId: number, stem: StemKind): string |
   if (!relativePath) return null;
   const encodedPath = relativePath.split('/').map(encodeURIComponent).join('/');
   return `${stemAudioBaseUrl()}/${encodedPath}`;
-}
-
-export function getRemoteStemAudioSource(trackId: number, stem: StemKind): AudioSource | null {
-  const uri = getRemoteStemAudioUrl(trackId, stem);
-  return uri ? { uri } : null;
 }
 
 export function hasRemoteStemAudio(trackId: number): boolean {

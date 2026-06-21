@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import type { AudioSource } from 'expo-audio';
-import { getRemoteStemAudioSource } from './stem-audio-assets.ts';
+import { getRemoteStemAudioUrl } from './stem-audio-assets.ts';
 
 /**
  * MUSA — client-safe audio mode + stem streaming URLs.
@@ -46,8 +46,8 @@ export function usesRemoteStemAudio(): boolean {
 
 export function getStemAudioSource(trackId: number, stem: StemKind): AudioSource | null {
   if (Platform.OS !== 'web') {
-    const remote = getRemoteStemAudioSource(trackId, stem);
-    if (remote) return remote;
+    const remoteUri = getRemoteStemAudioUrl(trackId, stem);
+    if (remoteUri) return { uri: remoteUri };
     if (apiBase().length === 0) return null;
   }
   return { uri: getStemStreamUrl(trackId, stem) };
