@@ -1,0 +1,11 @@
+node_modules/
+.expo/
+dist/
+web-build/
+artifacts/
+output/
+*.log
+.env
+.env*.local
+.git/
+assets/lalalai/**/*.mp3

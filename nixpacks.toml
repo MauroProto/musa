@@ -1,0 +1,8 @@
+[variables]
+NPM_CONFIG_PRODUCTION = "false"
+
+[phases.install]
+cmds = ["npm install --include=dev --include=optional --no-audit --no-fund"]
+
+[phases.build]
+cmds = ["node -e \"console.log('No static build step: Railway serves Expo Go through Metro at runtime.')\""]
