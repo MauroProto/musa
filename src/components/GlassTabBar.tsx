@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,13 +26,12 @@ type TabMeta = { label: string; icon: IconName };
 const TAB_META: Record<string, TabMeta> = {
   search: { label: 'Songs', icon: 'search' },
   live: { label: 'Live', icon: 'broadcast' },
-  demo: { label: 'Demo', icon: 'vinyl' },
   legend: { label: 'Touch', icon: 'wave' },
 };
 
 /**
  * Floating liquid-glass tab bar.
- * 3 destination tabs (Songs · Demo · Touch) + a Settings action that opens the
+ * 3 destination tabs (Songs · Live · Touch) + a Settings action that opens the
  * full-screen calibration/settings page. An animated capsule tracks the active
  * tab; everything is keyboard/AT-labelled and respects reduced motion.
  */
@@ -43,16 +42,24 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps) {
   const [barWidth, setBarWidth] = useState(0);
 
   const routes = state.routes.filter((r) => TAB_META[r.name]);
+  const activeRouteName = state.routes[state.index]?.name;
+  const activeVisibleIndex = Math.max(0, routes.findIndex((route) => route.name === activeRouteName));
   const itemCount = routes.length + 1; // + Settings
   const hasLiveShow = liveShows().length > 0;
   const innerPad = 6;
   const itemWidth = barWidth > 0 ? (barWidth - innerPad * 2) / itemCount : 0;
 
-  const indicator = useSharedValue(state.index);
+  const indicator = useSharedValue(activeVisibleIndex);
   const indicatorStyle = useAnimatedStyle(() => ({
     width: Math.max(0, itemWidth),
     transform: [{ translateX: innerPad + indicator.value * itemWidth }],
   }));
+
+  useEffect(() => {
+    indicator.value = reduceMotion
+      ? activeVisibleIndex
+      : withTiming(activeVisibleIndex, { duration: MOTION.dur.base, easing: EASE_OUT });
+  }, [activeVisibleIndex, indicator, reduceMotion]);
 
   function go(routeName: string, index: number, isFocused: boolean) {
     indicator.value = reduceMotion
@@ -81,14 +88,14 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps) {
             <Animated.View style={[styles.capsule, indicatorStyle, { pointerEvents: 'none' }]} />
           ) : null}
 
-          {routes.map((route) => {
+          {routes.map((route, visibleIndex) => {
             const meta = TAB_META[route.name];
             const index = state.routes.indexOf(route);
             const isFocused = state.index === index;
             return (
               <Pressable
                 key={route.key}
-                onPress={() => go(route.name, index, isFocused)}
+                onPress={() => go(route.name, visibleIndex, isFocused)}
                 style={styles.item}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isFocused }}

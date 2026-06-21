@@ -9,6 +9,7 @@ import {
   HAPTIC_LEGEND,
   type HapticLegendCategory,
 } from '../../constants/haptic-patterns';
+import { PRIMARY_GUIDED_TRACK } from '../../lib/fixtures';
 import { previewHaptic } from '../../lib/haptics';
 import { usePreferences } from '../../store/preferences';
 import type { HapticEventType } from '../../lib/types';
@@ -33,6 +34,19 @@ const LEGEND_ICON: Record<HapticEventType, IconName> = {
 
 export default function LegendScreen() {
   const strength = usePreferences((s) => s.strength);
+
+  function openGuidedTrack() {
+    router.push({
+      pathname: '/player',
+      params: {
+        trackId: String(PRIMARY_GUIDED_TRACK.trackId),
+        title: PRIMARY_GUIDED_TRACK.title,
+        artist: PRIMARY_GUIDED_TRACK.artist,
+        durationMs: String(PRIMARY_GUIDED_TRACK.durationMs ?? ''),
+        guided: '1',
+      },
+    });
+  }
 
   return (
     <Screen scroll bottomBarSpace>
@@ -95,7 +109,7 @@ export default function LegendScreen() {
 
       <Stack gap={10}>
         <Button label="Tune your strength" variant="secondary" onPress={() => router.push('/calibrate')} />
-        <Button label="Try the guided demo" variant="ghost" onPress={() => router.push('/demo')} />
+        <Button label="Try a guided listen" variant="ghost" onPress={openGuidedTrack} />
       </Stack>
     </Screen>
   );

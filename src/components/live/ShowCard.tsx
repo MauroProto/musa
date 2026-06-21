@@ -28,22 +28,24 @@ export function ShowCard({ show, onPress }: { show: Concert; onPress: () => void
           locations={[0, 0.42, 1]}
           style={StyleSheet.absoluteFill}
         />
-        <View style={styles.mediaTop}>
-          {isLive ? (
-            <View style={styles.livePill}>
-              <LiveBadge label="LIVE NOW" />
-            </View>
-          ) : (
-            <View style={styles.upcomingTag}>
-              <Icon name="vinyl" size={12} color={Theme.accentText} />
-              <Text variant="label" color={Theme.accentText} style={styles.mediaKicker}>UPCOMING</Text>
-            </View>
-          )}
-        </View>
+        <View style={styles.mediaContent}>
+          <View style={styles.mediaTop}>
+            {isLive ? (
+              <View style={styles.livePill}>
+                <LiveBadge label="LIVE NOW" />
+              </View>
+            ) : (
+              <View style={styles.upcomingTag}>
+                <Icon name="vinyl" size={12} color={Theme.accentText} />
+                <Text variant="label" color={Theme.accentText} style={styles.mediaKicker}>UPCOMING</Text>
+              </View>
+            )}
+          </View>
 
-        <View style={styles.mediaCopy}>
-          <Text variant="title" color={Theme.accentText} numberOfLines={1}>{show.name}</Text>
-          <Text variant="caption" color="rgba(255,255,255,0.76)" numberOfLines={1}>{show.subtitle}</Text>
+          <View style={styles.mediaCopy}>
+            <Text variant="title" color={Theme.accentText} numberOfLines={1}>{show.name}</Text>
+            <Text variant="caption" color="rgba(255,255,255,0.76)" numberOfLines={1}>{show.subtitle}</Text>
+          </View>
         </View>
       </View>
 
@@ -74,6 +76,11 @@ const styles = StyleSheet.create({
   media: {
     width: '100%',
     height: 246,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  mediaContent: {
+    ...StyleSheet.absoluteFillObject,
     justifyContent: 'space-between',
     padding: 16,
   },

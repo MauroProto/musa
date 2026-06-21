@@ -25,6 +25,8 @@ export const DEMO_TRACKS: Track[] = [
   },
 ];
 
+export const PRIMARY_GUIDED_TRACK = DEMO_TRACKS.find((track) => track.trackId === ORDINARY_TRACK_ID) ?? DEMO_TRACKS[0];
+
 /**
  * Sensory captions shown when live lyrics can't be loaded for a stem demo
  * (e.g. offline). They describe the tactile map rather than reproduce lyrics.

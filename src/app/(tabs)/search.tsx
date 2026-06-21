@@ -9,7 +9,7 @@ import { AlbumArtwork } from '../../components/songs/AlbumArtwork';
 import { DemoTrackShelf } from '../../components/songs/DemoTrackShelf';
 import { Theme, RADIUS } from '../../constants/theme';
 import { searchTracksClient } from '../../lib/api-client';
-import { DEMO_TRACKS } from '../../lib/fixtures';
+import { DEMO_TRACKS, PRIMARY_GUIDED_TRACK } from '../../lib/fixtures';
 import { songsHeroBannerHeight } from '../../lib/songs-layout';
 import { usePreferences } from '../../store/preferences';
 import type { Track } from '../../lib/types';
@@ -51,17 +51,20 @@ export default function SearchScreen() {
     setLoading(true);
   }
 
-  function openTrack(track: Track) {
+  function openTrack(track: Track, guided = false) {
     setLastTrackId(track.trackId);
+    const params: Record<string, string> = {
+      trackId: String(track.trackId),
+      title: track.title,
+      artist: track.artist,
+      durationMs: String(track.durationMs ?? ''),
+      artwork: track.artworkUrl ?? '',
+    };
+    if (guided) params.guided = '1';
+
     router.push({
       pathname: '/player',
-      params: {
-        trackId: String(track.trackId),
-        title: track.title,
-        artist: track.artist,
-        durationMs: String(track.durationMs ?? ''),
-        artwork: track.artworkUrl ?? '',
-      },
+      params,
     });
   }
 
@@ -69,7 +72,7 @@ export default function SearchScreen() {
 
   return (
     <Screen scroll bottomBarSpace pad={20}>
-      {!searching ? <HeroBanner height={songsHeroBannerHeight(width)} onDemo={() => router.push('/demo')} /> : null}
+      {!searching ? <HeroBanner height={songsHeroBannerHeight(width)} onDemo={() => openTrack(PRIMARY_GUIDED_TRACK, true)} /> : null}
 
       <GlassSurface radius={RADIUS.field} elevation="none" intensity={28} style={styles.inputWrap}>
         <View style={{ marginLeft: 16 }}>
@@ -126,7 +129,7 @@ export default function SearchScreen() {
           </Stack>
 
           <View style={styles.quickRow}>
-            <QuickTile icon="vinyl" label="Guided demo" hint="See what you'll feel" onPress={() => router.push('/demo')} />
+            <QuickTile icon="vinyl" label="Guided listen" hint="Jump into Ordinary" onPress={() => openTrack(PRIMARY_GUIDED_TRACK, true)} />
             <QuickTile icon="wave" label="Touch language" hint="Learn the cues" onPress={() => router.push('/legend')} />
           </View>
         </>

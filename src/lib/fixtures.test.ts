@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { DANI_CALIFORNIA_TRACK_ID, ORDINARY_TRACK_ID, isStemDemoTrack } from './demo-score-tracks.ts';
-import { DEMO_TRACKS, searchDemoTracks } from './fixtures.ts';
+import { DEMO_TRACKS, PRIMARY_GUIDED_TRACK, searchDemoTracks } from './fixtures.ts';
 
 test('Dani California is listed as a demo score without bundling local lyrics', () => {
   const track = DEMO_TRACKS.find((item) => item.trackId === DANI_CALIFORNIA_TRACK_ID);
@@ -34,4 +34,9 @@ test('Ordinary is listed as a stem-backed demo score without bundled lyrics', ()
 test('only real stem-backed songs are offered as demo scores', () => {
   const ids = DEMO_TRACKS.map((t) => t.trackId).sort();
   assert.deepEqual(ids, [ORDINARY_TRACK_ID, DANI_CALIFORNIA_TRACK_ID].sort());
+});
+
+test('primary guided entry opens the strongest current judge demo', () => {
+  assert.equal(PRIMARY_GUIDED_TRACK.trackId, ORDINARY_TRACK_ID);
+  assert.equal(PRIMARY_GUIDED_TRACK.artist, 'Alex Warren');
 });
