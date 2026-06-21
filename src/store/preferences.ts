@@ -12,6 +12,7 @@ type FontScale = 'comfortable' | 'large' | 'xl';
 export type NowPlaying = { trackId: number; title: string; artist: string; durationMs?: number } | null;
 
 type PreferencesState = {
+  audioPresetVersion: number;
   profile: ListeningProfile | null;
   strength: HapticStrength;
   pulseOn: boolean;
@@ -46,6 +47,7 @@ type PreferencesState = {
 type PersistedPreferences = Pick<
   PreferencesState,
   | 'audioMode'
+  | 'audioPresetVersion'
   | 'fontScale'
   | 'isolateStem'
   | 'layerGains'
@@ -59,8 +61,10 @@ type PersistedPreferences = Pick<
 >;
 
 const STORAGE_KEY = 'musa-preferences';
+const AUDIO_PRESET_VERSION = 2;
 
 const DEFAULT_PREFERENCES: PersistedPreferences = {
+  audioPresetVersion: AUDIO_PRESET_VERSION,
   profile: null,
   strength: 'medium',
   pulseOn: true,
@@ -81,6 +85,7 @@ function canUseStorage(): boolean {
 function pickPreferences(state: PreferencesState): PersistedPreferences {
   return {
     profile: state.profile,
+    audioPresetVersion: state.audioPresetVersion,
     strength: state.strength,
     pulseOn: state.pulseOn,
     visualOnly: state.visualOnly,
@@ -116,6 +121,7 @@ export const usePreferences = create<PreferencesState>()((set, get) => {
     applyProfilePreset: (profile) => {
       const preset = presetForProfile(profile);
       setAndPersist({
+        audioPresetVersion: AUDIO_PRESET_VERSION,
         profile,
         strength: preset.strength,
         visualOnly: preset.visualOnly,
@@ -142,6 +148,20 @@ export const usePreferences = create<PreferencesState>()((set, get) => {
   };
 });
 
+function migratePersistedPreferences(parsed: Partial<PersistedPreferences>): PersistedPreferences {
+  const merged = { ...DEFAULT_PREFERENCES, ...parsed };
+  if (
+    (parsed.audioPresetVersion ?? 0) < AUDIO_PRESET_VERSION &&
+    merged.profile &&
+    merged.profile !== 'deaf_visual' &&
+    parsed.audioMode === 'silent'
+  ) {
+    merged.audioMode = presetForProfile(merged.profile).audioMode;
+  }
+  merged.audioPresetVersion = AUDIO_PRESET_VERSION;
+  return merged;
+}
+
 async function hydratePreferences() {
   if (!canUseStorage()) return;
   try {
@@ -149,7 +169,7 @@ async function hydratePreferences() {
     if (!raw) return;
     const parsed = JSON.parse(raw) as unknown;
     if (isPersistedPreferences(parsed)) {
-      const merged = { ...DEFAULT_PREFERENCES, ...parsed };
+      const merged = migratePersistedPreferences(parsed);
       merged.layerGains = normalizeLayerGains(merged.layerGains);
       usePreferences.setState(merged);
     }
