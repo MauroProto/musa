@@ -1,5 +1,6 @@
 import { memo, useEffect, useState } from 'react';
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -12,6 +13,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MOTION, CUE_BLOOMS } from '../../constants/theme';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
+import {
+  PLAYER_BACKGROUND_BASE,
+  PLAYER_BACKGROUND_BLOOMS,
+  PLAYER_BACKGROUND_GRAIN,
+  PLAYER_BACKGROUND_TEXTURE,
+  cueBloomLayoutFor,
+  type PlayerBackgroundBloom,
+} from '../../lib/player-visual-chrome';
 import type { HapticEventType } from '../../lib/types';
 
 const GLOW = require('../../../assets/images/logo-glow.png');
@@ -21,7 +30,7 @@ const EASE_OUT = Easing.bezier(MOTION.easeOut[0], MOTION.easeOut[1], MOTION.ease
 /**
  * Each semantic cue lights the background a meaningful colour — so the pulse
  * *means* something. Sourced from CUE_BLOOMS so the palette stays consistent
- * across the app. Bass=deep blue · Drums=recording-red · Guitar=moss ·
+ * across the app. Bass=deep blue · Drums=recording-red · Guitar=electric cyan ·
  * Voice=amber · Emotion=plum · Chorus=ember · Build=sky · Release=cool grey.
  */
 export function colorForCue(type?: HapticEventType): string {
@@ -81,6 +90,7 @@ export const PlayerReactiveBg = memo(function PlayerReactiveBg({
   const punch = useSharedValue(0);
   const cueBloom = useSharedValue(0);
   const [cueColor, setCueColor] = useState('#7A7F8A');
+  const [cueLayout, setCueLayout] = useState(cueBloomLayoutFor());
 
   useEffect(() => {
     if (reduceMotion) {
@@ -112,6 +122,7 @@ export const PlayerReactiveBg = memo(function PlayerReactiveBg({
   useEffect(() => {
     if (!cueId || reduceMotion) return;
     setCueColor(colorForCue(cueType));
+    setCueLayout(cueBloomLayoutFor(cueType));
     cueBloom.value = 0;
     cueBloom.value = withSequence(
       withTiming(1, { duration: 130, easing: EASE_OUT }),
@@ -123,16 +134,148 @@ export const PlayerReactiveBg = memo(function PlayerReactiveBg({
   const size = Math.max(width, height) * 1.25;
   const cx = width / 2;
   const cy = height * 0.48;
+  const cueSize = size * cueLayout.size;
 
   return (
-    <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none', overflow: 'hidden' }]}>
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.backdrop]}>
+      <LinearGradient
+        colors={[...PLAYER_BACKGROUND_BASE.washColors]}
+        locations={[...PLAYER_BACKGROUND_BASE.washLocations]}
+        start={{ x: 0.04, y: 0.12 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      />
+      {PLAYER_BACKGROUND_BLOOMS.map((bloom) => (
+        <AmbientBloom
+          key={bloom.key}
+          bloom={bloom}
+          size={size * bloom.size}
+          width={width}
+          height={height}
+          breathe={breathe}
+          live={live}
+          punch={punch}
+        />
+      ))}
+      {PLAYER_BACKGROUND_TEXTURE.enabled ? <TextureLayer size={size} width={width} height={height} breathe={breathe} live={live} /> : null}
+      {PLAYER_BACKGROUND_GRAIN.enabled ? <GrainField width={width} height={height} /> : null}
       {/* monochrome base — breathes with the voice */}
-      <MonoGlow size={size} left={cx - size / 2} top={cy - size / 2} base={0.16} react={0.8} breathe={breathe} voice={voice} live={live} punch={punch} />
+      <MonoGlow size={size * 0.92} left={cx - (size * 0.92) / 2} top={cy - (size * 0.92) / 2} base={0.08} react={0.45} breathe={breathe} voice={voice} live={live} punch={punch} />
       {/* meaningful colour pulse on each cue */}
-      <ColorGlow size={size * 0.92} left={cx - (size * 0.92) / 2} top={cy - (size * 0.92) / 2} color={cueColor} bloom={cueBloom} />
+      <ColorGlow
+        size={cueSize}
+        left={width * cueLayout.x - cueSize / 2}
+        top={height * cueLayout.y - cueSize / 2}
+        color={cueColor}
+        bloom={cueBloom}
+        maxOpacity={cueLayout.opacity}
+      />
     </View>
   );
 });
+
+function AmbientBloom({
+  bloom,
+  size,
+  width,
+  height,
+  breathe,
+  live,
+  punch,
+}: {
+  bloom: PlayerBackgroundBloom;
+  size: number;
+  width: number;
+  height: number;
+  breathe: SharedValue<number>;
+  live: SharedValue<number>;
+  punch: SharedValue<number>;
+}) {
+  const left = width * bloom.x - size / 2;
+  const top = height * bloom.y - size / 2;
+  const style = useAnimatedStyle(() => {
+    const wave = bloom.reverse ? 1 - breathe.value : breathe.value;
+    const energy = live.value;
+    const scale = 0.96 + wave * 0.08 + energy * 0.08 + punch.value * 0.035;
+    const ty = (wave - 0.5) * bloom.drift - energy * 8;
+    return {
+      opacity: bloom.opacity * (0.72 + energy * 0.46 + punch.value * 0.32),
+      transform: [{ translateY: ty }, { scale }],
+    };
+  });
+
+  return (
+    <Animated.Image
+      source={GLOW}
+      resizeMode="contain"
+      tintColor={bloom.color}
+      style={[{ position: 'absolute', left, top, width: size, height: size }, style]}
+    />
+  );
+}
+
+function TextureLayer({
+  size,
+  width,
+  height,
+  breathe,
+  live,
+}: {
+  size: number;
+  width: number;
+  height: number;
+  breathe: SharedValue<number>;
+  live: SharedValue<number>;
+}) {
+  const textureSize = size * PLAYER_BACKGROUND_TEXTURE.scale;
+  const style = useAnimatedStyle(() => ({
+    opacity: PLAYER_BACKGROUND_TEXTURE.opacity * (0.72 + live.value * 0.32),
+    transform: [{ translateY: (breathe.value - 0.5) * 10 }, { scale: 0.98 + breathe.value * 0.025 }],
+  }));
+
+  return (
+    <Animated.Image
+      source={GLOW}
+      resizeMode="cover"
+      tintColor={PLAYER_BACKGROUND_TEXTURE.tintColor}
+      style={[
+        {
+          position: 'absolute',
+          left: width / 2 - textureSize / 2,
+          top: height / 2 - textureSize / 2,
+          width: textureSize,
+          height: textureSize,
+        },
+        style,
+      ]}
+    />
+  );
+}
+
+function GrainField({ width, height }: { width: number; height: number }) {
+  return (
+    <View style={StyleSheet.absoluteFill}>
+      {PLAYER_BACKGROUND_GRAIN.dots.map((dot) => {
+        const size = dot.size;
+        return (
+          <View
+            key={dot.key}
+            style={{
+              position: 'absolute',
+              left: width * dot.x,
+              top: height * dot.y,
+              width: size,
+              height: size,
+              borderRadius: size / 2,
+              opacity: dot.opacity,
+              backgroundColor: PLAYER_BACKGROUND_GRAIN.color,
+            }}
+          />
+        );
+      })}
+    </View>
+  );
+}
 
 function MonoGlow({
   size,
@@ -170,12 +313,33 @@ function MonoGlow({
   );
 }
 
-function ColorGlow({ size, left, top, color, bloom }: { size: number; left: number; top: number; color: string; bloom: SharedValue<number> }) {
+function ColorGlow({
+  size,
+  left,
+  top,
+  color,
+  bloom,
+  maxOpacity,
+}: {
+  size: number;
+  left: number;
+  top: number;
+  color: string;
+  bloom: SharedValue<number>;
+  maxOpacity: number;
+}) {
   const style = useAnimatedStyle(() => ({
-    opacity: bloom.value * 0.42,
+    opacity: bloom.value * maxOpacity,
     transform: [{ scale: 0.55 + bloom.value * 0.7 }],
   }));
   return (
     <Animated.Image source={GLOW} resizeMode="contain" tintColor={color} style={[{ position: 'absolute', left, top, width: size, height: size }, style]} />
   );
 }
+
+const styles = StyleSheet.create({
+  backdrop: {
+    overflow: 'hidden',
+    backgroundColor: PLAYER_BACKGROUND_BASE.color,
+  },
+});

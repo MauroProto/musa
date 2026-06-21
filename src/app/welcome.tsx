@@ -23,7 +23,14 @@ import {
   enterMusaDelayMs,
   shouldCompleteOnboardingOnEnter,
 } from '../lib/onboarding-entry';
+import { PROFILE_OPTIONS } from '../components/ProfilePicker';
+import {
+  canEnterWelcome,
+  WELCOME_PROFILE_PICKER,
+  welcomeCtaLabel,
+} from '../lib/welcome-onboarding';
 import { usePreferences } from '../store/preferences';
+import type { ListeningProfile } from '../lib/types';
 
 const HERO = require('../../assets/images/musa-hero-background-person.png');
 const EASE_OUT = Easing.bezier(MOTION.easeOut[0], MOTION.easeOut[1], MOTION.easeOut[2], MOTION.easeOut[3]);
@@ -34,8 +41,12 @@ export default function WelcomeScreen() {
   const { isWide, width } = useResponsive();
   const reducedMotion = useReducedMotion();
   const completeOnboarding = usePreferences((s) => s.completeOnboarding);
+  const profile = usePreferences((s) => s.profile);
+  const applyProfilePreset = usePreferences((s) => s.applyProfilePreset);
   const strength = usePreferences((s) => s.strength);
   const [entering, setEntering] = useState(false);
+  const contentMaxWidth = isWide ? Math.min(width - 112, 620) : Math.min(width - 88, 320);
+  const contentLeft = isWide ? Math.max(56, (width - contentMaxWidth) / 2) : 22;
 
   const intro = useSharedValue(reducedMotion ? 1 : 0);
   const ambient = useSharedValue(0);
@@ -89,6 +100,10 @@ export default function WelcomeScreen() {
 
   function enterMusa() {
     if (entering) return;
+    if (!canEnterWelcome(profile)) {
+      previewHaptic('pause', strength, 0.4);
+      return;
+    }
     setEntering(true);
     previewHaptic('line_start', strength, 0.6);
     press.value = withSequence(
@@ -101,6 +116,13 @@ export default function WelcomeScreen() {
     if (shouldCompleteOnboardingOnEnter()) completeOnboarding();
     setTimeout(() => router.replace(ENTER_MUSA_TARGET), enterMusaDelayMs(reducedMotion));
   }
+
+  function selectProfile(nextProfile: ListeningProfile) {
+    applyProfilePreset(nextProfile);
+    previewHaptic('line_start', strength, 0.4);
+  }
+
+  const canEnter = canEnterWelcome(profile);
 
   return (
     <View style={styles.fill}>
@@ -116,19 +138,15 @@ export default function WelcomeScreen() {
 
       <View style={[styles.topBar, { paddingTop: insets.top + 18 }]}>
         <Wordmark style={styles.wordmark}>MUSA</Wordmark>
-        <View style={styles.pill}>
-          <Icon name="handTap" size={14} color="#FFFFFF" weight="fill" />
-          <Text style={styles.pillText}>Haptic music</Text>
-        </View>
       </View>
 
       <Animated.View
         style={[
           styles.content,
           {
+            left: contentLeft,
             paddingBottom: insets.bottom + 34,
-            paddingHorizontal: isWide ? 56 : 24,
-            maxWidth: isWide ? Math.min(width - 112, 620) : 460,
+            width: contentMaxWidth,
           },
           contentStyle,
         ]}
@@ -141,6 +159,41 @@ export default function WelcomeScreen() {
           </Text>
         </View>
 
+        <View style={styles.profileBlock}>
+          <Text style={styles.profileLabel}>HOW DO YOU LISTEN?</Text>
+          <View style={styles.profileGrid}>
+            {PROFILE_OPTIONS.map((option) => (
+              <Pressable
+                key={option.id}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: profile === option.id }}
+                accessibilityLabel={option.title}
+                accessibilityHint={option.hint}
+                onPress={() => selectProfile(option.id)}
+                style={({ pressed }) => [
+                  styles.profileChip,
+                  profile === option.id ? styles.profileChipActive : null,
+                  pressed ? styles.profileChipPressed : null,
+                ]}
+              >
+                <View style={[styles.profileIcon, profile === option.id ? styles.profileIconActive : null]}>
+                  <Icon name={option.icon} size={16} color={profile === option.id ? '#0B0C0E' : 'rgba(255,255,255,0.82)'} weight="bold" />
+                </View>
+                <View style={styles.profileCopy}>
+                  <Text style={profile === option.id ? styles.profileTitleActive : styles.profileTitle} numberOfLines={1}>
+                    {option.title}
+                  </Text>
+                  {WELCOME_PROFILE_PICKER.showHints ? (
+                    <Text style={profile === option.id ? styles.profileHintActive : styles.profileHint} numberOfLines={1}>
+                      {option.hint}
+                    </Text>
+                  ) : null}
+                </View>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
         <Animated.View style={[styles.ctaWrap, buttonStyle]}>
           <Animated.View pointerEvents="none" style={[styles.ctaRing, ringStyle]} />
           <Pressable
@@ -148,12 +201,17 @@ export default function WelcomeScreen() {
             accessibilityLabel="Enter MUSA"
             disabled={entering}
             onPress={enterMusa}
-            style={({ pressed }) => [styles.cta, pressed && styles.ctaPressed, entering && styles.ctaEntering]}
+            style={({ pressed }) => [
+              styles.cta,
+              !canEnter ? styles.ctaDisabled : null,
+              pressed && canEnter ? styles.ctaPressed : null,
+              entering && styles.ctaEntering,
+            ]}
           >
             <View style={styles.ctaIcon}>
               <Icon name="wave" size={21} color="#0B0C0E" weight="bold" />
             </View>
-            <Text style={styles.ctaText}>{entering ? 'Opening' : 'Enter MUSA'}</Text>
+            <Text style={styles.ctaText}>{welcomeCtaLabel(profile, entering)}</Text>
             <Icon name="arrowRight" size={20} color="#0B0C0E" weight="bold" />
           </Pressable>
         </Animated.View>
@@ -173,44 +231,23 @@ const styles = StyleSheet.create({
   },
   topBar: {
     position: 'absolute',
-    left: 0,
-    right: 0,
+    left: 22,
+    right: 22,
     top: 0,
     zIndex: 2,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 22,
   },
   wordmark: {
     color: '#FFFFFF',
     fontSize: 20,
     letterSpacing: 0,
   },
-  pill: {
-    minHeight: 34,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.22)',
-  },
-  pillText: {
-    color: 'rgba(255,255,255,0.88)',
-    fontSize: 12,
-    lineHeight: 15,
-    fontWeight: '700',
-  },
   content: {
     position: 'absolute',
     bottom: 0,
     zIndex: 3,
-    width: '100%',
-    alignSelf: 'center',
-    gap: 26,
+    gap: 18,
   },
   copy: {
     gap: 10,
@@ -224,8 +261,8 @@ const styles = StyleSheet.create({
   },
   title: {
     color: '#FFFFFF',
-    fontSize: 58,
-    lineHeight: 58,
+    fontSize: 44,
+    lineHeight: 46,
     fontWeight: '900',
     letterSpacing: 0,
   },
@@ -242,6 +279,81 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 25,
     fontWeight: '500',
+  },
+  profileBlock: {
+    gap: 10,
+  },
+  profileLabel: {
+    color: 'rgba(255,255,255,0.58)',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    letterSpacing: 0,
+  },
+  profileGrid: {
+    flexDirection: 'row',
+    flexWrap: WELCOME_PROFILE_PICKER.wrap ? 'wrap' : 'nowrap',
+    gap: 8,
+  },
+  profileChip: {
+    flexGrow: 1,
+    flexBasis: '47%',
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    borderRadius: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 9,
+    backgroundColor: 'rgba(255,255,255,0.13)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  profileChipActive: {
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderColor: 'rgba(255,255,255,0.92)',
+  },
+  profileChipPressed: {
+    opacity: 0.9,
+  },
+  profileIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+  },
+  profileIconActive: {
+    backgroundColor: 'rgba(11,12,14,0.08)',
+  },
+  profileCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  profileTitle: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    lineHeight: 15,
+    fontWeight: '800',
+  },
+  profileTitleActive: {
+    color: '#0B0C0E',
+    fontSize: 12.5,
+    lineHeight: 15,
+    fontWeight: '800',
+  },
+  profileHint: {
+    color: 'rgba(255,255,255,0.54)',
+    fontSize: 10.5,
+    lineHeight: 14,
+    fontWeight: '600',
+  },
+  profileHintActive: {
+    color: 'rgba(11,12,14,0.52)',
+    fontSize: 10.5,
+    lineHeight: 14,
+    fontWeight: '600',
   },
   ctaWrap: {
     alignSelf: 'flex-start',
@@ -273,6 +385,9 @@ const styles = StyleSheet.create({
   },
   ctaPressed: {
     opacity: 0.94,
+  },
+  ctaDisabled: {
+    opacity: 0.72,
   },
   ctaEntering: {
     opacity: 0.88,

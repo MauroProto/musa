@@ -15,17 +15,17 @@ import { usePreferences } from '../store/preferences';
 import { SeekBar } from '../components/player/SeekBar';
 import { ChorusCountdown } from '../components/player/ChorusCountdown';
 import { LyricDisplay } from '../components/player/LyricDisplay';
-import { SensoryPanel } from '../components/player/SensoryPanel';
-import { LayerMixer } from '../components/player/LayerMixer';
 import { GuidedDemoChip } from '../components/player/GuidedDemoChip';
 import { CueCheatsheet } from '../components/player/CueCheatsheet';
 import { PlayerReactiveBg } from '../components/player/PlayerReactiveBg';
 import { TactileStatusBar } from '../components/player/TactileStatusBar';
+import { AlbumArtwork } from '../components/songs/AlbumArtwork';
 import { currentGuidedStep } from '../lib/demo-guided';
 import { playerHeaderRailWidth } from '../lib/player-header-layout';
+import { PLAYER_ALBUM_CHIP_CHROME, PLAYER_DOCK_CHROME } from '../lib/player-ui-chrome';
 
-const MOBILE_HEADER_RAIL_WIDTH = playerHeaderRailWidth({ buttonSize: 42, actionCount: 2, gap: 10 });
-const WEB_HEADER_RAIL_WIDTH = playerHeaderRailWidth({ buttonSize: 44, actionCount: 2, gap: 16 });
+const MOBILE_HEADER_RAIL_WIDTH = playerHeaderRailWidth({ buttonSize: 42, actionCount: 1, gap: 10 });
+const WEB_HEADER_RAIL_WIDTH = playerHeaderRailWidth({ buttonSize: 44, actionCount: 1, gap: 16 });
 
 export default function PlayerScreen() {
   const { isWide } = useResponsive();
@@ -36,6 +36,7 @@ export default function PlayerScreen() {
     artist?: string;
     durationMs?: string;
     guided?: string;
+    artwork?: string;
   }>();
   const trackId = Number(params.trackId ?? 0);
   const audioMode = usePreferences((s) => s.audioMode);
@@ -77,6 +78,7 @@ export default function PlayerScreen() {
   const progress = player.durationMs > 0 ? player.currentMs / player.durationMs : 0;
   const title = params.title ?? 'Track';
   const artist = params.artist ?? 'Unknown artist';
+  const artworkUrl = params.artwork && params.artwork.length > 0 ? params.artwork : undefined;
 
   // Remember this as the "now playing" track so the user can return to it.
   useEffect(() => {
@@ -113,9 +115,9 @@ export default function PlayerScreen() {
   }
 
   return isWide ? (
-    <WebPlayer player={player} title={title} artist={artist} progress={progress} insets={insets} showAudio={showAudio} trackId={trackId} guided={guided} />
+    <WebPlayer player={player} title={title} artist={artist} artworkUrl={artworkUrl} progress={progress} insets={insets} showAudio={showAudio} trackId={trackId} guided={guided} />
   ) : (
-    <MobilePlayer player={player} title={title} artist={artist} progress={progress} insets={insets} showAudio={showAudio} trackId={trackId} guided={guided} />
+    <MobilePlayer player={player} title={title} artist={artist} artworkUrl={artworkUrl} progress={progress} insets={insets} showAudio={showAudio} trackId={trackId} guided={guided} />
   );
 }
 
@@ -123,6 +125,7 @@ type LayoutProps = {
   player: SensoryPlayer;
   title: string;
   artist: string;
+  artworkUrl?: string;
   progress: number;
   insets: { top: number; bottom: number; left: number; right: number };
   showAudio: boolean;
@@ -153,9 +156,8 @@ function vocalLevel(player: SensoryPlayer): number {
 
 /* ----------------------------- MOBILE (app) ----------------------------- */
 
-function MobilePlayer({ player, title, artist, progress, insets, showAudio, trackId, guided }: LayoutProps) {
+function MobilePlayer({ player, title, artist, artworkUrl, progress, insets, showAudio, trackId, guided }: LayoutProps) {
   const f = useFontScale();
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [cheatOpen, setCheatOpen] = useState(false);
   const energy = useEnergy(player);
   const vocal = vocalLevel(player);
@@ -181,20 +183,17 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio, trac
             <GlassIconButton size={42} onPress={() => setCheatOpen(true)} accessibilityLabel="What am I feeling? Touch cheatsheet">
               <Icon name="help" size={20} color={Theme.text} />
             </GlassIconButton>
-            <GlassIconButton size={42} onPress={() => router.push('/calibrate')} accessibilityLabel="Settings">
-              <Icon name="settings" size={20} color={Theme.text} />
-            </GlassIconButton>
           </View>
         </View>
 
         <Pressable style={styles.lyricArea} onPress={player.toggle} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
+          <PlayerAlbumChip trackId={trackId} title={title} artworkUrl={artworkUrl} />
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} isPlaying={player.isPlaying} currentMs={player.currentMs} activeMoments={player.activeMoments} guidedStep={guidedStep} currentSize={26} contextSize={15} />
-          <View style={{ height: 14 }} />
-          <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
           {guided ? <GuidedDemoChip trackId={trackId} currentMs={player.currentMs} /> : null}
         </Pressable>
 
         <View style={{ gap: 12 }}>
+          <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
           <TactileStatusBar
             moments={player.activeMoments}
             cue={player.cue?.type}
@@ -203,25 +202,9 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio, trac
             section={player.currentSection?.kind}
             isPlaying={player.isPlaying}
             focus={player.activeTactileFocus}
-            detailsOpen={detailsOpen}
-            onToggleDetails={() => setDetailsOpen((value) => !value)}
           />
-          {detailsOpen ? (
-            <>
-              <SensoryPanel
-                moments={player.activeMoments}
-                cue={player.cue?.type}
-                cueId={player.cue?.id}
-                energy={energy}
-                source={player.energySource}
-                section={player.currentSection?.kind}
-                isPlaying={player.isPlaying}
-              />
-              <LayerMixer />
-            </>
-          ) : null}
 
-          <GlassSurface radius={RADIUS.card} elevation="bar" style={styles.dock}>
+          <View style={[styles.dock, PLAYER_DOCK_CHROME.surface === 'integrated' ? styles.dockIntegrated : null]}>
             <SeekBar
               progress={progress}
               beatPulse={player.beatPulse}
@@ -235,7 +218,7 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio, trac
             </View>
             <Transport player={player} />
             {showAudio ? <AudioModeControl /> : null}
-          </GlassSurface>
+          </View>
         </View>
       </View>
     </View>
@@ -245,7 +228,6 @@ function MobilePlayer({ player, title, artist, progress, insets, showAudio, trac
 /* ------------------------------ WEB (desktop) ------------------------------ */
 
 function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId, guided }: LayoutProps) {
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [cheatOpen, setCheatOpen] = useState(false);
   const energy = useEnergy(player);
   const vocal = vocalLevel(player);
@@ -270,23 +252,19 @@ function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId
           <GlassIconButton size={44} onPress={() => setCheatOpen(true)} accessibilityLabel="What am I feeling? Touch cheatsheet">
             <Icon name="help" size={20} color={Theme.text} />
           </GlassIconButton>
-          <GlassIconButton size={44} onPress={() => router.push('/calibrate')} accessibilityLabel="Settings">
-            <Icon name="settings" size={20} color={Theme.text} />
-          </GlassIconButton>
         </View>
       </View>
 
       <Pressable style={styles.webStage} onPress={player.toggle} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
         <View style={{ width: '100%', maxWidth: 1040 }}>
           <LyricDisplay lines={player.lines} currentLineIndex={player.currentLineIndex} isPlaying={player.isPlaying} currentMs={player.currentMs} activeMoments={player.activeMoments} guidedStep={guidedStep} currentSize={62} contextSize={24} />
-          <View style={{ height: 28 }} />
-          <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
           {guided ? <GuidedDemoChip trackId={trackId} currentMs={player.currentMs} /> : null}
         </View>
       </Pressable>
 
       <View style={[styles.webDock, { paddingBottom: insets.bottom + 28 }]}>
         <View style={{ width: '100%', maxWidth: 920, gap: 14 }}>
+          <ChorusCountdown msAway={player.nextChorusInMs !== null && player.nextChorusInMs <= 12000 ? player.nextChorusInMs : null} />
           <TactileStatusBar
             moments={player.activeMoments}
             cue={player.cue?.type}
@@ -295,24 +273,8 @@ function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId
             section={player.currentSection?.kind}
             isPlaying={player.isPlaying}
             focus={player.activeTactileFocus}
-            detailsOpen={detailsOpen}
-            onToggleDetails={() => setDetailsOpen((value) => !value)}
           />
-          {detailsOpen ? (
-            <>
-              <SensoryPanel
-                moments={player.activeMoments}
-                cue={player.cue?.type}
-                cueId={player.cue?.id}
-                energy={energy}
-                source={player.energySource}
-                section={player.currentSection?.kind}
-                isPlaying={player.isPlaying}
-              />
-              <LayerMixer />
-            </>
-          ) : null}
-          <GlassSurface radius={30} elevation="bar" chroma chromaStrength={0.6} intensity={46} style={styles.webDockGlass}>
+          <View style={[styles.webDockGlass, PLAYER_DOCK_CHROME.elevation === 'none' ? styles.dockIntegrated : null]}>
             <SeekBar
               progress={progress}
               beatPulse={player.beatPulse}
@@ -326,7 +288,7 @@ function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId
               <Text variant="mono" color={Theme.textFaint} style={{ width: 64, textAlign: 'right' }}>−{fmt(player.durationMs - player.currentMs)}</Text>
             </View>
             {showAudio ? <AudioModeControl /> : null}
-          </GlassSurface>
+          </View>
         </View>
       </View>
     </View>
@@ -335,18 +297,45 @@ function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId
 
 /* ------------------------------ Shared ------------------------------ */
 
+function PlayerAlbumChip({
+  trackId,
+  title,
+  artworkUrl,
+}: {
+  trackId: number;
+  title: string;
+  artworkUrl?: string;
+}) {
+  if (!PLAYER_ALBUM_CHIP_CHROME.visible) return null;
+  return (
+    <View style={styles.albumChip}>
+      <AlbumArtwork
+        track={{ trackId, title, artworkUrl }}
+        size={PLAYER_ALBUM_CHIP_CHROME.mobileSize}
+        radius={PLAYER_ALBUM_CHIP_CHROME.radius}
+      />
+    </View>
+  );
+}
+
 function Transport({ player }: { player: SensoryPlayer }) {
   return (
     <View style={styles.controls}>
-      <GlassIconButton size={44} onPress={() => player.seekBy(-10000)} accessibilityLabel="Seek back 10 seconds">
-        <Icon name="rewind" size={18} color={Theme.text} />
-      </GlassIconButton>
-      <Touch onPress={player.toggle} style={styles.playBtn} scaleTo={0.94} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
-        <Icon name={player.isPlaying ? 'pause' : 'play'} size={24} weight="fill" color={Theme.bg} />
+      <Touch style={styles.transportOuterBtn} onPress={player.restart} accessibilityLabel="Restart track">
+        <Icon name="repeatOnce" size={18} color={Theme.textDim} />
       </Touch>
-      <GlassIconButton size={44} onPress={() => player.seekBy(10000)} accessibilityLabel="Seek forward 10 seconds">
-        <Icon name="forward" size={18} color={Theme.text} />
-      </GlassIconButton>
+      <Touch style={styles.momentBtn} onPress={player.seekToPreviousMoment} accessibilityLabel="Previous tactile moment">
+        <Icon name="skipBack" size={19} color={Theme.text} />
+      </Touch>
+      <Touch onPress={player.toggle} style={styles.playBtn} scaleTo={0.94} accessibilityLabel={player.isPlaying ? 'Pause' : 'Play'}>
+        <Icon name={player.isPlaying ? 'pause' : 'play'} size={25} weight="fill" color={Theme.text} />
+      </Touch>
+      <Touch style={styles.momentBtn} onPress={player.seekToNextMoment} accessibilityLabel="Next tactile moment">
+        <Icon name="skipForward" size={19} color={Theme.text} />
+      </Touch>
+      <Touch style={styles.transportOuterBtn} onPress={player.replayMoment} accessibilityLabel="Replay current tactile moment">
+        <Icon name="repeat" size={18} color={Theme.textDim} />
+      </Touch>
     </View>
   );
 }
@@ -369,8 +358,23 @@ const styles = StyleSheet.create({
   mobileHeaderSide: { width: MOBILE_HEADER_RAIL_WIDTH, flexDirection: 'row', alignItems: 'center' },
   mobileHeaderActions: { justifyContent: 'flex-end', gap: 10 },
   trackTitleBlock: { flex: 1, minWidth: 0, alignItems: 'center' },
-  lyricArea: { flex: 1, justifyContent: 'center' },
-  dock: { padding: 14, gap: 10 },
+  lyricArea: { flex: 1, justifyContent: 'center', position: 'relative' },
+  albumChip: {
+    position: 'absolute',
+    top: 18,
+    left: 4,
+    width: PLAYER_ALBUM_CHIP_CHROME.mobileSize,
+    height: PLAYER_ALBUM_CHIP_CHROME.mobileSize,
+    borderRadius: PLAYER_ALBUM_CHIP_CHROME.radius,
+    backgroundColor: Theme.bgElevated,
+    shadowColor: Theme.text,
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
+  },
+  dock: { gap: 7, paddingTop: 2, paddingHorizontal: 2, paddingBottom: 0 },
+  dockIntegrated: { backgroundColor: 'transparent' },
   timeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
   // web
@@ -385,17 +389,42 @@ const styles = StyleSheet.create({
   webHeaderActions: { justifyContent: 'flex-end', gap: 16 },
   webStage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 48 },
   webDock: { alignItems: 'center', paddingHorizontal: 40, paddingTop: 16 },
-  webDockGlass: { padding: 18, gap: 14 },
+  webDockGlass: { gap: 12, paddingHorizontal: 2, paddingBottom: 0 },
   webDockRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 
   // transport
-  controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 22 },
-  playBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  controls: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14 },
+  transportOuterBtn: {
+    width: 38,
+    height: 38,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Theme.text,
+    borderRadius: 19,
+  },
+  momentBtn: {
+    width: 46,
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 23,
+    backgroundColor: 'rgba(255,255,255,0.86)',
+    shadowColor: Theme.text,
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 5 },
+    elevation: 2,
+  },
+  playBtn: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Theme.bgElevated,
+    shadowColor: Theme.text,
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 5,
   },
 });

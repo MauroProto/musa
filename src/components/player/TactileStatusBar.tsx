@@ -11,6 +11,7 @@ import { Theme, MOTION, RADIUS } from '../../constants/theme';
 import { Text, Touch } from '../ui';
 import { GlassSurface } from '../Glass';
 import { buildPlayerLayerStates, type PlayerLayerKey } from '../../lib/player-layer-state';
+import { SHOW_TACTILE_DETAILS_TOGGLE, SHOW_TACTILE_LAYER_PILL } from '../../lib/player-ui-chrome';
 import type { TactileFocus } from '../../lib/tactile-focus';
 import type { HapticEvent, SectionMark, SensoryLayer, SensoryMoment } from '../../lib/types';
 import { cueIcon, cueLabel, layerIcon } from './sensory-panel-copy';
@@ -25,8 +26,8 @@ type TactileStatusBarProps = {
   section?: SectionMark['kind'];
   isPlaying: boolean;
   focus: TactileFocus | null;
-  detailsOpen: boolean;
-  onToggleDetails: () => void;
+  detailsOpen?: boolean;
+  onToggleDetails?: () => void;
 };
 
 export function TactileStatusBar({
@@ -37,7 +38,7 @@ export function TactileStatusBar({
   section,
   isPlaying,
   focus,
-  detailsOpen,
+  detailsOpen = false,
   onToggleDetails,
 }: TactileStatusBarProps) {
   const label = focus?.label ?? moments[0]?.label ?? (cue ? cueLabel(cue) : isPlaying ? 'Feeling the track' : 'Ready to feel');
@@ -79,7 +80,7 @@ export function TactileStatusBar({
             {label}
           </Text>
         </View>
-        {activeLayer ? (
+        {SHOW_TACTILE_LAYER_PILL && activeLayer ? (
           <View style={styles.layerPill}>
             <Icon name={layerIcon(activeLayer.key)} size={12} color={Theme.textDim} />
             <Text variant="label" color={Theme.textDim} numberOfLines={1} style={styles.layerText}>
@@ -87,15 +88,17 @@ export function TactileStatusBar({
             </Text>
           </View>
         ) : null}
-        <Touch
-          onPress={onToggleDetails}
-          hitSlop={8}
-          scaleTo={0.94}
-          style={detailsOpen ? styles.detailsBtnOpen : styles.detailsBtn}
-          accessibilityLabel={detailsOpen ? 'Hide tactile details' : 'Show tactile details'}
-        >
-          <Icon name={detailsOpen ? 'chevronDown' : 'layers'} size={14} color={detailsOpen ? Theme.bg : Theme.text} />
-        </Touch>
+        {SHOW_TACTILE_DETAILS_TOGGLE ? (
+          <Touch
+            onPress={onToggleDetails}
+            hitSlop={8}
+            scaleTo={0.94}
+            style={detailsOpen ? styles.detailsBtnOpen : styles.detailsBtn}
+            accessibilityLabel={detailsOpen ? 'Hide tactile details' : 'Show tactile details'}
+          >
+            <Icon name={detailsOpen ? 'chevronDown' : 'layers'} size={14} color={detailsOpen ? Theme.bg : Theme.text} />
+          </Touch>
+        ) : null}
       </GlassSurface>
     </Animated.View>
   );
@@ -125,6 +128,7 @@ const styles = StyleSheet.create({
     gap: 9,
     paddingVertical: 8,
     paddingHorizontal: 12,
+    overflow: 'hidden',
   },
   iconMark: {
     width: 28,
@@ -143,16 +147,14 @@ const styles = StyleSheet.create({
     marginBottom: 1,
   },
   layerPill: {
-    maxWidth: 84,
+    maxWidth: 78,
     minHeight: 26,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     borderRadius: RADIUS.pill,
     backgroundColor: Theme.fill,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Theme.border,
   },
   layerText: {
     letterSpacing: 0,

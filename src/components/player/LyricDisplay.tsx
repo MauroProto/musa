@@ -9,6 +9,7 @@ import Animated, {
 import { Theme, MOTION } from '../../constants/theme';
 import { useFontScale } from '../ui';
 import { resolvePlayerDisplayState } from '../../lib/player-display';
+import { LYRIC_STACK_CHROME } from '../../lib/player-visual-chrome';
 import type { GuidedDemoStep } from '../../lib/demo-guided';
 import type { SensoryMoment, SyncedLine } from '../../lib/types';
 
@@ -60,39 +61,45 @@ function LyricDisplayBase({
   const curFs = Math.round(currentSize * f);
   const ctxFs = Math.round(contextSize * f);
   const quietMode = display.mode === 'idle' || display.mode === 'empty';
+  const contextSlotHeight = Math.round(ctxFs * 2.9);
+  const currentSlotMinHeight = quietMode ? Math.round(58 * f) : Math.round(curFs * 2.36);
+  const showThreeLineStack = LYRIC_STACK_CHROME.slots.length === 3;
 
   return (
     <View style={styles.wrap}>
-      {display.previousText ? (
-        <Text numberOfLines={2} style={[styles.context, { fontSize: ctxFs, lineHeight: Math.round(ctxFs * 1.4) }]}>
-          {display.previousText}
-        </Text>
-      ) : display.statusLabel ? (
-        <Text numberOfLines={1} style={[styles.status, { fontSize: Math.round(ctxFs * 0.72), lineHeight: Math.round(ctxFs * 1.05) }]}>
-          {display.statusLabel.toUpperCase()}
-        </Text>
-      ) : (
-        <View style={{ height: 8 }} />
-      )}
+      <View style={[styles.contextSlot, showThreeLineStack ? { minHeight: contextSlotHeight } : null]}>
+        {display.previousText ? (
+          <Text numberOfLines={2} style={[styles.context, styles.pastLine, { fontSize: ctxFs, lineHeight: Math.round(ctxFs * 1.36) }]}>
+            {display.previousText}
+          </Text>
+        ) : display.statusLabel ? (
+          <Text numberOfLines={1} style={[styles.status, { fontSize: Math.round(ctxFs * 0.72), lineHeight: Math.round(ctxFs * 1.05) }]}>
+            {display.statusLabel.toUpperCase()}
+          </Text>
+        ) : null}
+      </View>
 
-      <Animated.Text
-        style={[
-          styles.current,
-          quietMode ? styles.currentIdle : null,
-          { fontSize: quietMode ? Math.round(20 * f) : curFs, lineHeight: quietMode ? Math.round(24 * f) : Math.round(curFs * 1.12) },
-          currentStyle,
-        ]}
-      >
-        {display.primaryText}
-      </Animated.Text>
+      <View style={[styles.currentSlot, { minHeight: currentSlotMinHeight }]}>
+        <Animated.Text
+          numberOfLines={3}
+          style={[
+            styles.current,
+            quietMode ? styles.currentIdle : null,
+            { fontSize: quietMode ? Math.round(20 * f) : curFs, lineHeight: quietMode ? Math.round(24 * f) : Math.round(curFs * 1.12) },
+            currentStyle,
+          ]}
+        >
+          {display.primaryText}
+        </Animated.Text>
+      </View>
 
-      {display.nextText ? (
-        <Text numberOfLines={2} style={[styles.context, { fontSize: ctxFs, lineHeight: Math.round(ctxFs * 1.4) }]}>
-          {display.nextText}
-        </Text>
-      ) : (
-        <View style={{ height: 8 }} />
-      )}
+      <View style={[styles.contextSlot, showThreeLineStack ? { minHeight: contextSlotHeight } : null]}>
+        {display.nextText ? (
+          <Text numberOfLines={2} style={[styles.context, styles.nextLine, { fontSize: ctxFs, lineHeight: Math.round(ctxFs * 1.36) }]}>
+            {display.nextText}
+          </Text>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -100,12 +107,21 @@ function LyricDisplayBase({
 export const LyricDisplay = memo(LyricDisplayBase);
 
 const styles = StyleSheet.create({
-  wrap: { gap: 18, justifyContent: 'center' },
+  wrap: { gap: 8, justifyContent: 'center' },
+  contextSlot: {
+    justifyContent: 'center',
+  },
+  currentSlot: {
+    justifyContent: 'center',
+  },
   current: {
     color: Theme.text,
     fontWeight: '700',
     textAlign: 'center',
     letterSpacing: 0,
+    textShadowColor: 'rgba(255,255,255,0.72)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 12,
   },
   currentIdle: {
     color: Theme.textDim,
@@ -113,7 +129,14 @@ const styles = StyleSheet.create({
   context: {
     color: Theme.textFaint,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0,
+  },
+  pastLine: {
+    opacity: 0.72,
+  },
+  nextLine: {
+    opacity: 0.88,
   },
   status: {
     color: Theme.textGhost,

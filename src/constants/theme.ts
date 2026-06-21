@@ -101,7 +101,7 @@ export const CHROMA = {
 export const CUE_BLOOMS = {
   bass: '#2E5BFF', // deep blue — body / low end
   drums: '#E63946', // recording-button red — attack
-  guitar: '#3FA86B', // moss green — texture
+  guitar: '#35C5DE', // electric cyan — texture
   voice: '#F2A23A', // warm amber — voice
   emotion: '#A95BD0', // plum — emotion shift
   chorus: '#F26B3A', // ember orange — the payoff

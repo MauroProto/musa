@@ -11,7 +11,7 @@ import {
 import { createHapticController, type HapticController } from '../lib/haptics';
 import { clampToIntensity, gainForEventType, MUTE_THRESHOLD } from '../lib/layer-gains';
 import { resolveTactileFocus, shouldSuppressBeatAt, type TactileFocus } from '../lib/tactile-focus';
-import { seekByDeltaMs, seekToMs } from '../lib/player-time';
+import { nextMomentMs, previousMomentMs, replayMomentMs, seekByDeltaMs, seekToMs } from '../lib/player-time';
 import { usePreferences } from '../store/preferences';
 import type { StemAudioController } from './useStemAudio';
 import type { AuthoredMoment, HapticEvent, HapticStrength, Intensity, SectionMark, SensoryMoment, SensoryScore, SyncedLine } from '../lib/types';
@@ -43,6 +43,9 @@ export type SensoryPlayer = {
   restart: () => void;
   seekBy: (deltaMs: number) => void;
   seekTo: (targetMs: number) => void;
+  seekToPreviousMoment: () => void;
+  seekToNextMoment: () => void;
+  replayMoment: () => void;
 };
 
 export function useSensoryPlayer(
@@ -308,6 +311,18 @@ export function useSensoryPlayer(
     [durationMs, seekToPlaybackTime],
   );
 
+  const seekToPreviousMoment = useCallback(() => {
+    seekToPlaybackTime(previousMomentMs(currentMsRef.current, scoreRef.current?.moments ?? []));
+  }, [seekToPlaybackTime]);
+
+  const seekToNextMoment = useCallback(() => {
+    seekToPlaybackTime(nextMomentMs(currentMsRef.current, scoreRef.current?.moments ?? [], durationMs));
+  }, [durationMs, seekToPlaybackTime]);
+
+  const replayMoment = useCallback(() => {
+    seekToPlaybackTime(replayMomentMs(currentMsRef.current, scoreRef.current?.moments ?? []));
+  }, [seekToPlaybackTime]);
+
   const restart = useCallback(() => {
     stopLoop();
     currentMsRef.current = 0;
@@ -370,6 +385,9 @@ export function useSensoryPlayer(
     restart,
     seekBy,
     seekTo,
+    seekToPreviousMoment,
+    seekToNextMoment,
+    replayMoment,
   };
 }
 

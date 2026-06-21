@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
-import { ActivityIndicator, ImageBackground, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Icon, type IconName } from '../../components/Icon';
 import { Screen, Text, Stack, Touch, useFontScale, useResponsive } from '../../components/ui';
-import { GlassSurface, Wordmark } from '../../components/Glass';
+import { GlassSurface } from '../../components/Glass';
+import { AlbumArtwork } from '../../components/songs/AlbumArtwork';
+import { DemoTrackShelf } from '../../components/songs/DemoTrackShelf';
 import { Theme, RADIUS } from '../../constants/theme';
 import { searchTracksClient } from '../../lib/api-client';
 import { DEMO_TRACKS } from '../../lib/fixtures';
 import { songsHeroBannerHeight } from '../../lib/songs-layout';
 import { usePreferences } from '../../store/preferences';
 import type { Track } from '../../lib/types';
-
-const HERO = require('../../../assets/images/musa-hero-background-person.png');
 
 export default function SearchScreen() {
   const f = useFontScale();
@@ -114,9 +114,11 @@ export default function SearchScreen() {
 
       {!searching ? (
         <>
+          <DemoTrackShelf tracks={DEMO_TRACKS} onTrackPress={openTrack} />
+
           <Stack gap={10} style={{ marginTop: 4 }}>
             <View style={styles.sectionHeader}>
-              <Text variant="heading">Demo scores</Text>
+              <Text variant="heading">Songs</Text>
             </View>
             {DEMO_TRACKS.map((track) => (
               <TrackRow key={track.trackId} track={track} onPress={() => openTrack(track)} featured />
@@ -136,23 +138,34 @@ export default function SearchScreen() {
 function HeroBanner({ height, onDemo }: { height: number; onDemo: () => void }) {
   return (
     <View style={[styles.banner, { height }]}>
-      <ImageBackground source={HERO} resizeMode="cover" style={styles.bannerImg} imageStyle={styles.bannerImgInner}>
+      <View style={styles.bannerSurface}>
         <LinearGradient
-          colors={['rgba(6,7,10,0.2)', 'rgba(6,7,10,0.42)', 'rgba(6,7,10,0.9)']}
-          locations={[0, 0.44, 1]}
+          colors={['rgba(11,12,14,0.96)', 'rgba(31,35,38,0.92)', 'rgba(11,12,14,0.98)']}
+          locations={[0, 0.58, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFill}
         />
+        <View style={styles.bannerArtCluster} pointerEvents="none">
+          <View style={styles.bannerArtBack}>
+            <AlbumArtwork track={DEMO_TRACKS[0]} size={78} radius={9} />
+          </View>
+          <View style={styles.bannerArtFront}>
+            <AlbumArtwork track={DEMO_TRACKS[1]} size={94} radius={10} />
+          </View>
+        </View>
         <View style={styles.bannerContent}>
           <View style={styles.bannerTextBlock}>
-            <Wordmark style={styles.bannerWordmark}>MUSA</Wordmark>
+            <Text style={styles.bannerKicker}>MUSA DEMOS</Text>
             <Text style={styles.bannerHeadline}>Music you can feel</Text>
+            <Text style={styles.bannerSubline}>Real stems, tactile captions, album-first listening.</Text>
           </View>
           <Touch onPress={onDemo} style={styles.bannerCta} accessibilityLabel="Open guided demo">
             <Icon name="play" size={14} weight="fill" color={Theme.accentText} />
             <Text variant="caption" weight="700" color={Theme.accentText}>Guided demo</Text>
           </Touch>
         </View>
-      </ImageBackground>
+      </View>
     </View>
   );
 }
@@ -169,6 +182,7 @@ function TrackRow({ track, onPress, featured = false }: { track: Track; onPress:
       accessibilityLabel={`Play ${track.title} by ${track.artist}`}
       style={styles.result}
     >
+      <AlbumArtwork track={track} size={58} radius={8} />
       <View style={{ flex: 1, gap: 4 }}>
         <Text variant="heading" numberOfLines={1}>{track.title}</Text>
         <Text dim variant="caption" numberOfLines={1}>
@@ -203,19 +217,50 @@ function formatDuration(ms: number) {
 
 const styles = StyleSheet.create({
   banner: { borderRadius: RADIUS.card, overflow: 'hidden' },
-  bannerImg: { flex: 1, justifyContent: 'center' },
-  bannerImgInner: { borderRadius: RADIUS.card },
+  bannerSurface: { flex: 1, justifyContent: 'center', overflow: 'hidden' },
+  bannerArtCluster: {
+    position: 'absolute',
+    right: 8,
+    top: 20,
+    width: 112,
+    height: 108,
+  },
+  bannerArtBack: {
+    position: 'absolute',
+    right: 30,
+    top: 10,
+    opacity: 0.66,
+    transform: [{ rotate: '-8deg' }],
+  },
+  bannerArtFront: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    shadowColor: '#000000',
+    shadowOpacity: 0.32,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+    transform: [{ rotate: '5deg' }],
+  },
   bannerContent: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: 14,
+    alignItems: 'flex-start',
+    justifyContent: 'flex-end',
+    gap: 10,
     padding: 16,
+    paddingRight: 108,
   },
   bannerTextBlock: { flex: 1, gap: 4, minWidth: 0 },
-  bannerWordmark: { fontSize: 18, color: '#FFFFFF', letterSpacing: 0 },
+  bannerKicker: {
+    color: 'rgba(255,255,255,0.58)',
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '800',
+    letterSpacing: 0,
+  },
   bannerHeadline: { fontSize: 22, lineHeight: 25, fontWeight: '800', letterSpacing: 0, color: '#FFFFFF' },
+  bannerSubline: { fontSize: 12.5, lineHeight: 16, fontWeight: '600', letterSpacing: 0, color: 'rgba(255,255,255,0.68)' },
   bannerCta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -231,7 +276,7 @@ const styles = StyleSheet.create({
   sourceDot: { width: 6, height: 6, borderRadius: 3 },
   resultsWrap: { gap: 10 },
   sectionHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  result: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15, paddingHorizontal: 16 },
+  result: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 10 },
   playChip: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center', backgroundColor: Theme.text },
   quickRow: { flexDirection: 'row', gap: 12, marginTop: 6 },
   tile: { flex: 1, padding: 16, minHeight: 124, justifyContent: 'flex-end' },
