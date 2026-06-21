@@ -60,6 +60,14 @@ const IGNACIO_LINKEDIN_URL = 'https://www.linkedin.com/in/ignacio-estevo/';
 const PLAYSTORE_URL = 'https://play.google.com/store/apps/details?id=host.exp.exponent';
 const APPSTORE_URL = 'https://apps.apple.com/app/expo-go/id982107779';
 
+type LandingCanvas = 'regular' | 'large' | 'ultra';
+
+function landingCanvasForWidth(width: number): LandingCanvas {
+  if (width >= 2400) return 'ultra';
+  if (width >= 1680) return 'large';
+  return 'regular';
+}
+
 function openURL(url: string) {
   Linking.openURL(url).catch(() => {});
 }
@@ -112,7 +120,7 @@ function WelcomeLanding() {
   const { isWide, width, height } = useResponsive();
   const insets = useSafeAreaInsets();
   const isTablet = !isWide && width >= 700;
-  const isMobile = !isWide && !isTablet;
+  const canvas = landingCanvasForWidth(width);
   const [showGetApp, setShowGetApp] = useState(false);
   const [showBootLoader, setShowBootLoader] = useState(Platform.OS === 'web');
   const [bootLoaderExiting, setBootLoaderExiting] = useState(false);
@@ -130,11 +138,11 @@ function WelcomeLanding() {
     const y = pinTop.value + (targets[idx] ?? 0) * (height * 1.3);
     scrollRef.current?.scrollTo({ y, animated: true });
   };
-  // El header arranca transparente (sobre el hero) y se vuelve sólido (#FAFAFA, el fondo
-  // de la sección de scroll) al llegar a las cards "WHY MUSA" — o sea al pasar el pinned.
+  // El header arranca transparente sobre el hero y se vuelve sólido al entrar
+  // en las secciones claras, para que no se pise visualmente con el scroll.
   const headerBgStyle = useAnimatedStyle(() => {
-    const fadeStart = isMobile ? height * 0.72 : pinTop.value + height * 2.3 - height * 0.5;
-    const fadeEnd = isMobile ? height * 0.94 : pinTop.value + height * 2.3 - height * 0.08;
+    const fadeStart = !isWide ? height * 0.72 : pinTop.value - height * 0.18;
+    const fadeEnd = !isWide ? height * 0.94 : pinTop.value + height * 0.02;
     const t = interpolate(
       scrollY.value,
       [fadeStart, fadeEnd],
@@ -168,7 +176,7 @@ function WelcomeLanding() {
           { paddingTop: insets.top + 18 },
         ]}
       >
-        <Header isWide={isWide} isTablet={isTablet} onGetApp={openGetApp} onNavigatePart={scrollToPart} />
+        <Header isWide={isWide} isTablet={isTablet} canvas={canvas} onGetApp={openGetApp} onNavigatePart={scrollToPart} />
       </Animated.View>
       <Animated.ScrollView
         ref={(node: any) => {
@@ -208,7 +216,7 @@ function WelcomeLanding() {
               { paddingTop: insets.top + 92 },
             ]}
           >
-            <Hero isWide={isWide} isTablet={isTablet} onGetApp={openGetApp} />
+            <Hero isWide={isWide} isTablet={isTablet} canvas={canvas} onGetApp={openGetApp} />
           </View>
         </ImageBackground>
         <PinnedPhoneSection scrollY={scrollY} pinTop={pinTop} isWide={isWide} isTablet={isTablet} />
@@ -279,16 +287,18 @@ function BootLoaderBar({ clock, index }: { clock: { value: number }; index: numb
 function Header({
   isWide,
   isTablet,
+  canvas,
   onGetApp,
   onNavigatePart,
 }: {
   isWide: boolean;
   isTablet: boolean;
+  canvas: LandingCanvas;
   onGetApp: () => void;
   onNavigatePart?: (idx: number) => void;
 }) {
   return (
-    <View style={styles.shell}>
+    <View style={[styles.shell, canvas === 'large' ? styles.shellLarge : canvas === 'ultra' ? styles.shellUltra : null]}>
       <View style={styles.header}>
         <Pressable onPress={() => router.replace('/welcome')} hitSlop={10}>
           <Text color={INK} weight="800" style={styles.logo}>
@@ -324,44 +334,65 @@ function NavLink({ label, onPress }: { label: string; onPress: () => void }) {
   );
 }
 
-function Hero({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: boolean; onGetApp: () => void }) {
+function Hero({ isWide, isTablet, canvas, onGetApp }: { isWide: boolean; isTablet: boolean; canvas: LandingCanvas; onGetApp: () => void }) {
   const isCompact = !isWide && !isTablet;
+  const phoneSize = canvas === 'ultra' ? 'ultra' : canvas === 'large' ? 'large' : 'regular';
 
   return (
     <View
       style={[
         styles.shell,
+        canvas === 'large' ? styles.shellLarge : canvas === 'ultra' ? styles.shellUltra : null,
         styles.hero,
         isWide ? styles.heroWide : isTablet ? styles.heroTablet : styles.heroMobile,
+        canvas === 'large' ? styles.heroWideLarge : canvas === 'ultra' ? styles.heroWideUltra : null,
       ]}
     >
       <View
         style={[
           styles.heroCopyColumn,
           isWide ? styles.heroCopyWide : null,
+          isWide && canvas === 'ultra' ? styles.heroCopyWideUltra : null,
           isTablet ? styles.heroCopyTablet : null,
         ]}
       >
         <Text
           color={INK}
           weight="800"
-          style={isWide ? styles.heroTitle : isTablet ? styles.heroTitleTablet : styles.heroTitleMobile}
+          style={StyleSheet.flatten([
+            isWide ? styles.heroTitle : isTablet ? styles.heroTitleTablet : styles.heroTitleMobile,
+            isWide && canvas === 'ultra' ? styles.heroTitleUltra : null,
+          ])}
         >
           Lyrics you can read. Rhythm you can feel.
         </Text>
         <Text
           color={HERO_MUTED}
           weight="500"
-          style={isWide ? styles.heroBody : isTablet ? styles.heroBodyTablet : styles.heroBodyMobile}
+          style={StyleSheet.flatten([
+            isWide ? styles.heroBody : isTablet ? styles.heroBodyTablet : styles.heroBodyMobile,
+            isWide && canvas === 'ultra' ? styles.heroBodyUltra : null,
+          ])}
         >
           MUSA turns synced lyrics and song structure into haptic captions for people who
           follow music through sight, touch, hearing aids, or cochlear implants.
         </Text>
 
         <View style={[styles.ctaRow, !isWide && !isTablet ? styles.ctaRowMobile : null]}>
-          <Touch onPress={onGetApp} style={styles.primaryCta} scaleTo={0.98}>
+          <Touch
+            onPress={onGetApp}
+            style={StyleSheet.flatten([
+              styles.primaryCta,
+              isWide && canvas === 'ultra' ? styles.primaryCtaUltra : null,
+            ])}
+            scaleTo={0.98}
+          >
             <Ionicons name="play" size={17} color={PAPER} style={{ marginLeft: 1 }} />
-            <Text color={PAPER} weight="700" style={styles.ctaText}>
+            <Text
+              color={PAPER}
+              weight="700"
+              style={StyleSheet.flatten([styles.ctaText, isWide && canvas === 'ultra' ? styles.ctaTextUltra : null])}
+            >
               Feel the demo
             </Text>
           </Touch>
@@ -371,7 +402,10 @@ function Hero({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: boole
           <Text
             color="rgba(14,23,38,0.62)"
             weight="700"
-            style={isCompact ? styles.sponsorLabelMobile : styles.sponsorLabel}
+            style={StyleSheet.flatten([
+              isCompact ? styles.sponsorLabelMobile : styles.sponsorLabel,
+              isWide && canvas === 'ultra' ? styles.sponsorLabelUltra : null,
+            ])}
           >
             Powered by
           </Text>
@@ -384,7 +418,10 @@ function Hero({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: boole
             <Text
               color={INK}
               weight="600"
-              style={isCompact ? styles.sponsorNameMobile : styles.sponsorName}
+              style={StyleSheet.flatten([
+                isCompact ? styles.sponsorNameMobile : styles.sponsorName,
+                isWide && canvas === 'ultra' ? styles.sponsorNameUltra : null,
+              ])}
             >
               Musixmatch
             </Text>
@@ -399,7 +436,10 @@ function Hero({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: boole
             <Text
               color={INK}
               weight="600"
-              style={isCompact ? styles.sponsorNameMobile : styles.sponsorName}
+              style={StyleSheet.flatten([
+                isCompact ? styles.sponsorNameMobile : styles.sponsorName,
+                isWide && canvas === 'ultra' ? styles.sponsorNameUltra : null,
+              ])}
             >
               LALAL.AI
             </Text>
@@ -410,7 +450,7 @@ function Hero({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: boole
       {isWide || isTablet ? (
         <View style={[styles.phoneStage, isTablet ? styles.phoneStageTablet : styles.phoneStageWide]}>
           <WaveField />
-          <PhoneMockup compact={isTablet} />
+          <PhoneMockup compact={isTablet} size={phoneSize} />
         </View>
       ) : null}
     </View>
@@ -506,10 +546,16 @@ function BeatPulse() {
   );
 }
 
-function PhoneMockup({ compact }: { compact: boolean }) {
+function PhoneMockup({ compact, size = 'regular' }: { compact: boolean; size?: LandingCanvas }) {
   return (
     <View style={[styles.phoneShadow, compact ? styles.phoneShadowCompact : null]}>
-      <View style={[styles.phoneFrameWrap, compact ? styles.phoneFrameWrapCompact : null]}>
+      <View
+        style={[
+          styles.phoneFrameWrap,
+          size === 'large' ? styles.phoneFrameWrapLarge : size === 'ultra' ? styles.phoneFrameWrapUltra : null,
+          compact ? styles.phoneFrameWrapCompact : null,
+        ]}
+      >
         {Platform.OS === 'web' ? <BeatPulse /> : null}
         <View style={[styles.phoneScreenHole, styles.heroPhoneScreenHole]}>
           {Platform.OS === 'web' ? <HeroPhoneVideo /> : <Image source={PHONE_SCREEN} style={styles.phoneScreenImage} resizeMode="cover" />}
@@ -1083,13 +1129,39 @@ const MOBILE_SCROLL_MOMENTS: {
   },
 ];
 
-function Beat({ title, body, compact = false }: { title: string; body: string; compact?: boolean }) {
+function Beat({
+  title,
+  body,
+  compact = false,
+  size = 'regular',
+}: {
+  title: string;
+  body: string;
+  compact?: boolean;
+  size?: LandingCanvas;
+}) {
   return (
     <>
-      <Text color={INK} weight="800" style={compact ? styles.beatTitleMobile : styles.beatTitle}>
+      <Text
+        color={INK}
+        weight="800"
+        style={StyleSheet.flatten([
+          compact ? styles.beatTitleMobile : styles.beatTitle,
+          !compact && size === 'large' ? styles.beatTitleLarge : null,
+          !compact && size === 'ultra' ? styles.beatTitleUltra : null,
+        ])}
+      >
         {title}
       </Text>
-      <Text color={MUTED} weight="500" style={compact ? styles.beatBodyMobile : styles.beatBody}>
+      <Text
+        color={MUTED}
+        weight="500"
+        style={StyleSheet.flatten([
+          compact ? styles.beatBodyMobile : styles.beatBody,
+          !compact && size === 'large' ? styles.beatBodyLarge : null,
+          !compact && size === 'ultra' ? styles.beatBodyUltra : null,
+        ])}
+      >
         {body}
       </Text>
     </>
@@ -1106,6 +1178,7 @@ function PinnedPhone({
   video2LayerStyle,
   video3LayerStyle,
   compact = false,
+  size = 'regular',
   showVideo = false,
   moment = 'library',
 }: {
@@ -1113,6 +1186,7 @@ function PinnedPhone({
   video2LayerStyle?: any;
   video3LayerStyle?: any;
   compact?: boolean;
+  size?: LandingCanvas;
   showVideo?: boolean;
   moment?: PhoneMomentMode;
 }) {
@@ -1127,7 +1201,13 @@ function PinnedPhone({
       : null;
 
   return (
-    <View style={[styles.pinnedPhone, compact ? styles.pinnedPhoneMobile : null]}>
+    <View
+      style={[
+        styles.pinnedPhone,
+        size === 'large' ? styles.pinnedPhoneLarge : size === 'ultra' ? styles.pinnedPhoneUltra : null,
+        compact ? styles.pinnedPhoneMobile : null,
+      ]}
+    >
       <View style={styles.pinnedScreenHole}>
         <Image source={PHONE_SCREEN} style={styles.phoneScreenImage} resizeMode="cover" />
         {shouldShowVideo ? (
@@ -1338,11 +1418,15 @@ function PinnedPhoneSection({
 }) {
   const { height, width } = useResponsive();
   const wide = width >= 1120;
+  const canvas = landingCanvasForWidth(width);
   const vh = height;
-  const sectionH = vh * 2.3;
+  const sectionH = vh * (canvas === 'regular' ? 2.3 : 2.12);
   const range = sectionH - vh;
   // El texto no va centrado: lo subimos al tercio superior del viewport.
-  const beatPadTop = Math.max(110, Math.round(vh * 0.18));
+  const beatPadTop = Math.max(96, Math.round(vh * (canvas === 'regular' ? 0.18 : 0.13)));
+  const pinMaxWidth = canvas === 'ultra' ? 2180 : canvas === 'large' ? 1560 : 1240;
+  const progressRight = canvas === 'regular' ? 30 : Math.max(42, (width - pinMaxWidth) / 2 + 34);
+  const pinnedPhoneSize = canvas === 'ultra' ? 'ultra' : canvas === 'large' ? 'large' : 'regular';
 
   // El video corre solo (autoplay+loop). Se ve durante la parte 1 y se desvanece
   // hacia el screenshot en las partes 2/3.
@@ -1418,13 +1502,13 @@ function PinnedPhoneSection({
   if (!wide) {
     return (
       <View
-        style={styles.pinMobile}
+        style={[styles.pinMobile, isTablet ? styles.pinMobileTablet : null]}
         onLayout={(e) => {
           pinTop.value = e.nativeEvent.layout.y;
         }}
       >
         {MOBILE_SCROLL_MOMENTS.map((moment) => (
-          <View key={moment.label} style={styles.mobileScrollMoment}>
+          <View key={moment.label} style={[styles.mobileScrollMoment, isTablet ? styles.mobileScrollMomentTablet : null]}>
             <View style={styles.mobileMomentPhoneWrap}>
               <PinnedPhone compact moment={moment.phone} />
               <View style={styles.mobileMomentNumber}>
@@ -1476,41 +1560,90 @@ function PinnedPhoneSection({
           )
         : null}
       <View style={[styles.pinSticky, STICKY, { height: vh }]}>
-        <View style={styles.pinRow}>
+        <View
+          style={[
+            styles.pinRow,
+            canvas === 'large' ? styles.pinRowLarge : canvas === 'ultra' ? styles.pinRowUltra : null,
+          ]}
+        >
           <View style={styles.pinCol}>
-            <Animated.View style={[styles.colLeft, { paddingTop: beatPadTop }, beat1Style]}>
-              <Text color={INK} weight="800" style={styles.beatTitle}>
+            <Animated.View
+              style={[
+                styles.colLeft,
+                canvas === 'large' ? styles.colWideLarge : canvas === 'ultra' ? styles.colWideUltra : null,
+                { paddingTop: beatPadTop },
+                beat1Style,
+              ]}
+            >
+              <Text
+                color={INK}
+                weight="800"
+                style={StyleSheet.flatten([
+                  styles.beatTitle,
+                  canvas === 'large' ? styles.beatTitleLarge : canvas === 'ultra' ? styles.beatTitleUltra : null,
+                ])}
+              >
                 {BEATS[0].title}
               </Text>
               <Animated.View style={beat1BodyStyle}>
-                <Text color={MUTED} weight="500" style={styles.beatBody}>
+                <Text
+                  color={MUTED}
+                  weight="500"
+                  style={StyleSheet.flatten([
+                    styles.beatBody,
+                    canvas === 'large' ? styles.beatBodyLarge : canvas === 'ultra' ? styles.beatBodyUltra : null,
+                  ])}
+                >
                   {BEATS[0].body}
                 </Text>
               </Animated.View>
             </Animated.View>
-            <Animated.View style={[styles.colLeft, { paddingTop: beatPadTop }, beat3Style]}>
-              <Beat title={BEATS[2].title} body={BEATS[2].body} />
+            <Animated.View
+              style={[
+                styles.colLeft,
+                canvas === 'large' ? styles.colWideLarge : canvas === 'ultra' ? styles.colWideUltra : null,
+                { paddingTop: beatPadTop },
+                beat3Style,
+              ]}
+            >
+              <Beat title={BEATS[2].title} body={BEATS[2].body} size={canvas} />
             </Animated.View>
           </View>
           <PinnedPhone
+            size={pinnedPhoneSize}
             videoLayerStyle={videoLayerStyle}
             video2LayerStyle={video2LayerStyle}
             video3LayerStyle={video3LayerStyle}
           />
           <View style={styles.pinCol}>
-            <Animated.View style={[styles.colRight, { paddingTop: beatPadTop }, beat2Style]}>
-              <Beat title={BEATS[1].title} body={BEATS[1].body} />
+            <Animated.View
+              style={[
+                styles.colRight,
+                canvas === 'large' ? styles.colWideLarge : canvas === 'ultra' ? styles.colWideUltra : null,
+                { paddingTop: beatPadTop },
+                beat2Style,
+              ]}
+            >
+              <Beat title={BEATS[1].title} body={BEATS[1].body} size={canvas} />
             </Animated.View>
             {/* Parte 3: aparece al costado un poco después del beat 3 (cel en el bolsillo). */}
-            <Animated.View style={[styles.colRight, { paddingTop: beatPadTop }, pocketSideStyle]}>
+            <Animated.View
+              style={[
+                styles.colRight,
+                canvas === 'large' ? styles.colWideLarge : canvas === 'ultra' ? styles.colWideUltra : null,
+                { paddingTop: beatPadTop },
+                pocketSideStyle,
+              ]}
+            >
               <Beat
                 title="Even in your pocket"
                 body="Screen off, phone away — the haptics keep playing in sync, so you never stop feeling the music."
+                size={canvas}
               />
             </Animated.View>
           </View>
         </View>
-        <View style={styles.scrollIndic} pointerEvents="none">
+        <View style={[styles.scrollIndic, { right: progressRight }]} pointerEvents="none">
           <View style={[styles.scrollTrack, { height: trackH }]}>
             <Animated.View style={[styles.scrollFill, progressFillStyle]} />
             {[0.19, 0.5, 0.81].map((f, i) => (
@@ -1607,11 +1740,13 @@ function CardVideo() {
   });
 }
 
-function CardsSection({ isWide, isTablet }: { isWide: boolean; isTablet: boolean }) {
+function CardsSection({ isWide }: { isWide: boolean; isTablet: boolean }) {
   const { width } = useResponsive();
-  const wide = isWide || isTablet;
-  const sidePad = Math.max(24, (width - 1160) / 2);
-  const cardW = wide ? 420 : Math.min(342, width - sidePad * 2);
+  const canvas = landingCanvasForWidth(width);
+  const wide = isWide;
+  const contentMax = canvas === 'ultra' ? 2180 : canvas === 'large' ? 1560 : 1160;
+  const sidePad = Math.max(24, (width - contentMax) / 2);
+  const cardW = wide ? (canvas === 'ultra' ? 500 : canvas === 'large' ? 440 : 420) : Math.min(342, width - sidePad * 2);
   const gap = 16;
   // Ancho de UNA tanda completa de cards (incluye el gap entre cada una).
   const setW = CARDS.length * (cardW + gap);
@@ -1779,9 +1914,14 @@ function CardsSection({ isWide, isTablet }: { isWide: boolean; isTablet: boolean
         </Text>
       </View>
       <GestureDetector gesture={pan}>
-        <View style={styles.marqueeViewport}>
+        <View
+          style={[
+            styles.marqueeViewport,
+            canvas === 'large' ? styles.marqueeViewportLarge : canvas === 'ultra' ? styles.marqueeViewportUltra : null,
+          ]}
+      >
           <Animated.View style={[styles.marqueeTrack, { paddingLeft: gap, gap }, trackStyle]}>
-          {[...CARDS, ...CARDS].map((c, i) => renderCard(c, i, i))}
+            {[...CARDS, ...CARDS].map((c, i) => renderCard(c, i, i))}
           </Animated.View>
         </View>
       </GestureDetector>
@@ -1843,6 +1983,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 24,
   },
+  shellLarge: {
+    maxWidth: 1560,
+    paddingHorizontal: 36,
+  },
+  shellUltra: {
+    maxWidth: 2180,
+    paddingHorizontal: 44,
+  },
   headerOverlay: {
     position: 'absolute',
     top: 0,
@@ -1869,6 +2017,8 @@ const styles = StyleSheet.create({
   },
   heroFrameImage: {
     opacity: 1,
+    width: '100%',
+    height: '100%',
   },
   heroVeil: {
     ...StyleSheet.absoluteFillObject,
@@ -1932,6 +2082,12 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
     gap: 38,
   },
+  heroWideLarge: {
+    gap: 78,
+  },
+  heroWideUltra: {
+    gap: 96,
+  },
   heroTablet: {
     minHeight: 590,
     flexDirection: 'row',
@@ -1954,6 +2110,9 @@ const styles = StyleSheet.create({
     flex: 0.95,
     maxWidth: 560,
   },
+  heroCopyWideUltra: {
+    maxWidth: 720,
+  },
   heroCopyTablet: {
     flex: 1,
     maxWidth: 430,
@@ -1962,6 +2121,10 @@ const styles = StyleSheet.create({
     fontSize: 76,
     lineHeight: 78,
     letterSpacing: -2.2,
+  },
+  heroTitleUltra: {
+    fontSize: 92,
+    lineHeight: 95,
   },
   heroTitleTablet: {
     fontSize: 52,
@@ -1977,6 +2140,11 @@ const styles = StyleSheet.create({
     maxWidth: 500,
     fontSize: 19,
     lineHeight: 29,
+  },
+  heroBodyUltra: {
+    maxWidth: 640,
+    fontSize: 22,
+    lineHeight: 34,
   },
   heroBodyTablet: {
     maxWidth: 430,
@@ -2007,9 +2175,17 @@ const styles = StyleSheet.create({
     gap: 9,
     backgroundColor: '#0E1425',
   },
+  primaryCtaUltra: {
+    minHeight: 60,
+    paddingHorizontal: 28,
+  },
   ctaText: {
     fontSize: 15,
     lineHeight: 18,
+  },
+  ctaTextUltra: {
+    fontSize: 16.5,
+    lineHeight: 20,
   },
   heroSponsors: {
     maxWidth: 520,
@@ -2029,6 +2205,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginRight: 3,
   },
+  sponsorLabelUltra: {
+    fontSize: 14,
+    lineHeight: 17,
+  },
   sponsorLabelMobile: {
     fontSize: 11.5,
     lineHeight: 14,
@@ -2040,6 +2220,10 @@ const styles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 21,
     letterSpacing: 0.2,
+  },
+  sponsorNameUltra: {
+    fontSize: 18.5,
+    lineHeight: 23,
   },
   sponsorNameMobile: {
     fontSize: 15,
@@ -2161,6 +2345,12 @@ const styles = StyleSheet.create({
   phoneFrameWrapCompact: {
     width: 210,
     borderRadius: 40,
+  },
+  phoneFrameWrapLarge: {
+    width: 286,
+  },
+  phoneFrameWrapUltra: {
+    width: 392,
   },
   // Latido de música (hero). Detrás del marco; emanan hacia afuera al escalar.
   beatRing: {
@@ -3104,6 +3294,14 @@ const styles = StyleSheet.create({
     shadowRadius: 46,
     shadowOffset: { width: 0, height: 22 },
   },
+  pinnedPhoneLarge: {
+    width: 350,
+    borderRadius: 55,
+  },
+  pinnedPhoneUltra: {
+    width: 430,
+    borderRadius: 68,
+  },
   pinnedPhoneMobile: {
     width: 268,
     borderRadius: 43,
@@ -3305,6 +3503,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 36,
   },
+  pinRowLarge: {
+    maxWidth: 1560,
+    gap: 58,
+  },
+  pinRowUltra: {
+    maxWidth: 2180,
+    gap: 96,
+  },
   pinCol: {
     flex: 1,
     alignSelf: 'stretch',
@@ -3328,15 +3534,39 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     gap: 18,
   },
+  colWideLarge: {
+    maxWidth: 410,
+  },
+  colWideUltra: {
+    maxWidth: 470,
+  },
   beatTitle: {
     fontSize: 44,
     lineHeight: 48,
     letterSpacing: -1.6,
   },
+  beatTitleLarge: {
+    fontSize: 48,
+    lineHeight: 52,
+  },
+  beatTitleUltra: {
+    fontSize: 52,
+    lineHeight: 56,
+  },
   beatBody: {
     maxWidth: 380,
     fontSize: 18,
     lineHeight: 27,
+  },
+  beatBodyLarge: {
+    maxWidth: 410,
+    fontSize: 18.5,
+    lineHeight: 28,
+  },
+  beatBodyUltra: {
+    maxWidth: 460,
+    fontSize: 20,
+    lineHeight: 30,
   },
   beatTitleMobile: {
     fontSize: 30,
@@ -3357,6 +3587,9 @@ const styles = StyleSheet.create({
     gap: 18,
     alignItems: 'center',
   },
+  pinMobileTablet: {
+    paddingTop: 116,
+  },
   mobileScrollMoment: {
     width: '100%',
     maxWidth: 460,
@@ -3364,6 +3597,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 22,
+  },
+  mobileScrollMomentTablet: {
+    minHeight: 900,
   },
   mobileMomentPhoneWrap: {
     width: '100%',
@@ -3495,6 +3731,14 @@ const styles = StyleSheet.create({
     width: '100%',
     overflow: 'hidden',
     paddingTop: 36,
+  },
+  marqueeViewportLarge: {
+    maxWidth: 1560,
+    alignSelf: 'center',
+  },
+  marqueeViewportUltra: {
+    maxWidth: 2180,
+    alignSelf: 'center',
   },
   marqueeTrack: {
     flexDirection: 'row',
