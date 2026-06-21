@@ -1,32 +1,44 @@
 import type { AudioSource } from 'expo-audio';
-import { DANI_CALIFORNIA_TRACK_ID, ORDINARY_TRACK_ID } from './demo-score-tracks';
-import type { StemKind } from './audio-client';
+import { DANI_CALIFORNIA_TRACK_ID, ORDINARY_TRACK_ID } from './demo-score-tracks.ts';
+import type { StemKind } from './audio-client.ts';
 
-type StemAudioKind = StemKind | 'no_vocals';
-type StemSourceMap = Record<StemAudioKind, AudioSource>;
+type StemSourceMap = Record<StemKind, string>;
 
-const STEM_AUDIO_ASSETS: Record<number, StemSourceMap> = {
+const DEFAULT_STEM_AUDIO_BASE_URL =
+  'https://raw.githubusercontent.com/MauroProto/musa/main/assets/lalalai';
+
+const STEM_AUDIO_PATHS: Record<number, StemSourceMap> = {
   [DANI_CALIFORNIA_TRACK_ID]: {
-    bass: require('../../assets/lalalai/pasirluyu_red-hot-chili-peppers-dani-california_bass_split_by_lalalai.mp3'),
-    drums: require('../../assets/lalalai/pasirluyu_red-hot-chili-peppers-dani-california_drum_split_by_lalalai.mp3'),
-    guitar: require('../../assets/lalalai/pasirluyu_red-hot-chili-peppers-dani-california_electric_guitar_split_by_lalalai.mp3'),
-    vocals: require('../../assets/lalalai/pasirluyu_red-hot-chili-peppers-dani-california_vocals_split_by_lalalai.mp3'),
-    no_vocals: require('../../assets/lalalai/pasirluyu_red-hot-chili-peppers-dani-california_no_vocals_split_by_lalalai.mp3'),
+    bass: 'pasirluyu_red-hot-chili-peppers-dani-california_bass_split_by_lalalai.mp3',
+    drums: 'pasirluyu_red-hot-chili-peppers-dani-california_drum_split_by_lalalai.mp3',
+    guitar: 'pasirluyu_red-hot-chili-peppers-dani-california_electric_guitar_split_by_lalalai.mp3',
+    vocals: 'pasirluyu_red-hot-chili-peppers-dani-california_vocals_split_by_lalalai.mp3',
   },
   [ORDINARY_TRACK_ID]: {
-    bass: require('../../assets/lalalai/ordinary/Alex warren - Ordinary_strings_split_by_lalalai.mp3'),
-    drums: require('../../assets/lalalai/ordinary/Alex warren - Ordinary_drum_split_by_lalalai.mp3'),
-    guitar: require('../../assets/lalalai/ordinary/Alex warren - Ordinary_acoustic_guitar_split_by_lalalai.mp3'),
-    vocals: require('../../assets/lalalai/ordinary/Alex warren - Ordinary_vocals_split_by_lalalai.mp3'),
-    no_vocals: require('../../assets/lalalai/ordinary/Alex warren - Ordinary_no_vocals_split_by_lalalai.mp3'),
+    bass: 'ordinary/Alex warren - Ordinary_strings_split_by_lalalai.mp3',
+    drums: 'ordinary/Alex warren - Ordinary_drum_split_by_lalalai.mp3',
+    guitar: 'ordinary/Alex warren - Ordinary_acoustic_guitar_split_by_lalalai.mp3',
+    vocals: 'ordinary/Alex warren - Ordinary_vocals_split_by_lalalai.mp3',
   },
 };
 
-export function getBundledStemAudioSource(trackId: number, stem: StemKind): AudioSource | null {
-  return STEM_AUDIO_ASSETS[trackId]?.[stem] ?? null;
+function stemAudioBaseUrl(): string {
+  return (process.env.EXPO_PUBLIC_STEM_AUDIO_BASE_URL ?? DEFAULT_STEM_AUDIO_BASE_URL).replace(/\/+$/, '');
 }
 
-export function hasBundledStemAudio(trackId: number): boolean {
-  const stems = STEM_AUDIO_ASSETS[trackId];
+export function getRemoteStemAudioUrl(trackId: number, stem: StemKind): string | null {
+  const relativePath = STEM_AUDIO_PATHS[trackId]?.[stem];
+  if (!relativePath) return null;
+  const encodedPath = relativePath.split('/').map(encodeURIComponent).join('/');
+  return `${stemAudioBaseUrl()}/${encodedPath}`;
+}
+
+export function getRemoteStemAudioSource(trackId: number, stem: StemKind): AudioSource | null {
+  const uri = getRemoteStemAudioUrl(trackId, stem);
+  return uri ? { uri } : null;
+}
+
+export function hasRemoteStemAudio(trackId: number): boolean {
+  const stems = STEM_AUDIO_PATHS[trackId];
   return Boolean(stems?.bass && stems.drums && stems.guitar && stems.vocals);
 }

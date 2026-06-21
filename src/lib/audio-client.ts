@@ -1,15 +1,15 @@
 import { Platform } from 'react-native';
 import type { AudioSource } from 'expo-audio';
-import { getBundledStemAudioSource } from './stem-audio-assets';
+import { getRemoteStemAudioSource } from './stem-audio-assets.ts';
 
 /**
  * MUSA — client-safe audio mode + stem streaming URLs.
  *
  * Audio playback is OPTIONAL and OFF by default ("silent"), keeping MUSA
  * faithful to its Deaf-first pitch. When the user opts in ("mix" or
- * "isolate"), we stream the LALAL stems that are already separated locally
- * for the demo track, letting hard-of-hearing users hear + feel + read in
- * sync — and isolate a single layer, which Apple Music Haptics does not offer.
+ * "isolate"), we stream the repo-hosted LALAL stems for the demo track,
+ * letting hard-of-hearing users hear + feel + read in sync — and isolate a
+ * single layer, which Apple Music Haptics does not offer.
  */
 
 /** Which audio experience the player uses. */
@@ -40,14 +40,14 @@ export function getStemStreamUrl(trackId: number, stem: 'bass' | 'drums' | 'guit
   return `${apiBase()}/api/audio?trackId=${trackId}&stem=${stem}`;
 }
 
-export function usesBundledStemAudio(): boolean {
+export function usesRemoteStemAudio(): boolean {
   return Platform.OS !== 'web' && apiBase().length === 0;
 }
 
 export function getStemAudioSource(trackId: number, stem: StemKind): AudioSource | null {
   if (Platform.OS !== 'web') {
-    const bundled = getBundledStemAudioSource(trackId, stem);
-    if (bundled) return bundled;
+    const remote = getRemoteStemAudioSource(trackId, stem);
+    if (remote) return remote;
     if (apiBase().length === 0) return null;
   }
   return { uri: getStemStreamUrl(trackId, stem) };
