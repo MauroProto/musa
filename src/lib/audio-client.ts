@@ -1,4 +1,6 @@
 import { Platform } from 'react-native';
+import type { AudioSource } from 'expo-audio';
+import { getBundledStemAudioSource } from './stem-audio-assets';
 
 /**
  * MUSA — client-safe audio mode + stem streaming URLs.
@@ -36,4 +38,15 @@ function apiBase(): string {
 
 export function getStemStreamUrl(trackId: number, stem: 'bass' | 'drums' | 'guitar' | 'vocals' | 'no_vocals'): string {
   return `${apiBase()}/api/audio?trackId=${trackId}&stem=${stem}`;
+}
+
+export function usesBundledStemAudio(): boolean {
+  return Platform.OS !== 'web' && apiBase().length === 0;
+}
+
+export function getStemAudioSource(trackId: number, stem: StemKind): AudioSource | null {
+  if (usesBundledStemAudio()) {
+    return getBundledStemAudioSource(trackId, stem);
+  }
+  return { uri: getStemStreamUrl(trackId, stem) };
 }

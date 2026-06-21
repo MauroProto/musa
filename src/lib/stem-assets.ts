@@ -1,9 +1,9 @@
 /**
  * MUSA — server-only mapping from trackId to LALAL stem audio files on disk.
  *
- * The stem MP3s are gitignored (copyrighted inputs), so this module only
- * resolves files that exist locally on the demo machine. The /api/audio route
- * streams them on demand; nothing is bundled into the app.
+ * The stem MP3s are included in this hackathon demo with permission from the
+ * rights holders. The /api/audio route streams them on demand for web/server
+ * builds; native Expo Go can use the bundled client asset map instead.
  *
  * SERVER-ONLY: never import from client code.
  */

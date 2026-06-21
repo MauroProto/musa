@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import { getStemStreamUrl } from '../lib/audio-client';
+import { getStemAudioSource } from '../lib/audio-client';
 import type { AudioMode, StemKind } from '../lib/audio-client';
 import { clampGain, type LayerGains } from '../lib/layer-gains';
 
@@ -40,7 +40,7 @@ export function useStemAudio(
     if (mode === 'isolate') return stem === isolateStem;
     return true; // mix → all four
   };
-  const src = (stem: Stem) => (want(stem) ? { uri: getStemStreamUrl(trackId, stem) } : NO_SOURCE);
+  const src = (stem: Stem) => (want(stem) ? getStemAudioSource(trackId, stem) : NO_SOURCE);
 
   const bass = useAudioPlayer(src('bass'), { updateInterval: 250, downloadFirst: false });
   const drums = useAudioPlayer(src('drums'), { updateInterval: 250, downloadFirst: false });
