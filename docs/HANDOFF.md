@@ -1,8 +1,8 @@
 # MUSA handoff
 
-Updated: 2026-06-19 (guided Android haptic demo)
+Updated: 2026-06-21 (public Expo Go-safe judge demo)
 Repo: `D:\GithubProjects\Musa`
-Branch for this work: `codex-guided-haptic-demo`
+Branch for this work: `main`
 
 ## What this project is
 
@@ -11,18 +11,19 @@ MUSA is an Expo Router app for haptic captions for music. The core loop is:
 1. Search or open a curated demo track.
 2. Fetch synced lyrics server-side when available.
 3. Build a deterministic Sensory Score from lyrics, stems, and authored moments.
-4. Play visual captions plus native haptics; optional audio/stem isolation is a bonus, not required.
+4. Play visual captions plus native haptics; audio/stem isolation is a bonus path for APK/dev builds, not the public Expo Go update.
 
 The hackathon demo track is **Dani California** by Red Hot Chili Peppers, Musixmatch `trackId = 95574135`.
 
 ## Current demo posture
 
 - Android native is the source of truth for haptics.
-- Expo Go remains useful for development.
+- Expo Go is the public judge path, but only for haptics/captions/visuals.
 - `eas.json` has a `preview` Android APK profile.
-- The Dani guided demo works without the local API for haptics because native clients fall back to bundled generated stem analysis and non-lyric sensory captions.
-- Real lyrics and optional stem audio still require a reachable API server.
-- Raw LALAL stem MP3s are not committed.
+- Dani and Ordinary work without the local API for haptics because native clients fall back to bundled generated stem analysis and non-lyric sensory captions.
+- The Expo Go update intentionally does not import `expo-audio` or load the stem mixer. This keeps the update stable for judges who are not logged into the Expo owner account.
+- Real Musixmatch lyrics require a reachable API server.
+- Approved demo MP3/stem files exist in `assets/lalalai`, but EAS Update must not bundle MP3 assets.
 
 ## How to run
 
@@ -66,6 +67,14 @@ Preview APK:
 npx eas build --profile preview --platform android
 ```
 
+Public Expo Go update for judges:
+
+```powershell
+npx eas-cli update --branch judges --platform all --message "MUSA judge Expo Go safe haptics"
+```
+
+Share a `qr.expo.dev/eas-update` QR/link for project `b42e4087-875c-4d04-92d0-f8f42eba92e4`, runtime `exposdk:54.0.0`, channel `judges`, and `slug=exp`. Do not share the Expo dashboard preview URL as the primary judge link.
+
 ## Demo flow
 
 1. Open `/demo`.
@@ -104,6 +113,7 @@ Manual checks that matter:
 - Expo Go opens the LAN URL.
 - `/demo` opens Dani guided player.
 - If API is unreachable, Dani still loads sensory captions and haptics.
+- Expo Go public update opens without requiring the Expo owner account.
 - `guitar_riff` feels distinct from `guitar_strum`.
 - `/calibrate` core patterns feel different in Strong mode.
 - `/tuner` can jump to a moment, preview the cue, and display a snippet.
@@ -112,6 +122,7 @@ Manual checks that matter:
 
 - Do not persist Musixmatch lyrics/subtitles.
 - Do not commit `.env`.
-- Do not commit raw LALAL stem MP3s.
-- Audio/stem isolate mode requires a reachable `/api/audio` server with local stems.
+- Only commit audio that is explicitly approved for the demo.
+- The public Expo Go update is haptics/captions only; audio/stem isolate mode requires an APK/dev build or a reachable `/api/audio`/static audio host.
+- A bucket is not needed to fix Expo Go loading. Use a bucket later if you want reliable remote audio playback outside local dev/GitHub raw URLs.
 - Browser/mobile web vibration is only a fallback; judge the haptics on native Android.

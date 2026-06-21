@@ -56,7 +56,9 @@ Demo tracks:
 - **Ordinary** by Alex Warren, stem-backed guided score.
 - **Dani California** by Red Hot Chili Peppers, Musixmatch `trackId = 95574135`.
 
-The bundled demo captions are original, non-lyric sensory captions. MUSA does not persist Musixmatch lyrics or subtitles.
+The bundled demo captions are original, non-lyric sensory captions. MUSA does not persist Musixmatch lyrics or subtitles. If the API is unreachable, Dani and Ordinary still work for native haptics using bundled sensory captions plus generated LALAL stem analysis.
+
+The public Expo Go judge build is haptics/captions first. It intentionally does **not** load the native stem-audio mixer, because Expo Go is a constrained shared runtime and the judge link has to work for people outside the repo/account. Full audio/stem playback belongs in an APK/dev build or a deployed API/static audio host.
 
 ## Video Loops
 
@@ -103,6 +105,28 @@ For phone testing:
 npx expo start --host lan --clear
 ```
 
+Open Expo Go with:
+
+```text
+exp://<your-lan-ip>:8081
+```
+
+For the public judge Expo Go update:
+
+```bash
+npx eas-cli update --branch judges --platform all --message "MUSA judge Expo Go safe haptics"
+```
+
+Share the `qr.expo.dev` QR/link for the `judges` channel, not the private Expo dashboard page.
+
+For a judge APK preview:
+
+```bash
+npx eas build --profile preview --platform android
+```
+
+Use the APK path when you want native audio/stem playback in addition to the Expo Go haptic demo.
+
 Server-side environment variables:
 
 ```bash
@@ -128,3 +152,5 @@ npm run lint
 - Keep `src/lib/sensory-score.ts` pure and deterministic.
 - Use `src/lib/haptics.ts` for native and web haptic playback.
 - Demo stem assets are included only for the MUSA hackathon/demo context and should not be reused or redistributed outside that scope.
+- Only commit audio stems that are explicitly approved for this demo.
+- Keep EAS Update free of MP3 assets; serve audio through API/static URLs or a later bucket if full playback is needed.

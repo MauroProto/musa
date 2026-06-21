@@ -38,31 +38,30 @@ export const PROFILE_PRESETS: Record<ListeningProfile, ProfilePreset> = {
     layerGains: { drums: 1, bass: 1.3, guitar: 0.9, vocals: 1.3 },
     rationale: 'Strong, silent, big captions — with the voice and body pushed up.',
   },
-  // Hard of hearing — some sound remains. Play the mix, lift the voice you tend
-  // to lose, keep haptics balanced.
+  // Hard of hearing — keep haptics balanced and lift the voice layer in touch.
   hard_of_hearing: {
     strength: 'medium',
     visualOnly: false,
-    audioMode: 'mix',
+    audioMode: 'silent',
     fontScale: 'large',
     layerGains: { drums: 1, bass: 1, guitar: 1, vocals: 1.3 },
-    rationale: 'Plays the mix with the voice lifted — the part most easily lost.',
+    rationale: 'Balanced haptics with the voice layer lifted — the part most easily lost.',
   },
   // Cochlear implant — rhythm and voice come through, texture is missed, so the
-  // guitar/texture layer is boosted; voice isolated to learn the layer.
+  // guitar/texture layer is boosted.
   cochlear_implant: {
     strength: 'medium',
     visualOnly: false,
-    audioMode: 'isolate',
+    audioMode: 'silent',
     fontScale: 'large',
     layerGains: { drums: 1, bass: 1, guitar: 1.35, vocals: 1.1 },
-    rationale: 'Boosts the texture layer you miss, and lets you isolate one stem.',
+    rationale: 'Boosts the texture layer so guitar and detail are easier to feel.',
   },
   // Hearing aid — clarity over rumble. Tame the low end, lift the voice.
   hearing_aid: {
     strength: 'medium',
     visualOnly: false,
-    audioMode: 'mix',
+    audioMode: 'silent',
     fontScale: 'large',
     layerGains: { drums: 1, bass: 0.7, guitar: 1, vocals: 1.2 },
     rationale: 'Tames low-end rumble and lifts the voice for clarity.',
@@ -71,7 +70,7 @@ export const PROFILE_PRESETS: Record<ListeningProfile, ProfilePreset> = {
   feel_more: {
     strength: 'strong',
     visualOnly: false,
-    audioMode: 'mix',
+    audioMode: 'silent',
     fontScale: 'large',
     layerGains: { drums: 1.2, bass: 1.2, guitar: 1.2, vocals: 1.2 },
     rationale: 'Everything turned up — the fullest multisensory version.',

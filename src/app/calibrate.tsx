@@ -10,7 +10,6 @@ import { Theme, RADIUS } from '../constants/theme';
 import { HAPTIC_LEGEND } from '../constants/haptic-patterns';
 import { usePreferences } from '../store/preferences';
 import { previewHaptic } from '../lib/haptics';
-import { AUDIO_MODE_OPTIONS, ISOLATABLE_STEMS, type AudioMode, type StemKind } from '../lib/audio-client';
 import { presetForProfile } from '../lib/profile-presets';
 import type { HapticStrength } from '../lib/types';
 
@@ -34,10 +33,6 @@ export default function CalibrateScreen() {
   const setPulseOn = usePreferences((s) => s.setPulseOn);
   const visualOnly = usePreferences((s) => s.visualOnly);
   const setVisualOnly = usePreferences((s) => s.setVisualOnly);
-  const audioMode = usePreferences((s) => s.audioMode);
-  const setAudioMode = usePreferences((s) => s.setAudioMode);
-  const isolateStem = usePreferences((s) => s.isolateStem);
-  const setIsolateStem = usePreferences((s) => s.setIsolateStem);
   const fontScale = usePreferences((s) => s.fontScale);
   const setFontScale = usePreferences((s) => s.setFontScale);
   const profile = usePreferences((s) => s.profile);
@@ -92,7 +87,7 @@ export default function CalibrateScreen() {
         ))}
       </Stack>
 
-      <SectionLabel icon="faders" title="Layer mixer" hint="How much of each layer you feel — and hear, when audio is on. Also live in the player." />
+      <SectionLabel icon="faders" title="Layer mixer" hint="How much of each layer you feel. Also live in the player." />
       <LayerMixer />
 
       <SectionLabel icon="faders" title="Pattern lab" hint="The full set of cues. Fine-tune once you know the core five." />
@@ -128,42 +123,6 @@ export default function CalibrateScreen() {
           </View>
         </View>
       </GlassSurface>
-
-      <SectionLabel icon="music" title="Audio" hint="Silent by default. Optionally hear the song with haptics in sync, or solo one stem to learn a single layer." />
-      <Stack gap={10}>
-        {AUDIO_MODE_OPTIONS.map((opt) => (
-          <SelectCard
-            key={opt.key}
-            title={opt.label}
-            hint={opt.hint}
-            active={audioMode === opt.key}
-            onPress={() => setAudioMode(opt.key as AudioMode)}
-          />
-        ))}
-      </Stack>
-      {audioMode === 'isolate' ? (
-        <View style={styles.stemRow}>
-          {ISOLATABLE_STEMS.map((stem) => {
-            const active = isolateStem === stem.key;
-            return (
-              <GlassSurface
-                key={stem.key}
-                onPress={() => setIsolateStem(stem.key as StemKind)}
-                radius={RADIUS.pill}
-                elevation="none"
-                chroma={false}
-                fill={active ? 'strong' : 'whisper'}
-                intensity={active ? 26 : 14}
-                style={styles.stemBtn}
-                accessibilityLabel={stem.label}
-                accessibilityState={{ selected: active }}
-              >
-                <Text variant="caption" color={active ? Theme.text : Theme.textDim} weight="700">{stem.label}</Text>
-              </GlassSurface>
-            );
-          })}
-        </View>
-      ) : null}
 
       {onboarding ? (
         <Button label="Enter" onPress={() => router.replace('/search')} />
@@ -214,6 +173,4 @@ const styles = StyleSheet.create({
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: Theme.textDim },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 6 },
   sep: { height: StyleSheet.hairlineWidth, backgroundColor: Theme.separator, marginVertical: 6 },
-  stemRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  stemBtn: { paddingVertical: 10, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
 });

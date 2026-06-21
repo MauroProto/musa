@@ -1,5 +1,4 @@
 import { Platform } from 'react-native';
-import type { AudioSource } from 'expo-audio';
 import { getRemoteStemAudioUrl } from './stem-audio-assets.ts';
 
 /**
@@ -17,6 +16,7 @@ export type AudioMode = 'silent' | 'mix' | 'isolate';
 
 /** A stem the user can isolate. `no_vocals` (instrumental) is internal to mix only. */
 export type StemKind = 'bass' | 'drums' | 'guitar' | 'vocals';
+type AudioSource = { uri: string };
 
 export const ISOLATABLE_STEMS: { key: StemKind; label: string }[] = [
   { key: 'vocals', label: 'Vocals' },

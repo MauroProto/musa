@@ -7,10 +7,7 @@ import { GlassSurface, GlassIconButton } from '../components/Glass';
 import { Text, Touch, useResponsive, useFontScale } from '../components/ui';
 import { Theme, RADIUS } from '../constants/theme';
 import { useSensoryPlayer, type SensoryPlayer } from '../hooks/useSensoryPlayer';
-import { useStemAudio } from '../hooks/useStemAudio';
-import { AudioModeControl } from '../components/player/AudioModeControl';
 import { energyValueAt } from '../lib/sensory-score';
-import { isStemDemoTrack } from '../lib/demo-score-tracks';
 import { usePreferences } from '../store/preferences';
 import { SeekBar } from '../components/player/SeekBar';
 import { ChorusCountdown } from '../components/player/ChorusCountdown';
@@ -39,23 +36,18 @@ export default function PlayerScreen() {
     artwork?: string;
   }>();
   const trackId = Number(params.trackId ?? 0);
-  const audioMode = usePreferences((s) => s.audioMode);
-  const isolateStem = usePreferences((s) => s.isolateStem);
-  const layerGains = usePreferences((s) => s.layerGains);
   const setNowPlaying = usePreferences((s) => s.setNowPlaying);
 
-  const audio = useStemAudio(trackId, audioMode, isolateStem, layerGains);
   const player = useSensoryPlayer(
     trackId,
     {
       durationMs: params.durationMs ? Number(params.durationMs) : undefined,
     },
-    audio,
+    null,
   );
   const togglePlayer = player.toggle;
   const seekPlayerBy = player.seekBy;
 
-  const showAudio = isStemDemoTrack(trackId);
   const guided = params.guided === '1';
 
   // Web: keyboard (space = play/pause, arrows = seek)
@@ -115,9 +107,9 @@ export default function PlayerScreen() {
   }
 
   return isWide ? (
-    <WebPlayer player={player} title={title} artist={artist} artworkUrl={artworkUrl} progress={progress} insets={insets} showAudio={showAudio} trackId={trackId} guided={guided} />
+    <WebPlayer player={player} title={title} artist={artist} artworkUrl={artworkUrl} progress={progress} insets={insets} trackId={trackId} guided={guided} />
   ) : (
-    <MobilePlayer player={player} title={title} artist={artist} artworkUrl={artworkUrl} progress={progress} insets={insets} showAudio={showAudio} trackId={trackId} guided={guided} />
+    <MobilePlayer player={player} title={title} artist={artist} artworkUrl={artworkUrl} progress={progress} insets={insets} trackId={trackId} guided={guided} />
   );
 }
 
@@ -128,7 +120,6 @@ type LayoutProps = {
   artworkUrl?: string;
   progress: number;
   insets: { top: number; bottom: number; left: number; right: number };
-  showAudio: boolean;
   trackId: number;
   guided: boolean;
 };
@@ -156,7 +147,7 @@ function vocalLevel(player: SensoryPlayer): number {
 
 /* ----------------------------- MOBILE (app) ----------------------------- */
 
-function MobilePlayer({ player, title, artist, artworkUrl, progress, insets, showAudio, trackId, guided }: LayoutProps) {
+function MobilePlayer({ player, title, artist, artworkUrl, progress, insets, trackId, guided }: LayoutProps) {
   const f = useFontScale();
   const [cheatOpen, setCheatOpen] = useState(false);
   const energy = useEnergy(player);
@@ -217,7 +208,6 @@ function MobilePlayer({ player, title, artist, artworkUrl, progress, insets, sho
               <Text variant="mono" color={Theme.textFaint} style={{ fontSize: Math.round(11.5 * f) }}>−{fmt(player.durationMs - player.currentMs)}</Text>
             </View>
             <Transport player={player} />
-            {showAudio ? <AudioModeControl /> : null}
           </View>
         </View>
       </View>
@@ -227,7 +217,7 @@ function MobilePlayer({ player, title, artist, artworkUrl, progress, insets, sho
 
 /* ------------------------------ WEB (desktop) ------------------------------ */
 
-function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId, guided }: LayoutProps) {
+function WebPlayer({ player, title, artist, progress, insets, trackId, guided }: LayoutProps) {
   const [cheatOpen, setCheatOpen] = useState(false);
   const energy = useEnergy(player);
   const vocal = vocalLevel(player);
@@ -287,7 +277,6 @@ function WebPlayer({ player, title, artist, progress, insets, showAudio, trackId
               <Transport player={player} />
               <Text variant="mono" color={Theme.textFaint} style={{ width: 64, textAlign: 'right' }}>−{fmt(player.durationMs - player.currentMs)}</Text>
             </View>
-            {showAudio ? <AudioModeControl /> : null}
           </View>
         </View>
       </View>
