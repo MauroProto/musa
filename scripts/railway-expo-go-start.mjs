@@ -6,6 +6,7 @@ const port = process.env.PORT || '8081';
 const publicDomain = process.env.RAILWAY_PUBLIC_DOMAIN || process.env.MUSA_PUBLIC_DOMAIN || '';
 
 process.env.EXPO_NO_DOTENV = process.env.EXPO_NO_DOTENV || '1';
+process.env.MUSA_EXPO_GO_SERVER = process.env.MUSA_EXPO_GO_SERVER || '1';
 
 if (publicDomain) {
   const publicBaseUrl = publicDomain.startsWith('http') ? publicDomain : `https://${publicDomain}`;
