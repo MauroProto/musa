@@ -5,14 +5,18 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import '../global.css';
 import { Theme } from '../constants/theme';
 
+const WEB_SHELL_BG = '#FBFDFD';
+
 export default function RootLayout() {
+  const shellBackground = Platform.OS === 'web' ? WEB_SHELL_BG : Theme.bg;
+
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: Theme.bg }}>
-      <StatusBar style="light" />
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: shellBackground }}>
+      <StatusBar style={Platform.OS === 'web' ? 'dark' : 'light'} />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Theme.bg },
+          contentStyle: { backgroundColor: shellBackground },
           animation: Platform.OS === 'web' ? 'none' : 'fade',
         }}
       >
