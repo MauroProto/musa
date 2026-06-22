@@ -7,6 +7,12 @@ MUSA turns synced lyrics and song structure into a readable, visual, and tactile
 > Lyrics you can read. Rhythm you can feel.
 
 <p align="center">
+  <a href="https://musa-landing-vercel.vercel.app">
+    <img src="https://api.microlink.io/?url=https%3A%2F%2Fmusa-landing-vercel.vercel.app&amp;screenshot=true&amp;embed=screenshot.url" alt="MUSA landing homepage preview" width="100%" />
+  </a>
+</p>
+
+<p align="center">
   <a href="https://musa-landing-vercel.vercel.app"><strong>Live landing</strong></a>
   ·
   <a href="https://www.youtube.com/watch?v=CLiNLzRrqWI"><strong>Demo video</strong></a>
@@ -33,9 +39,17 @@ MUSA is not raw vibration. Each cue has meaning:
 
 The demo is phone-first because real haptics need real hardware. The landing explains the idea, and the mobile app shows the full experience with captions, rhythm, and touch.
 
-- Watch the demo video: [youtube.com/watch?v=CLiNLzRrqWI](https://www.youtube.com/watch?v=CLiNLzRrqWI)
+- Watch the demo video: [https://www.youtube.com/watch?v=CLiNLzRrqWI](https://www.youtube.com/watch?v=CLiNLzRrqWI)
 - Open the landing: [musa-landing-vercel.vercel.app](https://musa-landing-vercel.vercel.app)
 - Use the landing QR or mobile link to open the Expo Go build.
+
+<p align="center">
+  <img src="./assets/images/musa-qr.png" alt="QR code to open the MUSA Expo Go demo" width="220" />
+</p>
+
+<p align="center">
+  Scan with Expo Go to open the mobile demo.
+</p>
 
 ## How It Works
 
