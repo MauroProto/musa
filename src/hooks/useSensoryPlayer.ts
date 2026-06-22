@@ -287,14 +287,18 @@ export function useSensoryPlayer(
   }, [isPlaying, pause, play]);
 
   const seekToPlaybackTime = useCallback((target: number) => {
-      currentMsRef.current = target;
-      setCurrentMs(target);
-      resetCursors(target);
-      if (audioRef.current) audioRef.current.seekTo(target);
+      const nextTarget = seekToMs(target, durationMs);
+      hapticRef.current?.stop();
+      lastSemanticHapticMsRef.current = -Infinity;
+      prevHadAudioRef.current = false;
+      currentMsRef.current = nextTarget;
+      setCurrentMs(nextTarget);
+      resetCursors(nextTarget);
+      if (audioRef.current) audioRef.current.seekTo(nextTarget);
       // Rebase the wall clock so playback stays continuous if the audio clock drops.
-      playStartMsRef.current = target;
+      playStartMsRef.current = nextTarget;
       playStartWallRef.current = performance.now();
-  }, [resetCursors]);
+  }, [durationMs, resetCursors]);
 
   const seekBy = useCallback(
     (deltaMs: number) => {

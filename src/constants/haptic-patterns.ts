@@ -119,7 +119,7 @@ export const HAPTIC_LEGEND: HapticLegendItem[] = [
     role: 'Keep time between events',
     category: 'rhythm',
     color: '#7C7C7C',
-    intensity: 0.2,
+    intensity: 0.6,
   },
   {
     type: 'energy_rise',

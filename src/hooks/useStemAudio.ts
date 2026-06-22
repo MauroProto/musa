@@ -29,6 +29,13 @@ const AUDIO_OPTIONS = {
   keepAudioSessionActive: true,
 };
 const NO_SOURCE = null;
+const SEEK_CLOCK_HOLD_MS = 900;
+
+function nowMs(): number {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+}
 
 export function useStemAudio(
   trackId: number,
@@ -71,6 +78,7 @@ export function useStemAudio(
   modeRef.current = mode;
   const playingRef = useRef(false);
   const lastSeekSecondsRef = useRef(0);
+  const seekPendingUntilRef = useRef(0);
 
   const activePlayers = useCallback((): ExpoAudioPlayer[] => {
     const players = playersRef.current;
@@ -100,6 +108,22 @@ export function useStemAudio(
     }
   }, [activePlayers]);
 
+  const pauseActivePlayers = useCallback(() => {
+    for (const p of activePlayers()) {
+      try {
+        p.pause();
+      } catch {
+        /* no-op */
+      }
+    }
+  }, [activePlayers]);
+
+  const markSeekPending = useCallback(() => {
+    seekPendingUntilRef.current = nowMs() + SEEK_CLOCK_HOLD_MS;
+  }, []);
+
+  const seekIsPending = useCallback(() => nowMs() < seekPendingUntilRef.current, []);
+
   useEffect(() => {
     if (mode === 'silent') {
       playingRef.current = false;
@@ -125,12 +149,16 @@ export function useStemAudio(
     (ms: number) => {
       const seconds = Math.max(0, ms / 1000);
       lastSeekSecondsRef.current = seconds;
+      const shouldResume = playingRef.current;
+      markSeekPending();
+      if (shouldResume) pauseActivePlayers();
       const seeks = activePlayers().map((p) => p.seekTo(seconds).catch(() => {}));
       void Promise.all(seeks).then(() => {
+        seekPendingUntilRef.current = 0;
         if (playingRef.current) playActivePlayers();
       });
     },
-    [activePlayers, playActivePlayers],
+    [activePlayers, markSeekPending, pauseActivePlayers, playActivePlayers],
   );
 
   const play = useCallback(() => {
@@ -141,6 +169,7 @@ export function useStemAudio(
 
   const pause = useCallback(() => {
     playingRef.current = false;
+    seekPendingUntilRef.current = 0;
     pauseAll();
   }, [pauseAll]);
 
@@ -153,17 +182,20 @@ export function useStemAudio(
       currentTime: clock.currentTime,
       playing: clock.playing,
       playbackRequested: playingRef.current,
+      seekPending: seekIsPending(),
     });
-  }, []);
+  }, [seekIsPending]);
 
   useEffect(() => {
     if (!ready || !playingRef.current) return;
     const seconds = lastSeekSecondsRef.current;
+    markSeekPending();
     const seeks = activePlayers().map((p) => p.seekTo(seconds).catch(() => {}));
     void Promise.all(seeks).then(() => {
+      seekPendingUntilRef.current = 0;
       if (playingRef.current) playActivePlayers();
     });
-  }, [ready, activePlayers, playActivePlayers]);
+  }, [ready, activePlayers, markSeekPending, playActivePlayers]);
 
   useEffect(() => {
     if (mode !== 'mix') return;

@@ -19,3 +19,10 @@ test('audioClockMs returns null when paused by user or not loaded', () => {
     null,
   );
 });
+
+test('audioClockMs ignores native currentTime while a seek is pending', () => {
+  assert.equal(
+    audioClockMs({ isLoaded: true, currentTime: 120, playing: true, playbackRequested: true, seekPending: true }),
+    null,
+  );
+});
