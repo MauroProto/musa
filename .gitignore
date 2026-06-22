@@ -41,6 +41,14 @@ output/playwright/
 .env
 .env*.local
 
+# local/private docs not published to the public repo
+AGENTS.md
+MUSA_contexto_investigacion.md
+MUSA_idea_producto.md
+docs/HANDOFF.md
+assets/images/live/ATTRIBUTION.md
+assets/lalalai/README.md
+
 # typescript
 *.tsbuildinfo
 
