@@ -63,10 +63,6 @@ function tap(delayMs: number, android: AndroidHapticName, ios: IosHapticName, we
   return { delayMs, android, ios, webMs };
 }
 
-function lightTap(delayMs: number, energy: number): HapticStep {
-  return tap(delayMs, 'segment-frequent-tick', 'selection', pulseMs(energy, 8, 16));
-}
-
 function buildWebPattern(steps: HapticStep[]): number | number[] | null {
   if (steps.length === 0) return null;
   if (steps.length === 1 && steps[0].delayMs === 0) return steps[0].webMs;
@@ -113,7 +109,9 @@ export function buildHapticSequence(
 
   switch (type) {
     case 'beat':
-      return finish([lightTap(0, Math.min(energy, 0.45))]);
+      return finish([
+        tap(0, 'virtual-key', 'impact-light', pulseMs(Math.min(energy, 0.55), 16, 28)),
+      ]);
 
     case 'bass_pulse': {
       const base = [

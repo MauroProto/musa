@@ -9,7 +9,8 @@ test('beat stays subtle because it can fire many times per song', () => {
   });
 
   assert.equal(sequence.steps.length, 1);
-  assert.equal(sequence.steps[0].android, 'segment-frequent-tick');
+  assert.equal(sequence.steps[0].android, 'virtual-key');
+  assert.ok(sequence.stopAfterMs < 120);
 });
 
 test('chorus hit becomes a noticeable signature on strong settings', () => {

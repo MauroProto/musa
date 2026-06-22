@@ -28,6 +28,9 @@ export function CueCheatsheet({
 }) {
   const insets = useSafeAreaInsets();
   const strength = usePreferences((s) => s.strength);
+  const pulseOn = usePreferences((s) => s.pulseOn);
+  const visualOnly = usePreferences((s) => s.visualOnly);
+  const layerGains = usePreferences((s) => s.layerGains);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -59,7 +62,7 @@ export function CueCheatsheet({
                     return (
                       <GlassSurface
                         key={item.type}
-                        onPress={() => previewHaptic(item.type, strength, item.intensity)}
+                        onPress={() => previewHaptic(item.type, strength, item.intensity, { visualOnly, pulseOn, layerGains })}
                         radius={RADIUS.md}
                         elevation="none"
                         fill={isNow ? 'strong' : 'whisper'}

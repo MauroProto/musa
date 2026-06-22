@@ -44,6 +44,7 @@ export default function WelcomeScreen() {
   const profile = usePreferences((s) => s.profile);
   const applyProfilePreset = usePreferences((s) => s.applyProfilePreset);
   const strength = usePreferences((s) => s.strength);
+  const visualOnly = usePreferences((s) => s.visualOnly);
   const [entering, setEntering] = useState(false);
   const contentMaxWidth = isWide ? Math.min(width - 112, 620) : Math.min(width - 88, 320);
   const contentLeft = isWide ? Math.max(56, (width - contentMaxWidth) / 2) : 22;
@@ -101,11 +102,11 @@ export default function WelcomeScreen() {
   function enterMusa() {
     if (entering) return;
     if (!canEnterWelcome(profile)) {
-      previewHaptic('pause', strength, 0.4);
+      previewHaptic('pause', strength, 0.4, { visualOnly });
       return;
     }
     setEntering(true);
-    previewHaptic('line_start', strength, 0.6);
+    previewHaptic('line_start', strength, 0.6, { visualOnly });
     press.value = withSequence(
       withTiming(0.96, { duration: 80, easing: EASE_OUT }),
       withTiming(1.025, { duration: 150, easing: EASE_OUT }),
@@ -119,7 +120,7 @@ export default function WelcomeScreen() {
 
   function selectProfile(nextProfile: ListeningProfile) {
     applyProfilePreset(nextProfile);
-    previewHaptic('line_start', strength, 0.4);
+    previewHaptic('line_start', strength, 0.4, { visualOnly });
   }
 
   const canEnter = canEnterWelcome(profile);

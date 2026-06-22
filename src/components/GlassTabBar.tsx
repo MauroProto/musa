@@ -39,6 +39,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
   const strength = usePreferences((s) => s.strength);
+  const visualOnly = usePreferences((s) => s.visualOnly);
   const [barWidth, setBarWidth] = useState(0);
 
   const routes = state.routes.filter((r) => TAB_META[r.name]);
@@ -65,7 +66,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps) {
     indicator.value = reduceMotion
       ? index
       : withTiming(index, { duration: MOTION.dur.base, easing: EASE_OUT });
-    previewHaptic('line_start', strength, 0.4);
+    previewHaptic('line_start', strength, 0.4, { visualOnly });
     const event = navigation.emit({ type: 'tabPress', target: state.routes.find((r) => r.name === routeName)?.key ?? '', canPreventDefault: true });
     if (!isFocused && !event.defaultPrevented) {
       navigation.navigate(routeName as never);
@@ -126,7 +127,7 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps) {
           {/* Settings action — opens full-screen calibration */}
           <Pressable
             onPress={() => {
-              previewHaptic('line_start', strength, 0.4);
+              previewHaptic('line_start', strength, 0.4, { visualOnly });
               router.push('/calibrate');
             }}
             style={styles.item}

@@ -34,6 +34,7 @@ export default function CalibrateScreen() {
   const setPulseOn = usePreferences((s) => s.setPulseOn);
   const visualOnly = usePreferences((s) => s.visualOnly);
   const setVisualOnly = usePreferences((s) => s.setVisualOnly);
+  const layerGains = usePreferences((s) => s.layerGains);
   const audioMode = usePreferences((s) => s.audioMode);
   const setAudioMode = usePreferences((s) => s.setAudioMode);
   const isolateStem = usePreferences((s) => s.isolateStem);
@@ -80,7 +81,11 @@ export default function CalibrateScreen() {
       <GlassSurface radius={RADIUS.card} elevation="card" intensity={20} style={styles.card}>
         <View style={styles.testRow}>
           {LEARN_PATTERNS.map((item) => (
-            <TestButton key={item.type} label={item.label} onPress={() => previewHaptic(item.type, strength, item.intensity)} />
+            <TestButton
+              key={item.type}
+              label={item.label}
+              onPress={() => previewHaptic(item.type, strength, item.intensity, { visualOnly, pulseOn, layerGains })}
+            />
           ))}
         </View>
       </GlassSurface>
@@ -99,7 +104,11 @@ export default function CalibrateScreen() {
       <GlassSurface radius={RADIUS.card} elevation="card" intensity={18} style={styles.card}>
         <View style={styles.testRow}>
           {TEST_PATTERNS.map((item) => (
-            <TestButton key={item.type} label={item.label} onPress={() => previewHaptic(item.type, strength, item.intensity)} />
+            <TestButton
+              key={item.type}
+              label={item.label}
+              onPress={() => previewHaptic(item.type, strength, item.intensity, { visualOnly, pulseOn, layerGains })}
+            />
           ))}
         </View>
       </GlassSurface>

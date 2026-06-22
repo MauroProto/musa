@@ -34,6 +34,9 @@ const LEGEND_ICON: Record<HapticEventType, IconName> = {
 
 export default function LegendScreen() {
   const strength = usePreferences((s) => s.strength);
+  const pulseOn = usePreferences((s) => s.pulseOn);
+  const visualOnly = usePreferences((s) => s.visualOnly);
+  const layerGains = usePreferences((s) => s.layerGains);
 
   function openGuidedTrack() {
     router.push({
@@ -70,7 +73,7 @@ export default function LegendScreen() {
               {items.map((item) => (
                 <GlassSurface
                   key={item.type}
-                  onPress={() => previewHaptic(item.type, strength, item.intensity)}
+                  onPress={() => previewHaptic(item.type, strength, item.intensity, { visualOnly, pulseOn, layerGains })}
                   radius={RADIUS.lg}
                   elevation="none"
                   chroma={false}

@@ -25,6 +25,8 @@ export default function TunerScreen() {
   const overrides = usePreferences((s) => s.demoTuningOverrides);
   const setOverrides = usePreferences((s) => s.setDemoTuningOverrides);
   const strength = usePreferences((s) => s.strength);
+  const visualOnly = usePreferences((s) => s.visualOnly);
+  const layerGains = usePreferences((s) => s.layerGains);
   const [selectedKey, setSelectedKey] = useState(() => keyForLabel(DANI_CALIFORNIA_SCREENPLAY[1]?.label ?? ''));
 
   const tuned = useMemo(
@@ -135,7 +137,7 @@ export default function TunerScreen() {
           <Button
             label="Preview cue"
             variant="secondary"
-            onPress={() => previewHaptic(selectedBase.cueType, strength, selectedOverride.intensity ?? selectedBase.intensity)}
+            onPress={() => previewHaptic(selectedBase.cueType, strength, selectedOverride.intensity ?? selectedBase.intensity, { visualOnly, layerGains })}
             full={false}
           />
           <Button label="Back" variant="ghost" onPress={() => router.back()} full={false} />

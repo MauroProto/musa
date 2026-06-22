@@ -1,6 +1,7 @@
 import { Platform, Vibration } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import type { HapticEventType, HapticStrength, Intensity } from './types';
+import { resolveHapticPreviewIntensity, type HapticPreviewOptions } from './haptic-preview';
 import {
   buildAndroidVibrationPattern,
   buildHapticSequence,
@@ -77,8 +78,12 @@ function playNativeStep(step: HapticStep) {
   playIos(step.ios);
 }
 
-function playAndroidVibrationFallback(sequence: HapticSequence, type: HapticEventType) {
-  if (type === 'beat') return;
+function playAndroidVibrationFallback(
+  sequence: HapticSequence,
+  type: HapticEventType,
+  allowBeatFallback: boolean,
+) {
+  if (type === 'beat' && !allowBeatFallback) return;
   const pattern = buildAndroidVibrationPattern(sequence.steps);
   if (!pattern) return;
   try {
@@ -96,6 +101,7 @@ export type HapticController = {
 export function createHapticController(opts: {
   strength: HapticStrength;
   visualOnly: boolean;
+  allowBeatFallback?: boolean;
 }): HapticController {
   const timers = new Set<ReturnType<typeof setTimeout>>();
 
@@ -121,7 +127,7 @@ export function createHapticController(opts: {
     }
 
     if (platform === 'android') {
-      playAndroidVibrationFallback(sequence, type);
+      playAndroidVibrationFallback(sequence, type, opts.allowBeatFallback ?? false);
     }
 
     for (const step of sequence.steps) {
@@ -144,8 +150,12 @@ export function previewHaptic(
   type: HapticEventType,
   strength: HapticStrength,
   intensity: Intensity,
+  options: HapticPreviewOptions = {},
 ) {
-  const ctrl = createHapticController({ strength, visualOnly: false });
-  ctrl.fire(type, intensity);
+  const previewIntensity = resolveHapticPreviewIntensity(type, intensity, options);
+  if (previewIntensity === null) return;
+
+  const ctrl = createHapticController({ strength, visualOnly: false, allowBeatFallback: true });
+  ctrl.fire(type, previewIntensity);
   setTimeout(() => ctrl.stop(), 1500);
 }
