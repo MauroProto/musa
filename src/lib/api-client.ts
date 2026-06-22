@@ -40,9 +40,6 @@ export async function searchTracksClient(q: string): Promise<{ tracks: Track[]; 
 export async function getLyricsClient(
   trackId: number,
 ): Promise<{ lines: SyncedLine[]; source: string; instrumental?: boolean }> {
-  if (usesLocalStemDemoData(trackId)) {
-    return { lines: fallbackSensoryCaptionsForTrack(trackId), source: 'stem-demo' };
-  }
   const res = await safeFetch(`${apiBase()}/api/lyrics?trackId=${trackId}`);
   if (res && res.ok) {
     const data = (await res.json()) as { lines?: SyncedLine[]; source?: string; instrumental?: boolean };

@@ -50,3 +50,16 @@ test('Railway Expo Go server strips EAS account fields from public config', () =
     }
   }
 });
+
+test('native stem demos request synced lyrics before using sensory caption fallback', () => {
+  const apiClient = readRepoFile('src/lib/api-client.ts');
+  const lyricsFetchIndex = apiClient.indexOf('const res = await safeFetch(`${apiBase()}/api/lyrics?trackId=${trackId}`)');
+  const stemFallbackIndex = apiClient.indexOf("return { lines: fallbackSensoryCaptionsForTrack(trackId), source: 'stem-demo' };");
+
+  assert.ok(lyricsFetchIndex >= 0, 'expected getLyricsClient to call the lyrics API');
+  assert.ok(stemFallbackIndex >= 0, 'expected getLyricsClient to retain stem demo fallback');
+  assert.ok(
+    lyricsFetchIndex < stemFallbackIndex,
+    'stem demos should fetch Musixmatch-synced lyrics before falling back to sensory captions',
+  );
+});
