@@ -43,7 +43,7 @@ const MINT = '#1FD3A3';
 
 // === Acceso a la app (hackathon) — REEMPLAZAR con el link y QR reales ===
 // QR oficial provisto por el usuario (assets/images/musa-qr.png).
-const APP_URL = 'exp://musa-expo-go-production.up.railway.app?release=danifix-8ee13b9';
+const APP_URL = 'exp://musa-expo-go-production.up.railway.app?release=lyricsfix-20260622';
 const APP_URL_LABEL = 'musa-expo-go-production.up.railway.app';
 const QR_SRC = require('../../assets/images/musa-qr.png');
 
@@ -858,6 +858,88 @@ function TranslationLane({
 function TryDemoSection({ isWide, isTablet }: { isWide: boolean; isTablet: boolean }) {
   const stacked = !isWide && !isTablet;
   const compact = stacked || isTablet;
+  const directMobilePanel = stacked;
+
+  if (stacked) {
+    return (
+      <View style={[styles.tryDemoBand, styles.tryDemoBandMobileFlat]}>
+        <View style={[styles.shell, styles.tryDemoMobileFlatSection]}>
+          <Text color={MUTED} weight="800" style={styles.tryDemoMobileKicker}>
+            TRY THE DEMO
+          </Text>
+          <Text color={INK} weight="800" style={styles.tryDemoMobileFlatTitle}>
+            Open MUSA on your phone.
+          </Text>
+          <Text color={HERO_MUTED} weight="500" style={styles.tryDemoMobileFlatBody}>
+            Install Expo Go, then launch the live build from here.
+          </Text>
+
+          <Pressable
+            onPress={() => openURL(APP_URL)}
+            hitSlop={8}
+            accessibilityRole="link"
+            accessibilityLabel="Open MUSA in Expo Go"
+            style={styles.tryDemoMobileHeroButton}
+          >
+            <Ionicons name="open-outline" size={20} color={PAPER} />
+            <Text color={PAPER} weight="800" numberOfLines={1} style={styles.tryDemoMobileOpenText}>
+              Open in Expo Go
+            </Text>
+          </Pressable>
+
+          <View style={styles.tryDemoMobileStoresBlock}>
+            <Text color={MUTED} weight="700" style={styles.tryDemoMobileStoreHint}>
+              Need Expo Go?
+            </Text>
+            <View style={styles.tryDemoMobileStoreIcons}>
+              <Pressable
+                onPress={() => openURL(APPSTORE_URL)}
+                hitSlop={8}
+                accessibilityRole="link"
+                accessibilityLabel="Install Expo Go from the App Store"
+                style={styles.tryDemoStoreButton}
+              >
+                <Image source={APP_STORE_ICON} style={styles.tryDemoStoreIcon} resizeMode="contain" />
+              </Pressable>
+              <Pressable
+                onPress={() => openURL(PLAYSTORE_URL)}
+                hitSlop={8}
+                accessibilityRole="link"
+                accessibilityLabel="Install Expo Go from Google Play"
+                style={styles.tryDemoStoreButton}
+              >
+                <Image source={GOOGLE_PLAY_ICON} style={styles.tryDemoStoreIcon} resizeMode="contain" />
+              </Pressable>
+            </View>
+          </View>
+
+          <View style={styles.tryDemoMobileFlow}>
+            {['Install Expo Go', 'Open the demo', 'Feel the haptics'].map((item) => (
+              <View key={item} style={styles.tryDemoMobileFlowItem}>
+                <View style={styles.tryDemoMobileFlowDot} />
+                <Text color={MUTED} weight="700" style={styles.tryDemoMobileFlowText}>
+                  {item}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <Pressable
+            onPress={() => openURL(APP_URL)}
+            hitSlop={8}
+            accessibilityRole="link"
+            accessibilityLabel="Open the MUSA Expo demo link"
+            style={styles.tryDemoMobilePlainLink}
+          >
+            <Ionicons name="link-outline" size={15} color={MUTED} />
+            <Text color={MUTED} weight="700" numberOfLines={1} style={styles.tryDemoMobilePlainLinkText}>
+              {APP_URL_LABEL}
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.tryDemoBand}>
@@ -886,11 +968,17 @@ function TryDemoSection({ isWide, isTablet }: { isWide: boolean; isTablet: boole
           </Text>
 
           <View style={styles.tryDemoSteps}>
-            {[
-              ['01', 'Install Expo Go', 'Use the iOS or Android store link below.'],
-              ['02', 'Scan or open', 'Point your camera at the QR, or tap the direct link.'],
-              ['03', 'Feel the cues', 'Run the demo on your phone to test real haptics.'],
-            ].map(([n, title, copy]) => (
+            {(directMobilePanel
+              ? [
+                  ['01', 'Install Expo Go', 'Use the iOS or Android store link below.'],
+                  ['02', 'Tap the mobile link', 'Open MUSA directly from this phone.'],
+                  ['03', 'Feel the cues', 'Run the demo on real hardware for haptics.'],
+                ]
+              : [
+                  ['01', 'Install Expo Go', 'Use the iOS or Android store link below.'],
+                  ['02', 'Scan or open', 'Point your camera at the QR, or tap the direct link.'],
+                  ['03', 'Feel the cues', 'Run the demo on your phone to test real haptics.'],
+                ]).map(([n, title, copy]) => (
               <View key={n} style={styles.tryDemoStep}>
                 <Text color={MUTED} weight="800" style={styles.tryDemoStepNum}>
                   {n}
@@ -907,7 +995,7 @@ function TryDemoSection({ isWide, isTablet }: { isWide: boolean; isTablet: boole
             ))}
           </View>
 
-          <View style={styles.tryDemoStores}>
+          <View style={[styles.tryDemoStores, stacked ? styles.tryDemoStoresMobile : null]}>
             <Pressable
               onPress={() => openURL(APPSTORE_URL)}
               hitSlop={8}
@@ -930,27 +1018,65 @@ function TryDemoSection({ isWide, isTablet }: { isWide: boolean; isTablet: boole
         </View>
 
         <View style={[styles.tryDemoPanel, compact ? styles.tryDemoPanelCompact : null]}>
-          <Text color="rgba(14,23,38,0.52)" weight="800" style={styles.tryDemoPanelLabel}>
-            SCAN WITH EXPO GO
-          </Text>
-          <View style={[styles.tryDemoQrBox, compact ? styles.tryDemoQrBoxCompact : null]}>
-            <Image source={QR_SRC} style={[styles.tryDemoQrImage, compact ? styles.tryDemoQrImageCompact : null]} resizeMode="contain" />
-          </View>
-          <Pressable
-            onPress={() => openURL(APP_URL)}
-            hitSlop={8}
-            accessibilityRole="link"
-            accessibilityLabel="Open the MUSA Expo demo link"
-            style={styles.tryDemoLinkPill}
-          >
-            <Ionicons name="link-outline" size={16} color={INK} />
-            <Text color={INK} weight="800" numberOfLines={1} style={styles.tryDemoLinkText}>
-              {APP_URL_LABEL}
-            </Text>
-          </Pressable>
-          <Text color={MUTED} weight="500" style={styles.tryDemoPanelNote}>
-            Browser preview shows the landing. The demo itself is meant to be felt on your phone.
-          </Text>
+          {directMobilePanel ? (
+            <>
+              <Text color="rgba(14,23,38,0.52)" weight="800" style={styles.tryDemoPanelLabel}>
+                OPEN ON THIS PHONE
+              </Text>
+              <Pressable
+                onPress={() => openURL(APP_URL)}
+                hitSlop={8}
+                accessibilityRole="link"
+                accessibilityLabel="Open MUSA in Expo Go"
+                style={styles.tryDemoMobileOpenButton}
+              >
+                <Ionicons name="open-outline" size={20} color={PAPER} />
+                <Text color={PAPER} weight="800" numberOfLines={1} style={styles.tryDemoMobileOpenText}>
+                  Open in Expo Go
+                </Text>
+              </Pressable>
+              <Text color={MUTED} weight="500" style={styles.tryDemoPanelNote}>
+                If Expo Go is installed, this opens the demo directly. If nothing happens,
+                install Expo Go first and come back.
+              </Text>
+              <Pressable
+                onPress={() => openURL(APP_URL)}
+                hitSlop={8}
+                accessibilityRole="link"
+                accessibilityLabel="Open the MUSA Expo demo link"
+                style={styles.tryDemoLinkPill}
+              >
+                <Ionicons name="link-outline" size={16} color={INK} />
+                <Text color={INK} weight="800" numberOfLines={1} style={styles.tryDemoLinkText}>
+                  {APP_URL_LABEL}
+                </Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              <Text color="rgba(14,23,38,0.52)" weight="800" style={styles.tryDemoPanelLabel}>
+                SCAN WITH EXPO GO
+              </Text>
+              <View style={[styles.tryDemoQrBox, compact ? styles.tryDemoQrBoxCompact : null]}>
+                <Image source={QR_SRC} style={[styles.tryDemoQrImage, compact ? styles.tryDemoQrImageCompact : null]} resizeMode="contain" />
+              </View>
+              <Pressable
+                onPress={() => openURL(APP_URL)}
+                hitSlop={8}
+                accessibilityRole="link"
+                accessibilityLabel="Open the MUSA Expo demo link"
+                style={styles.tryDemoLinkPill}
+              >
+                <Ionicons name="link-outline" size={16} color={INK} />
+                <Text color={INK} weight="800" numberOfLines={1} style={styles.tryDemoLinkText}>
+                  {APP_URL_LABEL}
+                </Text>
+              </Pressable>
+              <Text color={MUTED} weight="500" style={styles.tryDemoPanelNote}>
+                Browser preview shows the landing. The demo itself is meant to be felt on your phone.
+              </Text>
+            </>
+          )}
         </View>
       </View>
     </View>
@@ -966,7 +1092,7 @@ function FinalCta({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: b
       source={HERO_BACKGROUND}
       resizeMode="cover"
       blurRadius={20}
-      style={styles.footerBand}
+      style={[styles.footerBand, stacked ? styles.footerBandMobile : null]}
       imageStyle={styles.footerBackgroundImage}
     >
       <View style={styles.footerSoftVeil} />
@@ -982,12 +1108,12 @@ function FinalCta({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: b
         style={[
           styles.shell,
           styles.finalFooter,
-          { paddingTop: 88, paddingBottom: insets.bottom + 44 },
+          { paddingTop: stacked ? 58 : 88, paddingBottom: insets.bottom + (stacked ? 30 : 44) },
           stacked ? styles.finalFooterMobile : null,
         ]}
       >
         <View style={[styles.footerContentGrid, stacked ? styles.footerContentGridMobile : null]}>
-          <View style={styles.footerIntro}>
+          <View style={[styles.footerIntro, stacked ? styles.footerIntroMobile : null]}>
             <Text color={MUTED} weight="800" style={styles.footerSmallBrand}>
               MUSA
             </Text>
@@ -1004,39 +1130,49 @@ function FinalCta({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: b
             >
               Music you can read, feel, and follow.
             </Text>
-            <Text color={HERO_MUTED} weight="500" style={isTablet ? styles.footerMinimalTextTablet : styles.footerMinimalText}>
+            <Text
+              color={HERO_MUTED}
+              weight="500"
+              style={
+                isTablet
+                  ? styles.footerMinimalTextTablet
+                  : stacked
+                    ? styles.footerMinimalTextMobile
+                    : styles.footerMinimalText
+              }
+            >
               Synced captions, visual rhythm, and haptic cues — for music beyond hearing.
             </Text>
-            <View style={styles.footerBuiltByRow}>
-              <Text color="rgba(14,23,38,0.58)" weight="700" style={styles.footerBuiltBy}>
-                Built by{' '}
-              </Text>
-              <Pressable
-                onPress={() => openURL(MAURO_LINKEDIN_URL)}
-                hitSlop={8}
-                accessibilityRole="link"
-                accessibilityLabel="Open Mauro Proto LinkedIn profile"
-              >
-                <Text color="rgba(14,23,38,0.7)" weight="800" style={styles.footerBuiltBy}>
-                  Mauro Proto
+            <View style={[styles.footerBuiltByRow, stacked ? styles.footerBuiltByRowMobile : null]}>
+                <Text color="rgba(14,23,38,0.58)" weight="700" style={styles.footerBuiltBy}>
+                  Built by{' '}
                 </Text>
-              </Pressable>
-              <Text color="rgba(14,23,38,0.58)" weight="700" style={styles.footerBuiltBy}>
-                {' '}and{' '}
-              </Text>
-              <Pressable
-                onPress={() => openURL(IGNACIO_LINKEDIN_URL)}
-                hitSlop={8}
-                accessibilityRole="link"
-                accessibilityLabel="Open Ignacio Estevo LinkedIn profile"
-              >
-                <Text color="rgba(14,23,38,0.7)" weight="800" style={styles.footerBuiltBy}>
-                  Ignacio Estevo
+                <Pressable
+                  onPress={() => openURL(MAURO_LINKEDIN_URL)}
+                  hitSlop={8}
+                  accessibilityRole="link"
+                  accessibilityLabel="Open Mauro Proto LinkedIn profile"
+                >
+                  <Text color="rgba(14,23,38,0.7)" weight="800" style={styles.footerBuiltBy}>
+                    Mauro Proto
+                  </Text>
+                </Pressable>
+                <Text color="rgba(14,23,38,0.58)" weight="700" style={styles.footerBuiltBy}>
+                  {' '}and{' '}
                 </Text>
-              </Pressable>
-              <Text color="rgba(14,23,38,0.58)" weight="700" style={styles.footerBuiltBy}>
-                .
-              </Text>
+                <Pressable
+                  onPress={() => openURL(IGNACIO_LINKEDIN_URL)}
+                  hitSlop={8}
+                  accessibilityRole="link"
+                  accessibilityLabel="Open Ignacio Estevo LinkedIn profile"
+                >
+                  <Text color="rgba(14,23,38,0.7)" weight="800" style={styles.footerBuiltBy}>
+                    Ignacio Estevo
+                  </Text>
+                </Pressable>
+                <Text color="rgba(14,23,38,0.58)" weight="700" style={styles.footerBuiltBy}>
+                  .
+                </Text>
             </View>
             <View style={[styles.footerActionRow, stacked ? styles.finalActionsMobile : null]}>
               <Touch onPress={onGetApp} style={styles.primaryCta} scaleTo={0.98}>
@@ -1048,13 +1184,13 @@ function FinalCta({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: b
             </View>
           </View>
 
-          <View style={styles.footerNavColumn}>
+          <View style={[styles.footerNavColumn, stacked ? styles.footerNavColumnMobile : null]}>
             <Text color={MUTED} weight="800" style={styles.footerNavLabel}>
               RESOURCES
             </Text>
             <FooterLink label="Get the app" onPress={onGetApp} />
-            <FooterLink label="Musicathon 2026" onPress={() => openURL(MUSICATHON_URL)} />
             <FooterLink label="GitHub" onPress={() => openURL(GITHUB_URL)} />
+            <FooterLink label="Musicathon 2026" onPress={() => openURL(MUSICATHON_URL)} />
             <FooterLink label="Demo on YouTube" onPress={() => openURL(YOUTUBE_URL)} />
             <FooterLink label="Contact" onPress={() => openURL(`mailto:${CONTACT_EMAIL}`)} />
           </View>
@@ -1100,7 +1236,9 @@ function GetAppModal({ onClose }: { onClose: () => void }) {
         Try MUSA on your phone
       </Text>
       <Text color="rgba(244,246,248,0.62)" weight="500" style={StyleSheet.flatten([styles.modalBody, stacked ? styles.modalBodyMobile : null])}>
-        {compactModal
+        {stacked
+          ? 'Install Expo Go, then open the live build from this phone.'
+          : compactModal
           ? 'Install Expo Go, then scan the QR or copy the link.'
           : "MUSA's haptics live in your hands, so the real thing runs on a phone — not the browser. Install Expo Go, then scan the QR or open the link."}
       </Text>
@@ -1111,7 +1249,11 @@ function GetAppModal({ onClose }: { onClose: () => void }) {
     <>
       <View style={styles.modalSteps}>
         <ModalStep n="1" title="Install Expo Go" copy="Free — get it here:" stores />
-        <ModalStep n="2" title="Scan the QR or open the link" copy="MUSA loads straight from our server." />
+        <ModalStep
+          n="2"
+          title={stacked ? 'Tap Open in Expo Go' : 'Scan the QR or open the link'}
+          copy={stacked ? 'MUSA loads straight from this phone.' : 'MUSA loads straight from our server.'}
+        />
       </View>
 
       <View style={[styles.modalUrlRow, stacked ? styles.modalUrlRowMobile : null]}>
@@ -1142,18 +1284,43 @@ function GetAppModal({ onClose }: { onClose: () => void }) {
 
   const qrPanel = (
     <View style={[styles.qrPanel, stacked ? styles.qrPanelMobile : null]}>
-      <Text color="rgba(14,23,38,0.5)" weight="800" style={styles.qrLabel}>
-        SCAN TO OPEN
-      </Text>
-      <View style={[styles.qrBox, stacked ? styles.qrBoxMobile : null]}>
-        <Image source={QR_SRC} style={[styles.qrImage, stacked ? styles.qrImageMobile : null]} resizeMode="contain" />
-      </View>
-      <View style={styles.qrFoot}>
-        <View style={styles.qrDot} />
-        <Text color="rgba(14,23,38,0.62)" weight="700" style={styles.qrFootText}>
-          Open with Expo Go
-        </Text>
-      </View>
+      {stacked ? (
+        <>
+          <Text color="rgba(14,23,38,0.5)" weight="800" style={styles.qrLabel}>
+            ON THIS PHONE
+          </Text>
+          <Pressable
+            onPress={() => openURL(APP_URL)}
+            hitSlop={8}
+            accessibilityRole="link"
+            accessibilityLabel="Open MUSA in Expo Go"
+            style={styles.modalExpoOpenButton}
+          >
+            <Ionicons name="open-outline" size={18} color={PAPER} />
+            <Text color={PAPER} weight="800" numberOfLines={1} style={styles.modalExpoOpenText}>
+              Open in Expo Go
+            </Text>
+          </Pressable>
+          <Text color="rgba(14,23,38,0.62)" weight="600" style={styles.modalExpoNote}>
+            Already have Expo Go? This opens MUSA directly.
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text color="rgba(14,23,38,0.5)" weight="800" style={styles.qrLabel}>
+            SCAN TO OPEN
+          </Text>
+          <View style={styles.qrBox}>
+            <Image source={QR_SRC} style={styles.qrImage} resizeMode="contain" />
+          </View>
+          <View style={styles.qrFoot}>
+            <View style={styles.qrDot} />
+            <Text color="rgba(14,23,38,0.62)" weight="700" style={styles.qrFootText}>
+              Open with Expo Go
+            </Text>
+          </View>
+        </>
+      )}
     </View>
   );
 
@@ -1242,28 +1409,24 @@ const BEATS = [
 type PhoneMomentMode = 'video' | 'video2' | 'video3' | 'library' | 'touch' | 'lyrics';
 
 const MOBILE_SCROLL_MOMENTS: {
-  label: string;
   kicker: string;
   title: string;
   body: string;
   phone: PhoneMomentMode;
 }[] = [
   {
-    label: '01',
     kicker: 'Guided demo',
     title: BEATS[0].title,
     body: BEATS[0].body,
     phone: 'video',
   },
   {
-    label: '02',
     kicker: 'Personalize',
     title: BEATS[1].title,
     body: BEATS[1].body,
     phone: 'video2',
   },
   {
-    label: '03',
     kicker: 'Live captions',
     title: BEATS[2].title,
     body: BEATS[2].body,
@@ -1624,14 +1787,9 @@ function PinnedPhoneSection({
         }}
       >
         {MOBILE_SCROLL_MOMENTS.map((moment) => (
-          <View key={moment.label} style={[styles.mobileScrollMoment, isTablet ? styles.mobileScrollMomentTablet : null]}>
+          <View key={moment.phone} style={[styles.mobileScrollMoment, isTablet ? styles.mobileScrollMomentTablet : null]}>
             <View style={styles.mobileMomentPhoneWrap}>
               <PinnedPhone compact moment={moment.phone} />
-              <View style={styles.mobileMomentNumber}>
-                <Text color={PAPER} weight="800" style={styles.mobileMomentNumberText}>
-                  {moment.label}
-                </Text>
-              </View>
             </View>
             <View style={styles.mobileMomentCopy}>
               <Text color={MUTED} weight="800" style={styles.mobileMomentKicker}>
@@ -2008,9 +2166,14 @@ function CardsSection({ isWide }: { isWide: boolean; isTablet: boolean }) {
             Built so a song reaches everyone.
           </Text>
         </View>
-        <View style={[styles.mobileCardsStack, { paddingHorizontal: sidePad }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.mobileCardsRailViewport}
+          contentContainerStyle={[styles.mobileCardsRail, { paddingHorizontal: sidePad }]}
+        >
           {CARDS.map((c, i) => renderCard(c, i, c.title))}
-        </View>
+        </ScrollView>
       </View>
     );
   }
@@ -2932,6 +3095,9 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(14,23,38,0.08)',
   },
+  footerBandMobile: {
+    minHeight: 700,
+  },
   footerBackgroundImage: {
     opacity: 0.55,
   },
@@ -2946,7 +3112,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   finalFooterMobile: {
-    gap: 28,
+    gap: 32,
   },
   footerMegaBrand: {
     position: 'absolute',
@@ -3001,6 +3167,9 @@ const styles = StyleSheet.create({
     maxWidth: 620,
     gap: 16,
   },
+  footerIntroMobile: {
+    gap: 15,
+  },
   footerSmallBrand: {
     fontSize: 13,
     lineHeight: 16,
@@ -3019,8 +3188,8 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
   },
   footerMinimalTitleMobile: {
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 31,
+    lineHeight: 35,
     letterSpacing: -0.8,
   },
   footerMinimalText: {
@@ -3033,11 +3202,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 25,
   },
+  footerMinimalTextMobile: {
+    maxWidth: 318,
+    fontSize: 17,
+    lineHeight: 26,
+  },
   footerBuiltByRow: {
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
     marginTop: -4,
+  },
+  footerBuiltByRowMobile: {
+    maxWidth: 318,
+    marginTop: 0,
   },
   footerBuiltBy: {
     fontSize: 14,
@@ -3136,6 +3314,13 @@ const styles = StyleSheet.create({
     minWidth: 210,
     gap: 18,
     alignItems: 'flex-start',
+  },
+  footerNavColumnMobile: {
+    minWidth: 0,
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 13,
+    paddingTop: 4,
   },
   footerNavLabel: {
     fontSize: 11,
@@ -3341,8 +3526,10 @@ const styles = StyleSheet.create({
   },
   modalUrlPillMobile: {
     minWidth: 0,
-    minHeight: 44,
-    paddingHorizontal: 12,
+    minHeight: 34,
+    paddingHorizontal: 0,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   modalUrlText: {
     flex: 1,
@@ -3362,8 +3549,9 @@ const styles = StyleSheet.create({
     backgroundColor: PAPER,
   },
   modalCopyBtnMobile: {
-    minHeight: 44,
-    paddingHorizontal: 12,
+    minHeight: 38,
+    paddingHorizontal: 14,
+    borderRadius: 999,
   },
   modalCopyText: {
     fontSize: 14,
@@ -3394,11 +3582,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 16,
     borderLeftWidth: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.1)',
-    paddingTop: 16,
-    paddingBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderTopWidth: 0,
+    paddingTop: 4,
+    paddingBottom: 8,
+    backgroundColor: 'transparent',
   },
   qrPanel: {
     alignItems: 'center',
@@ -3412,9 +3599,11 @@ const styles = StyleSheet.create({
   qrPanelMobile: {
     width: '100%',
     maxWidth: 260,
-    gap: 10,
-    padding: 14,
-    borderRadius: 18,
+    gap: 9,
+    padding: 0,
+    borderRadius: 0,
+    backgroundColor: 'transparent',
+    borderWidth: 0,
   },
   qrLabel: {
     fontSize: 11.5,
@@ -3457,6 +3646,31 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: 'rgba(14,23,38,0.5)',
   },
+  modalExpoOpenButton: {
+    width: '100%',
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+    backgroundColor: INK,
+    shadowColor: '#0A1020',
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+  },
+  modalExpoOpenText: {
+    fontSize: 15,
+    lineHeight: 19,
+  },
+  modalExpoNote: {
+    maxWidth: 210,
+    textAlign: 'center',
+    fontSize: 12.5,
+    lineHeight: 17,
+  },
 
   /* ---- Try demo guide ---- */
   tryDemoBand: {
@@ -3465,6 +3679,11 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(14,23,38,0.08)',
+  },
+  tryDemoBandMobileFlat: {
+    backgroundColor: '#FBFDFD',
+    borderTopWidth: 0,
+    borderBottomWidth: 0,
   },
   tryDemoSection: {
     minHeight: 560,
@@ -3488,6 +3707,101 @@ const styles = StyleSheet.create({
     gap: 30,
     paddingTop: 58,
     paddingBottom: 58,
+  },
+  tryDemoMobileFlatSection: {
+    alignItems: 'center',
+    paddingTop: 54,
+    paddingBottom: 56,
+    gap: 15,
+  },
+  tryDemoMobileKicker: {
+    alignSelf: 'center',
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 2.4,
+  },
+  tryDemoMobileFlatTitle: {
+    maxWidth: 300,
+    textAlign: 'center',
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: 0,
+  },
+  tryDemoMobileFlatBody: {
+    maxWidth: 286,
+    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 23,
+  },
+  tryDemoMobileHeroButton: {
+    minHeight: 58,
+    minWidth: 228,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 24,
+    borderRadius: 999,
+    backgroundColor: INK,
+    marginTop: 6,
+    shadowColor: '#0A1020',
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+  },
+  tryDemoMobileStoresBlock: {
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+  },
+  tryDemoMobileStoreHint: {
+    fontSize: 12.5,
+    lineHeight: 16,
+  },
+  tryDemoMobileStoreIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 13,
+  },
+  tryDemoMobileFlow: {
+    width: '100%',
+    maxWidth: 286,
+    gap: 9,
+    marginTop: 10,
+    paddingTop: 18,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(14,23,38,0.11)',
+  },
+  tryDemoMobileFlowItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+  },
+  tryDemoMobileFlowDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: MINT,
+  },
+  tryDemoMobileFlowText: {
+    fontSize: 13.5,
+    lineHeight: 18,
+  },
+  tryDemoMobilePlainLink: {
+    maxWidth: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 7,
+    marginTop: 2,
+    paddingHorizontal: 8,
+  },
+  tryDemoMobilePlainLinkText: {
+    maxWidth: 286,
+    fontSize: 12.5,
+    lineHeight: 16,
   },
   tryDemoCopy: {
     flex: 1,
@@ -3565,6 +3879,9 @@ const styles = StyleSheet.create({
     gap: 12,
     marginTop: 4,
   },
+  tryDemoStoresMobile: {
+    justifyContent: 'center',
+  },
   tryDemoStoreButton: {
     width: 42,
     height: 42,
@@ -3639,6 +3956,25 @@ const styles = StyleSheet.create({
     maxWidth: 220,
     fontSize: 14,
     lineHeight: 18,
+  },
+  tryDemoMobileOpenButton: {
+    width: '100%',
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    backgroundColor: INK,
+    shadowColor: '#0A1020',
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+  },
+  tryDemoMobileOpenText: {
+    fontSize: 16,
+    lineHeight: 20,
   },
   tryDemoPanelNote: {
     maxWidth: 250,
@@ -3985,24 +4321,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     paddingTop: 10,
   },
-  mobileMomentNumber: {
-    position: 'absolute',
-    top: 0,
-    left: 20,
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: INK,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.55)',
-  },
-  mobileMomentNumberText: {
-    fontSize: 12,
-    lineHeight: 15,
-    letterSpacing: 1,
-  },
   mobileMomentCopy: {
     width: '100%',
     gap: 10,
@@ -4128,6 +4446,17 @@ const styles = StyleSheet.create({
     gap: 16,
     alignItems: 'center',
   },
+  mobileCardsRailViewport: {
+    width: '100%',
+    paddingTop: 30,
+    overflow: 'visible',
+  },
+  mobileCardsRail: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 16,
+    paddingBottom: 4,
+  },
   bigCard: {
     width: 420,
     height: 600,
@@ -4141,8 +4470,9 @@ const styles = StyleSheet.create({
   },
   bigCardMobile: {
     width: 336,
-    height: 520,
-    padding: 30,
+    height: 460,
+    padding: 26,
+    borderRadius: 28,
   },
   bigCardVideoCard: {
     padding: 0,
