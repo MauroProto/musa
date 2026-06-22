@@ -14,6 +14,8 @@
     "test:engine": "node --test --experimental-strip-types \"src/lib/sensory-score.test.ts\"",
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
+    "build": "npm run vercel-build",
+    "vercel-build": "expo export --platform web --output-dir dist && node scripts/prepare-vercel-static.mjs",
     "analyze:lalal": "node scripts/analyze-lalal-stems.mjs"
   },
   "dependencies": {
