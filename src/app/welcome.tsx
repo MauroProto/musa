@@ -43,7 +43,7 @@ const MINT = '#1FD3A3';
 
 // === Acceso a la app (hackathon) — REEMPLAZAR con el link y QR reales ===
 // QR oficial provisto por el usuario (assets/images/musa-qr.png).
-const APP_URL = 'exp://musa-expo-go-production.up.railway.app?release=b5bca9b';
+const APP_URL = 'exp://musa-expo-go-production.up.railway.app?release=643d873';
 const APP_URL_LABEL = 'musa-expo-go-production.up.railway.app';
 const QR_SRC = require('../../assets/images/musa-qr.png');
 
