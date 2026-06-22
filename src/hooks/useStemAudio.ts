@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { Platform } from 'react-native';
 import { getStemAudioSource, type AudioMode, type StemKind } from '../lib/audio-client';
+import { audioClockMs } from '../lib/audio-clock';
 import { clampGain, type LayerGains } from '../lib/layer-gains';
 
 /**
@@ -21,7 +23,11 @@ export type StemAudioController = {
 
 type ExpoAudioPlayer = ReturnType<typeof useAudioPlayer>;
 
-const AUDIO_OPTIONS = { updateInterval: 250, downloadFirst: false, keepAudioSessionActive: true };
+const AUDIO_OPTIONS = {
+  updateInterval: 250,
+  downloadFirst: Platform.OS !== 'web',
+  keepAudioSessionActive: true,
+};
 const NO_SOURCE = null;
 
 export function useStemAudio(
@@ -83,6 +89,17 @@ export function useStemAudio(
     }
   }, []);
 
+  const playActivePlayers = useCallback(() => {
+    if (modeRef.current === 'silent') return;
+    for (const p of activePlayers()) {
+      try {
+        p.play();
+      } catch {
+        /* stream may still be loading */
+      }
+    }
+  }, [activePlayers]);
+
   useEffect(() => {
     if (mode === 'silent') {
       playingRef.current = false;
@@ -108,24 +125,19 @@ export function useStemAudio(
     (ms: number) => {
       const seconds = Math.max(0, ms / 1000);
       lastSeekSecondsRef.current = seconds;
-      for (const p of activePlayers()) {
-        void p.seekTo(seconds).catch(() => {});
-      }
+      const seeks = activePlayers().map((p) => p.seekTo(seconds).catch(() => {}));
+      void Promise.all(seeks).then(() => {
+        if (playingRef.current) playActivePlayers();
+      });
     },
-    [activePlayers],
+    [activePlayers, playActivePlayers],
   );
 
   const play = useCallback(() => {
     if (modeRef.current === 'silent') return;
     playingRef.current = true;
-    for (const p of activePlayers()) {
-      try {
-        p.play();
-      } catch {
-        /* stream may still be loading */
-      }
-    }
-  }, [activePlayers]);
+    playActivePlayers();
+  }, [playActivePlayers]);
 
   const pause = useCallback(() => {
     playingRef.current = false;
@@ -136,18 +148,22 @@ export function useStemAudio(
     if (modeRef.current === 'silent') return null;
     const players = playersRef.current;
     const clock = modeRef.current === 'mix' ? players.bed : players.isolate;
-    if (!clock.isLoaded || !clock.playing) return null;
-    if (!Number.isFinite(clock.currentTime) || clock.currentTime < 0) return null;
-    return clock.currentTime * 1000;
+    return audioClockMs({
+      isLoaded: clock.isLoaded,
+      currentTime: clock.currentTime,
+      playing: clock.playing,
+      playbackRequested: playingRef.current,
+    });
   }, []);
 
   useEffect(() => {
     if (!ready || !playingRef.current) return;
     const seconds = lastSeekSecondsRef.current;
-    for (const p of activePlayers()) {
-      void p.seekTo(seconds).then(() => p.play()).catch(() => {});
-    }
-  }, [ready, activePlayers]);
+    const seeks = activePlayers().map((p) => p.seekTo(seconds).catch(() => {}));
+    void Promise.all(seeks).then(() => {
+      if (playingRef.current) playActivePlayers();
+    });
+  }, [ready, activePlayers, playActivePlayers]);
 
   useEffect(() => {
     if (mode !== 'mix') return;

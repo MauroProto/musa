@@ -27,7 +27,7 @@ export function nextMomentMs(currentMs: number, moments: MomentStart[], duration
   const starts = momentStarts(moments);
   const cutoff = currentMs + MOMENT_NAV_GRACE_MS;
   const target = starts.find((t) => t > cutoff);
-  return target === undefined ? clampMs(durationMs, durationMs) : clampMs(target, durationMs);
+  return target === undefined ? clampMs(currentMs, durationMs) : clampMs(target, durationMs);
 }
 
 export function replayMomentMs(currentMs: number, moments: MomentStart[]): number {

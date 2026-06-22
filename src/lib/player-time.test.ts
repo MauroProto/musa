@@ -40,7 +40,13 @@ test('nextMomentMs jumps to the next tactile moment instead of a fixed time skip
 
   assert.equal(nextMomentMs(9000, moments, 30000), 10000);
   assert.equal(nextMomentMs(10050, moments, 30000), 25000);
-  assert.equal(nextMomentMs(26000, moments, 30000), 30000);
+  assert.equal(nextMomentMs(26000, moments, 30000), 26000);
+});
+
+test('nextMomentMs does not jump to exact end when there is no next moment', () => {
+  const moments = [{ t: 5000 }, { t: 10000 }, { t: 25000 }];
+
+  assert.equal(nextMomentMs(29900, moments, 30000), 29900);
 });
 
 test('replayMomentMs returns the current tactile moment start when possible', () => {
