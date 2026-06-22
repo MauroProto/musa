@@ -63,3 +63,16 @@ test('native stem demos request synced lyrics before using sensory caption fallb
     'stem demos should fetch Musixmatch-synced lyrics before falling back to sensory captions',
   );
 });
+
+test('native Expo Go clients keep a public API base for judge demos', () => {
+  const apiClient = readRepoFile('src/lib/api-client.ts');
+
+  assert.ok(
+    apiClient.includes("const PUBLIC_EXPO_API_BASE = 'https://musa-expo-go-production.up.railway.app';"),
+    'expected native API client to know the public Railway API base',
+  );
+  assert.ok(
+    apiClient.includes('process.env.EXPO_PUBLIC_API_BASE || PUBLIC_EXPO_API_BASE'),
+    'expected native API client to fall back when EXPO_PUBLIC_API_BASE is missing from the bundle',
+  );
+});

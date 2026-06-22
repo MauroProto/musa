@@ -6,9 +6,11 @@ import { fallbackSensoryCaptionsForTrack } from './demo-guided';
 import { fallbackLiveCaptionsForTrack } from './live-shows';
 import { getStemDemoAnalysis } from './stem-demo-analyses';
 
+const PUBLIC_EXPO_API_BASE = 'https://musa-expo-go-production.up.railway.app';
+
 function apiBase(): string {
   if (Platform.OS === 'web') return '';
-  return process.env.EXPO_PUBLIC_API_BASE ?? '';
+  return process.env.EXPO_PUBLIC_API_BASE || PUBLIC_EXPO_API_BASE;
 }
 
 function usesLocalStemDemoData(trackId: number): boolean {
