@@ -95,6 +95,7 @@ export function useSensoryPlayer(
   const scoreRef = useRef<SensoryScore | null>(null);
   const audioRef = useRef<StemAudioController | null | undefined>(audio);
   audioRef.current = audio;
+  const syncedAudioRef = useRef<StemAudioController | null | undefined>(audio);
   const prevHadAudioRef = useRef(false);
   // Live mixer gains — read via ref so changes apply without rebuilding the loop.
   const layerGainsRef = useRef(layerGains);
@@ -252,6 +253,26 @@ export function useSensoryPlayer(
   useEffect(() => {
     frameRef.current = frame;
   }, [frame]);
+
+  useEffect(() => {
+    if (audio === syncedAudioRef.current) return;
+    syncedAudioRef.current = audio;
+
+    if (rafRef.current === null) {
+      prevHadAudioRef.current = false;
+      return;
+    }
+
+    const resumeMs = currentMsRef.current;
+    playStartMsRef.current = resumeMs;
+    playStartWallRef.current = performance.now();
+    prevHadAudioRef.current = false;
+
+    if (status === 'ready' && scoreRef.current && audio) {
+      audio.seekTo(resumeMs);
+      audio.play();
+    }
+  }, [audio, status]);
 
   const play = useCallback(() => {
     if (status !== 'ready' || !scoreRef.current) return;

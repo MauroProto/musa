@@ -30,6 +30,7 @@ const AUDIO_OPTIONS = {
 };
 const NO_SOURCE = null;
 const SEEK_CLOCK_HOLD_MS = 900;
+const MAX_NATIVE_CLOCK_REWIND_MS = 1200;
 
 function nowMs(): number {
   return typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -78,6 +79,7 @@ export function useStemAudio(
   modeRef.current = mode;
   const playingRef = useRef(false);
   const lastSeekSecondsRef = useRef(0);
+  const lastAcceptedAudioMsRef = useRef(0);
   const seekPendingUntilRef = useRef(0);
 
   const activePlayers = useCallback((): ExpoAudioPlayer[] => {
@@ -149,6 +151,7 @@ export function useStemAudio(
     (ms: number) => {
       const seconds = Math.max(0, ms / 1000);
       lastSeekSecondsRef.current = seconds;
+      lastAcceptedAudioMsRef.current = seconds * 1000;
       const shouldResume = playingRef.current;
       markSeekPending();
       if (shouldResume) pauseActivePlayers();
@@ -177,18 +180,23 @@ export function useStemAudio(
     if (modeRef.current === 'silent') return null;
     const players = playersRef.current;
     const clock = modeRef.current === 'mix' ? players.bed : players.isolate;
-    return audioClockMs({
+    const acceptedMs = audioClockMs({
       isLoaded: clock.isLoaded,
       currentTime: clock.currentTime,
       playing: clock.playing,
       playbackRequested: playingRef.current,
       seekPending: seekIsPending(),
+      lastAcceptedMs: lastAcceptedAudioMsRef.current,
+      maxBackwardJumpMs: MAX_NATIVE_CLOCK_REWIND_MS,
     });
+    if (acceptedMs !== null) lastAcceptedAudioMsRef.current = acceptedMs;
+    return acceptedMs;
   }, [seekIsPending]);
 
   useEffect(() => {
     if (!ready || !playingRef.current) return;
     const seconds = lastSeekSecondsRef.current;
+    lastAcceptedAudioMsRef.current = seconds * 1000;
     markSeekPending();
     const seeks = activePlayers().map((p) => p.seekTo(seconds).catch(() => {}));
     void Promise.all(seeks).then(() => {
