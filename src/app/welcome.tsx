@@ -1,6 +1,6 @@
 import { createElement, useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
-import { Image, ImageBackground, Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Image, ImageBackground, Linking, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import type { ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -43,8 +43,8 @@ const MINT = '#1FD3A3';
 
 // === Acceso a la app (hackathon) — REEMPLAZAR con el link y QR reales ===
 // QR oficial provisto por el usuario (assets/images/musa-qr.png).
-const APP_URL = 'https://musa.tu-vps.com';
-const APP_URL_LABEL = 'musa.tu-vps.com';
+const APP_URL = 'exp://musa-expo-go-production.up.railway.app?release=b5bca9b';
+const APP_URL_LABEL = 'musa-expo-go-production.up.railway.app';
 const QR_SRC = require('../../assets/images/musa-qr.png');
 
 // === Links del footer — REEMPLAZAR con los reales ===
@@ -221,6 +221,7 @@ function WelcomeLanding() {
         </ImageBackground>
         <PinnedPhoneSection scrollY={scrollY} pinTop={pinTop} isWide={isWide} isTablet={isTablet} />
         <CardsSection isWide={isWide} isTablet={isTablet} />
+        <TryDemoSection isWide={isWide} isTablet={isTablet} />
         <FinalCta isWide={isWide} isTablet={isTablet} onGetApp={openGetApp} />
       </Animated.ScrollView>
 
@@ -854,6 +855,108 @@ function TranslationLane({
   );
 }
 
+function TryDemoSection({ isWide, isTablet }: { isWide: boolean; isTablet: boolean }) {
+  const stacked = !isWide && !isTablet;
+  const compact = stacked || isTablet;
+
+  return (
+    <View style={styles.tryDemoBand}>
+      <View
+        style={[
+          styles.shell,
+          styles.tryDemoSection,
+          isTablet ? styles.tryDemoSectionTablet : null,
+          stacked ? styles.tryDemoSectionMobile : null,
+        ]}
+      >
+        <View style={[styles.tryDemoCopy, compact ? styles.tryDemoCopyCompact : null]}>
+          <Text color={MUTED} weight="800" style={styles.tryDemoKicker}>
+            TRY THE DEMO
+          </Text>
+          <Text
+            color={INK}
+            weight="800"
+            style={isWide ? styles.tryDemoTitle : isTablet ? styles.tryDemoTitleTablet : styles.tryDemoTitleMobile}
+          >
+            Open MUSA on your phone with Expo Go.
+          </Text>
+          <Text color={HERO_MUTED} weight="500" style={compact ? styles.tryDemoBodyCompact : styles.tryDemoBody}>
+            The fastest demo runs through Expo Go. Install Expo, scan the QR, and MUSA opens
+            from our live build so you can test captions and haptics on a real device.
+          </Text>
+
+          <View style={styles.tryDemoSteps}>
+            {[
+              ['01', 'Install Expo Go', 'Use the iOS or Android store link below.'],
+              ['02', 'Scan or open', 'Point your camera at the QR, or tap the direct link.'],
+              ['03', 'Feel the cues', 'Run the demo on your phone to test real haptics.'],
+            ].map(([n, title, copy]) => (
+              <View key={n} style={styles.tryDemoStep}>
+                <Text color={MUTED} weight="800" style={styles.tryDemoStepNum}>
+                  {n}
+                </Text>
+                <View style={styles.tryDemoStepText}>
+                  <Text color={INK} weight="800" style={styles.tryDemoStepTitle}>
+                    {title}
+                  </Text>
+                  <Text color={MUTED} weight="500" style={styles.tryDemoStepCopy}>
+                    {copy}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.tryDemoStores}>
+            <Pressable
+              onPress={() => openURL(APPSTORE_URL)}
+              hitSlop={8}
+              accessibilityRole="link"
+              accessibilityLabel="Install Expo Go from the App Store"
+              style={styles.tryDemoStoreButton}
+            >
+              <Image source={APP_STORE_ICON} style={styles.tryDemoStoreIcon} resizeMode="contain" />
+            </Pressable>
+            <Pressable
+              onPress={() => openURL(PLAYSTORE_URL)}
+              hitSlop={8}
+              accessibilityRole="link"
+              accessibilityLabel="Install Expo Go from Google Play"
+              style={styles.tryDemoStoreButton}
+            >
+              <Image source={GOOGLE_PLAY_ICON} style={styles.tryDemoStoreIcon} resizeMode="contain" />
+            </Pressable>
+          </View>
+        </View>
+
+        <View style={[styles.tryDemoPanel, compact ? styles.tryDemoPanelCompact : null]}>
+          <Text color="rgba(14,23,38,0.52)" weight="800" style={styles.tryDemoPanelLabel}>
+            SCAN WITH EXPO GO
+          </Text>
+          <View style={[styles.tryDemoQrBox, compact ? styles.tryDemoQrBoxCompact : null]}>
+            <Image source={QR_SRC} style={[styles.tryDemoQrImage, compact ? styles.tryDemoQrImageCompact : null]} resizeMode="contain" />
+          </View>
+          <Pressable
+            onPress={() => openURL(APP_URL)}
+            hitSlop={8}
+            accessibilityRole="link"
+            accessibilityLabel="Open the MUSA Expo demo link"
+            style={styles.tryDemoLinkPill}
+          >
+            <Ionicons name="link-outline" size={16} color={INK} />
+            <Text color={INK} weight="800" numberOfLines={1} style={styles.tryDemoLinkText}>
+              {APP_URL_LABEL}
+            </Text>
+          </Pressable>
+          <Text color={MUTED} weight="500" style={styles.tryDemoPanelNote}>
+            Browser preview shows the landing. The demo itself is meant to be felt on your phone.
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function FinalCta({ isWide, isTablet, onGetApp }: { isWide: boolean; isTablet: boolean; onGetApp: () => void }) {
   const stacked = !isWide && !isTablet;
   const insets = useSafeAreaInsets();
@@ -973,8 +1076,10 @@ function FooterLink({ label, onPress }: { label: string; onPress: () => void }) 
 }
 
 function GetAppModal({ onClose }: { onClose: () => void }) {
-  const { width } = useResponsive();
+  const { width, height } = useResponsive();
   const stacked = width < 760;
+  const compactModal = stacked && height < 720;
+  const modalMaxHeight = stacked ? Math.max(520, height - 24) : undefined;
   const [copied, setCopied] = useState(false);
 
   const copyLink = () => {
@@ -986,64 +1091,101 @@ function GetAppModal({ onClose }: { onClose: () => void }) {
     }
   };
 
+  const intro = (
+    <>
+      <Text color="rgba(244,246,248,0.4)" weight="700" style={styles.modalEyebrow}>
+        GET THE APP
+      </Text>
+      <Text color="#F4F6F8" weight="800" style={StyleSheet.flatten([styles.modalTitle, stacked ? styles.modalTitleMobile : null])}>
+        Try MUSA on your phone
+      </Text>
+      <Text color="rgba(244,246,248,0.62)" weight="500" style={StyleSheet.flatten([styles.modalBody, stacked ? styles.modalBodyMobile : null])}>
+        {compactModal
+          ? 'Install Expo Go, then scan the QR or copy the link.'
+          : "MUSA's haptics live in your hands, so the real thing runs on a phone — not the browser. Install Expo Go, then scan the QR or open the link."}
+      </Text>
+    </>
+  );
+
+  const installSteps = (
+    <>
+      <View style={styles.modalSteps}>
+        <ModalStep n="1" title="Install Expo Go" copy="Free — get it here:" stores />
+        <ModalStep n="2" title="Scan the QR or open the link" copy="MUSA loads straight from our server." />
+      </View>
+
+      <View style={[styles.modalUrlRow, stacked ? styles.modalUrlRowMobile : null]}>
+        <View style={[styles.modalUrlPill, stacked ? styles.modalUrlPillMobile : null]}>
+          <Ionicons name="link-outline" size={16} color="rgba(244,246,248,0.6)" />
+          <Text
+            color="#F4F6F8"
+            weight="600"
+            numberOfLines={1}
+            style={StyleSheet.flatten([styles.modalUrlText, stacked ? styles.modalUrlTextMobile : null])}
+          >
+            {APP_URL_LABEL}
+          </Text>
+        </View>
+        <Touch
+          onPress={copyLink}
+          style={StyleSheet.flatten([styles.modalCopyBtn, stacked ? styles.modalCopyBtnMobile : null])}
+          scaleTo={0.97}
+        >
+          <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={16} color="#0C0E13" />
+          <Text color="#0C0E13" weight="700" style={StyleSheet.flatten([styles.modalCopyText, stacked ? styles.modalCopyTextMobile : null])}>
+            {copied ? 'Copied' : 'Copy link'}
+          </Text>
+        </Touch>
+      </View>
+    </>
+  );
+
+  const qrPanel = (
+    <View style={[styles.qrPanel, stacked ? styles.qrPanelMobile : null]}>
+      <Text color="rgba(14,23,38,0.5)" weight="800" style={styles.qrLabel}>
+        SCAN TO OPEN
+      </Text>
+      <View style={[styles.qrBox, stacked ? styles.qrBoxMobile : null]}>
+        <Image source={QR_SRC} style={[styles.qrImage, stacked ? styles.qrImageMobile : null]} resizeMode="contain" />
+      </View>
+      <View style={styles.qrFoot}>
+        <View style={styles.qrDot} />
+        <Text color="rgba(14,23,38,0.62)" weight="700" style={styles.qrFootText}>
+          Open with Expo Go
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
-    <View style={styles.modalOverlay}>
+    <View style={[styles.modalOverlay, stacked ? styles.modalOverlayStacked : null]}>
       <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-      <View style={[styles.modalCard, stacked ? styles.modalCardStacked : null]}>
-        <Pressable style={styles.modalClose} onPress={onClose} hitSlop={10}>
+      <View style={[styles.modalCard, stacked ? styles.modalCardStacked : null, stacked ? { maxHeight: modalMaxHeight } : null]}>
+        <Pressable style={[styles.modalClose, stacked ? styles.modalCloseStacked : null]} onPress={onClose} hitSlop={10}>
           <Ionicons name="close" size={20} color="rgba(244,246,248,0.72)" />
         </Pressable>
 
-        <View style={[styles.modalLeft, stacked ? styles.modalLeftStacked : null]}>
-          <Text color="rgba(244,246,248,0.4)" weight="700" style={styles.modalEyebrow}>
-            GET THE APP
-          </Text>
-          <Text color="#F4F6F8" weight="800" style={styles.modalTitle}>
-            Try MUSA on your phone
-          </Text>
-          <Text color="rgba(244,246,248,0.62)" weight="500" style={styles.modalBody}>
-            MUSA&apos;s haptics live in your hands, so the real thing runs on a phone — not the
-            browser. Install Expo Go, then scan the QR or open the link.
-          </Text>
-
-          <View style={styles.modalSteps}>
-            <ModalStep n="1" title="Install Expo Go" copy="Free — get it here:" stores />
-            <ModalStep n="2" title="Scan the QR or open the link" copy="MUSA loads straight from our server." />
-          </View>
-
-          <View style={styles.modalUrlRow}>
-            <View style={styles.modalUrlPill}>
-              <Ionicons name="link-outline" size={16} color="rgba(244,246,248,0.6)" />
-              <Text color="#F4F6F8" weight="600" numberOfLines={1} style={styles.modalUrlText}>
-                {APP_URL_LABEL}
-              </Text>
+        {stacked ? (
+          <ScrollView
+            style={styles.modalScroll}
+            contentContainerStyle={styles.modalScrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
+            <View style={styles.modalMobileIntro}>{intro}</View>
+            <View style={styles.modalRightStacked}>{qrPanel}</View>
+            <View style={styles.modalMobileActions}>{installSteps}</View>
+          </ScrollView>
+        ) : (
+          <>
+            <View style={styles.modalLeft}>
+              {intro}
+              {installSteps}
             </View>
-            <Touch onPress={copyLink} style={styles.modalCopyBtn} scaleTo={0.97}>
-              <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={16} color="#0C0E13" />
-              <Text color="#0C0E13" weight="700" style={styles.modalCopyText}>
-                {copied ? 'Copied' : 'Copy link'}
-              </Text>
-            </Touch>
-          </View>
 
-        </View>
-
-        <View style={[styles.modalRight, stacked ? styles.modalRightStacked : null]}>
-          <View style={styles.qrPanel}>
-            <Text color="rgba(14,23,38,0.5)" weight="800" style={styles.qrLabel}>
-              SCAN TO OPEN
-            </Text>
-            <View style={styles.qrBox}>
-              <Image source={QR_SRC} style={styles.qrImage} resizeMode="contain" />
-            </View>
-            <View style={styles.qrFoot}>
-              <View style={styles.qrDot} />
-              <Text color="rgba(14,23,38,0.62)" weight="700" style={styles.qrFootText}>
-                Open with Expo Go
-              </Text>
-            </View>
-          </View>
-        </View>
+            <View style={styles.modalRight}>{qrPanel}</View>
+          </>
+        )}
       </View>
     </View>
   );
@@ -1172,6 +1314,14 @@ function Beat({
 const SCROLL_VIDEO_1_SRC = '/musa-scroll-1.mp4';
 const SCROLL_VIDEO_2_SRC = '/musa-scroll-2.mp4';
 const SCROLL_VIDEO_3_SRC = '/musa-scroll-3.mp4';
+const PINNED_VIDEO_STYLE = {
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  objectPosition: 'center center',
+  display: 'block',
+  backgroundColor: '#050506',
+} as const;
 
 function PinnedPhone({
   videoLayerStyle,
@@ -1227,17 +1377,7 @@ function PinnedPhone({
                   if (p && p.catch) p.catch(() => {});
                 }
               },
-              // El video viene en proporción de pantalla. Lo encajamos apenas más corto
-              // para que el marco inferior del iPhone no tape los controles del video.
-              style: {
-                width: '100%',
-                height: '97.25%',
-                objectFit: 'contain',
-                objectPosition: 'center top',
-                display: 'block',
-                margin: '0 auto',
-                backgroundColor: '#F7FAFA',
-              },
+              style: PINNED_VIDEO_STYLE,
             })}
           </Animated.View>
         ) : null}
@@ -1257,15 +1397,7 @@ function PinnedPhone({
                   if (p && p.catch) p.catch(() => {});
                 }
               },
-              style: {
-                width: '100%',
-                height: '97.25%',
-                objectFit: 'contain',
-                objectPosition: 'center top',
-                display: 'block',
-                margin: '0 auto',
-                backgroundColor: '#F7FAFA',
-              },
+              style: PINNED_VIDEO_STYLE,
             })}
           </View>
         ) : null}
@@ -1286,15 +1418,7 @@ function PinnedPhone({
                   if (p && p.catch) p.catch(() => {});
                 }
               },
-              style: {
-                width: '100%',
-                height: '97.25%',
-                objectFit: 'contain',
-                objectPosition: 'center top',
-                display: 'block',
-                margin: '0 auto',
-                backgroundColor: '#F7FAFA',
-              },
+              style: PINNED_VIDEO_STYLE,
             })}
           </Animated.View>
         ) : null}
@@ -1315,15 +1439,7 @@ function PinnedPhone({
                   if (p && p.catch) p.catch(() => {});
                 }
               },
-              style: {
-                width: '100%',
-                height: '97.25%',
-                objectFit: 'contain',
-                objectPosition: 'center top',
-                display: 'block',
-                margin: '0 auto',
-                backgroundColor: '#F7FAFA',
-              },
+              style: PINNED_VIDEO_STYLE,
             })}
           </Animated.View>
         ) : null}
@@ -3060,6 +3176,9 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: 'rgba(6,8,12,0.66)',
   },
+  modalOverlayStacked: {
+    padding: 12,
+  },
   modalCard: {
     width: '100%',
     maxWidth: 908,
@@ -3075,7 +3194,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 30 },
   },
   modalCardStacked: {
-    maxWidth: 440,
+    maxWidth: 388,
     flexDirection: 'column',
   },
   modalClose: {
@@ -3091,6 +3210,27 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.12)',
+  },
+  modalCloseStacked: {
+    top: 12,
+    right: 12,
+  },
+  modalScroll: {
+    width: '100%',
+  },
+  modalScrollContent: {
+    paddingBottom: 4,
+  },
+  modalMobileIntro: {
+    paddingTop: 18,
+    paddingRight: 58,
+    paddingBottom: 12,
+    paddingLeft: 20,
+    gap: 10,
+  },
+  modalMobileActions: {
+    padding: 18,
+    gap: 12,
   },
   modalLeft: {
     flex: 1.2,
@@ -3114,10 +3254,19 @@ const styles = StyleSheet.create({
     lineHeight: 42,
     letterSpacing: -1.2,
   },
+  modalTitleMobile: {
+    fontSize: 25,
+    lineHeight: 29,
+    letterSpacing: -0.7,
+  },
   modalBody: {
     maxWidth: 430,
     fontSize: 15.5,
     lineHeight: 23,
+  },
+  modalBodyMobile: {
+    fontSize: 13,
+    lineHeight: 19,
   },
   modalSteps: {
     gap: 14,
@@ -3173,6 +3322,10 @@ const styles = StyleSheet.create({
     marginTop: 6,
     flexWrap: 'wrap',
   },
+  modalUrlRowMobile: {
+    flexWrap: 'nowrap',
+    gap: 8,
+  },
   modalUrlPill: {
     flex: 1,
     minWidth: 180,
@@ -3186,9 +3339,17 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(255,255,255,0.12)',
   },
+  modalUrlPillMobile: {
+    minWidth: 0,
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
   modalUrlText: {
     flex: 1,
     fontSize: 14.5,
+  },
+  modalUrlTextMobile: {
+    fontSize: 13,
   },
   modalCopyBtn: {
     minHeight: 46,
@@ -3200,9 +3361,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: PAPER,
   },
+  modalCopyBtnMobile: {
+    minHeight: 44,
+    paddingHorizontal: 12,
+  },
   modalCopyText: {
     fontSize: 14,
     lineHeight: 17,
+  },
+  modalCopyTextMobile: {
+    fontSize: 13,
+    lineHeight: 16,
   },
   modalStoresText: {
     marginTop: 2,
@@ -3221,11 +3390,15 @@ const styles = StyleSheet.create({
   },
   modalRightStacked: {
     width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
     borderLeftWidth: 0,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(255,255,255,0.1)',
-    paddingTop: 24,
-    paddingBottom: 28,
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   qrPanel: {
     alignItems: 'center',
@@ -3235,6 +3408,13 @@ const styles = StyleSheet.create({
     backgroundColor: PAPER,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: 'rgba(14,23,38,0.1)',
+  },
+  qrPanelMobile: {
+    width: '100%',
+    maxWidth: 260,
+    gap: 10,
+    padding: 14,
+    borderRadius: 18,
   },
   qrLabel: {
     fontSize: 11.5,
@@ -3250,9 +3430,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
+  qrBoxMobile: {
+    width: 144,
+    height: 144,
+  },
   qrImage: {
     width: 188,
     height: 188,
+  },
+  qrImageMobile: {
+    width: 144,
+    height: 144,
   },
   qrFoot: {
     flexDirection: 'row',
@@ -3268,6 +3456,195 @@ const styles = StyleSheet.create({
     height: 7,
     borderRadius: 4,
     backgroundColor: 'rgba(14,23,38,0.5)',
+  },
+
+  /* ---- Try demo guide ---- */
+  tryDemoBand: {
+    width: '100%',
+    backgroundColor: '#FAFAFA',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(14,23,38,0.08)',
+  },
+  tryDemoSection: {
+    minHeight: 560,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 58,
+    paddingTop: 84,
+    paddingBottom: 84,
+  },
+  tryDemoSectionTablet: {
+    minHeight: 520,
+    gap: 34,
+    paddingTop: 70,
+    paddingBottom: 70,
+  },
+  tryDemoSectionMobile: {
+    minHeight: 0,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: 30,
+    paddingTop: 58,
+    paddingBottom: 58,
+  },
+  tryDemoCopy: {
+    flex: 1,
+    maxWidth: 650,
+    gap: 18,
+  },
+  tryDemoCopyCompact: {
+    maxWidth: '100%',
+  },
+  tryDemoKicker: {
+    fontSize: 12,
+    lineHeight: 15,
+    letterSpacing: 2.2,
+  },
+  tryDemoTitle: {
+    maxWidth: 640,
+    fontSize: 56,
+    lineHeight: 60,
+    letterSpacing: -1.5,
+  },
+  tryDemoTitleTablet: {
+    maxWidth: 440,
+    fontSize: 40,
+    lineHeight: 44,
+    letterSpacing: -1,
+  },
+  tryDemoTitleMobile: {
+    fontSize: 34,
+    lineHeight: 38,
+    letterSpacing: -0.8,
+  },
+  tryDemoBody: {
+    maxWidth: 590,
+    fontSize: 18,
+    lineHeight: 28,
+  },
+  tryDemoBodyCompact: {
+    fontSize: 16,
+    lineHeight: 25,
+  },
+  tryDemoSteps: {
+    gap: 12,
+    marginTop: 4,
+  },
+  tryDemoStep: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 14,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(14,23,38,0.1)',
+  },
+  tryDemoStepNum: {
+    width: 32,
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 1.5,
+  },
+  tryDemoStepText: {
+    flex: 1,
+    gap: 3,
+  },
+  tryDemoStepTitle: {
+    fontSize: 16,
+    lineHeight: 20,
+  },
+  tryDemoStepCopy: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  tryDemoStores: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  tryDemoStoreButton: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tryDemoStoreIcon: {
+    width: 38,
+    height: 38,
+  },
+  tryDemoPanel: {
+    width: 330,
+    alignItems: 'center',
+    gap: 14,
+    padding: 22,
+    borderRadius: 24,
+    backgroundColor: PAPER,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(14,23,38,0.1)',
+    shadowColor: '#0A1020',
+    shadowOpacity: 0.06,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 14 },
+  },
+  tryDemoPanelCompact: {
+    width: '100%',
+    maxWidth: 330,
+    alignSelf: 'center',
+    padding: 18,
+    borderRadius: 20,
+  },
+  tryDemoPanelLabel: {
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 2,
+  },
+  tryDemoQrBox: {
+    width: 210,
+    height: 210,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+  },
+  tryDemoQrBoxCompact: {
+    width: 176,
+    height: 176,
+  },
+  tryDemoQrImage: {
+    width: 210,
+    height: 210,
+  },
+  tryDemoQrImageCompact: {
+    width: 176,
+    height: 176,
+  },
+  tryDemoLinkPill: {
+    width: '100%',
+    minHeight: 46,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    borderRadius: 999,
+    backgroundColor: 'rgba(14,23,38,0.06)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(14,23,38,0.1)',
+  },
+  tryDemoLinkText: {
+    maxWidth: 220,
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  tryDemoPanelNote: {
+    maxWidth: 250,
+    textAlign: 'center',
+    fontSize: 13,
+    lineHeight: 19,
   },
 
   /* ---- Pinned phone section ---- */
@@ -3317,12 +3694,13 @@ const styles = StyleSheet.create({
     height: '96.65%',
     borderRadius: 34,
     overflow: 'hidden',
-    backgroundColor: '#E8EEF2',
+    backgroundColor: '#050506',
   },
   pinnedVideoLayer: {
     ...StyleSheet.absoluteFillObject,
+    borderRadius: 34,
     overflow: 'hidden',
-    backgroundColor: '#F7FAFA',
+    backgroundColor: '#050506',
   },
   // Caption "en tu bolsillo" (parte 3). Flota sobre la parte baja de la pantalla.
   pocketCueWrap: {
