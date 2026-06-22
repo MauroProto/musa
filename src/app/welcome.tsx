@@ -50,7 +50,7 @@ const QR_SRC = require('../../assets/images/musa-qr.png');
 // === Links del footer — REEMPLAZAR con los reales ===
 const MUSICATHON_URL = 'https://musicathon.example';
 const GITHUB_URL = 'https://github.com/MauroProto/musa';
-const YOUTUBE_URL = 'https://youtube.com/@musa';
+const YOUTUBE_URL = 'https://www.youtube.com/watch?v=CLiNLzRrqWI';
 const CONTACT_EMAIL = 'hola@musa.app';
 const MUSIXMATCH_URL = 'https://www.musixmatch.com';
 const LALAL_URL = 'https://www.lalal.ai';
